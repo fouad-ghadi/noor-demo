@@ -103,7 +103,7 @@ DELEGATES = [
      "achievement": (0.70, 0.83), "pending": 5, "doctors": 46, "vacation": (8, 10)},
     {"name": "Imane Fassi Fihri", "email": "imane.fassifihri@noor-demo.ma", "region": "Fès-Meknès",
      "phone": "06 64 07 58 19", "interval_factor": 1.1, "neglect_a": 0.15, "neglect_b": 0.3, "cancel_rate": 0.15,
-     "achievement": (0.78, 0.90), "pending": 3, "doctors": 44, "vacation": (8, 17)},
+     "achievement": (0.72, 0.84), "pending": 3, "doctors": 44, "vacation": (8, 17)},
 ]
 
 # Jours fériés marocains (les dates des fêtes religieuses sont approximatives)
