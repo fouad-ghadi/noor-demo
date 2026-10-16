@@ -13,7 +13,7 @@ recommandations).
 ```
 noor-demo/
 ├── backend/          API Python (FastAPI + SQLAlchemy + SQLite)
-├── frontend/         Application web (React + Vite + TypeScript)   ← étape 2
+├── frontend/         Application web (React + Vite + TypeScript + Tailwind + shadcn/ui)
 ├── docs/products/    Documents produits (PDF) pour le futur assistant RAG
 └── seed_duplicates.md  Doublons et notes de pharmacovigilance générés par le seed
 ```
@@ -49,3 +49,39 @@ Documentation interactive de l'API : **http://localhost:8000/docs**
 
 Dans l'API, l'utilisateur courant est transmis par l'en-tête `X-User-Id`
 (démo, aucune vraie sécurité).
+
+## Lancer le frontend
+
+Prérequis : **Node.js 20+**. Le backend doit tourner en parallèle (autre terminal).
+
+```bash
+cd frontend
+npm install
+npm run dev                      # application sur http://localhost:5173
+```
+
+Les appels `/api/...` sont redirigés automatiquement vers le backend (port 8000).
+
+**Tester sur téléphone** : le PC et le téléphone sur le même Wi-Fi, puis ouvrir
+`http://<adresse-IP-du-PC>:5173` sur le téléphone (l'adresse s'affiche au lancement de `npm run dev`,
+ligne « Network »).
+
+### Organisation du frontend
+
+```
+frontend/src/
+├── api/            client HTTP (client.ts) + types TypeScript des données (types.ts)
+├── auth/           utilisateur connecté (connexion simulée, stocké dans le navigateur)
+├── components/
+│   ├── ui/         composants shadcn/ui (boutons, cartes, listes déroulantes...)
+│   ├── layout/     sidebar, barre mobile, mise en page générale
+│   ├── assistant/  panneau « Assistant NOOR » (point d'extension IA)
+│   ├── shared/     éléments réutilisables (badges, en-têtes, états vides...)
+│   └── visits/     planification de visite, historique des visites
+├── hooks/          requêtes partagées (React Query), utilitaires
+├── lib/            formatage français des dates, libellés, couleurs
+└── pages/          un fichier par écran
+```
+
+> Les composants `components/ui/` suivent les modèles shadcn/ui (style « new-york ») ;
+> le fichier `components.json` permet d'en ajouter d'autres avec `npx shadcn@latest add <nom>`.
