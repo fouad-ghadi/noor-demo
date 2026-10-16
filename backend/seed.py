@@ -370,7 +370,7 @@ def create_doctors(db, delegates, products):
                 "address": original["address"], "phone": original["phone"],
                 "practice_type": doc.practice_type, "email": original.get("email"),
                 "segment": "C",  # potentiel encore inconnu pour une fiche nouvellement créée
-                "created_at": NOW - timedelta(days=RNG.randint(5, 50), hours=RNG.randint(1, 8)),
+                "created_at": datetime.combine(TODAY, time(18, 0)) - timedelta(days=RNG.randint(5, 50), hours=RNG.randint(1, 8)),
             }
             fields.update(variant)
             dup = _build_doctor(user, set(), products, **fields)
@@ -417,9 +417,8 @@ def _fill_report(visit: Visit, doctor: Doctor, products_for: list[Product], pres
     objection_prob = {"tres_favorable": 0.1, "favorable": 0.25, "neutre": 0.55,
                       "reserve": 0.85, "defavorable": 0.9}[feedback]
     if RNG.random() < objection_prob:
-        categories = set()
-        for _ in range(RNG.choices([1, 2], [70, 30])[0]):
-            categories.add(weighted(OBJECTION_WEIGHTS))
+        # dict.fromkeys = liste sans doublons qui garde l'ordre (un set n'a pas d'ordre stable)
+        categories = dict.fromkeys(weighted(OBJECTION_WEIGHTS) for _ in range(RNG.choices([1, 2], [70, 30])[0]))
         for cat in categories:
             product = RNG.choice(presented)
             visit.objections.append(VisitObjection(
@@ -519,8 +518,7 @@ def create_visits(db, delegates, by_delegate, products, pairs):
                               status=VisitStatus.PLANIFIEE,
                               created_at=planned_at - timedelta(days=RNG.randint(2, 12)))
                 visits.append(visit)
-                in_past = planned_at < NOW - timedelta(minutes=30)
-                if not in_past:
+                if future:  # visite à venir : simplement planifiée
                     next_due[doctor.id] = day + timedelta(days=interval(doctor))
                     continue
                 if day < TODAY and RNG.random() < profile["cancel_rate"]:
@@ -533,6 +531,11 @@ def create_visits(db, delegates, by_delegate, products, pairs):
                 gap = interval(doctor)
                 next_due[doctor.id] = day + timedelta(days=gap)
                 visit.next_visit_date = day + timedelta(days=round(gap))
+                # Aujourd'hui : seules les visites de plus de 30 min sont « faites ».
+                # (Le rapport est généré puis effacé, pour que le hasard consommé ne dépende
+                # pas de l'heure : deux seeds le même jour donnent les mêmes données.)
+                if day == TODAY and planned_at >= NOW - timedelta(minutes=30):
+                    _clear_report(visit)
             day += timedelta(days=1)
 
         # Quelques comptes-rendus non saisis (récents) → « comptes-rendus en attente »
@@ -566,7 +569,9 @@ def add_pharmacovigilance_notes(db) -> list[tuple[Visit, str]]:
             .join(VisitProduct, VisitProduct.visit_id == Visit.id)
             .join(Product, Product.id == VisitProduct.product_id)
             .filter(Product.brand_name == brand, Visit.status == VisitStatus.REALISEE,
-                    Visit.actual_at >= NOW - timedelta(days=75))
+                    Visit.actual_at >= datetime.combine(TODAY - timedelta(days=75), time()),
+                    Visit.actual_at < datetime.combine(TODAY, time()))
+            .order_by(Visit.id)
             .all()
         )
         candidates = [v for v in candidates if v not in [a[0] for a in added]]
@@ -587,13 +592,15 @@ def create_objectives(db, delegates):
     for user, profile in delegates:
         for period in PERIODS:
             start, end = month_bounds(period)
+            # On ignore la journée en cours (son contenu dépend de l'heure du seed)
+            end = min(end, datetime.combine(TODAY, time()))
             in_month = (
                 db.query(Visit)
                 .filter(Visit.delegue_id == user.id, Visit.status == VisitStatus.REALISEE,
                         Visit.actual_at >= start, Visit.actual_at < end)
                 .all()
             )
-            fraction = max(elapsed_fraction(period, TODAY), 0.1)
+            fraction = max(elapsed_fraction(period, TODAY - timedelta(days=1)), 0.1)
             ratio = RNG.uniform(*profile["achievement"])
             target_visits = max(10, round(len(in_month) / fraction / ratio))
 

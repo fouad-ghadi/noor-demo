@@ -25,10 +25,10 @@ Ces visites contiennent dans leurs notes une mention d'effet indésirable. Le fu
 
 | Visite (id) | Médecin | Produit | Date |
 |---|---|---|---|
-| 781 | Dr Loubna Cherkaoui | Amoxira | 08/10/2026 |
-| 433 | Dr Karim Zniber | Cardiovex | 14/10/2026 |
-| 1120 | Dr Driss Tounsi | Glucanor | 06/10/2026 |
-| 1062 | Dr Chaimae Benmoussa | Statilia | 07/09/2026 |
-| 407 | Dr Hassan Raissouni | Artrinol | 05/10/2026 |
-| 758 | Dr Youssef Ouazzani | Respiflow | 28/09/2026 |
-| 1427 | Dr Ouafae Essaadi | Gestavia | 22/09/2026 |
+| 705 | Dr Ghizlane Raissouni | Amoxira | 04/09/2026 |
+| 432 | Dr Nabil El Ouardi | Cardiovex | 14/10/2026 |
+| 398 | Dr Sanaa El Ouardi | Glucanor | 02/10/2026 |
+| 279 | Dr Btissam Rami | Statilia | 19/08/2026 |
+| 691 | Dr Siham Hajji | Artrinol | 31/08/2026 |
+| 1316 | Dr Ismail Zerhouni | Respiflow | 01/09/2026 |
+| 304 | Dr Fatima Zahra Alaoui | Gestavia | 01/09/2026 |
