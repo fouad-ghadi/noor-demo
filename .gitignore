@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Base de données de démo (régénérée par `python seed.py`)
+backend/noor.db
+
+# Node / Vite
+node_modules/
+dist/
+*.local
+
+# Éditeurs / OS
+.vscode/
+.idea/
+.DS_Store

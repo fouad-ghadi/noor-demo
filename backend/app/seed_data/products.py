@@ -1,0 +1,189 @@
+"""
+Catalogue de produits FICTIFS.
+
+Les noms commerciaux sont inventés pour la démo (aucune marque réelle).
+Les molécules (DCI), classes et indications sont réelles et simplifiées.
+"""
+
+PRODUCTS: list[dict] = [
+    {
+        "brand_name": "Cardiovex",
+        "molecule": "Amlodipine",
+        "therapeutic_class": "Antihypertenseur — inhibiteur calcique",
+        "form_dosage": "Comprimés 5 mg et 10 mg — boîtes de 30",
+        "description": "Inhibiteur calcique de longue durée d'action, une prise par jour.",
+        "indications": [
+            "Hypertension artérielle essentielle",
+            "Angor stable chronique",
+            "Angor vasospastique (Prinzmetal)",
+        ],
+        "key_messages": [
+            "Contrôle tensionnel sur 24 h avec une seule prise par jour",
+            "Bonne tolérance métabolique : neutre sur la glycémie et les lipides",
+            "Associable aux IEC et aux diurétiques",
+            "Prix accessible, remboursé par l'AMO",
+        ],
+        "target_specialties": ["Cardiologue", "Généraliste", "Endocrinologue"],
+    },
+    {
+        "brand_name": "Statilia",
+        "molecule": "Atorvastatine",
+        "therapeutic_class": "Hypolipémiant — statine",
+        "form_dosage": "Comprimés pelliculés 10 mg, 20 mg et 40 mg",
+        "description": "Statine de référence pour la prévention cardiovasculaire.",
+        "indications": [
+            "Hypercholestérolémie primaire",
+            "Dyslipidémie mixte",
+            "Prévention des événements cardiovasculaires chez le patient à haut risque",
+        ],
+        "key_messages": [
+            "Baisse du LDL-c jusqu'à 50 % dès 40 mg",
+            "Trois dosages pour adapter l'intensité au risque du patient",
+            "Bénéfice démontré en prévention secondaire",
+        ],
+        "target_specialties": ["Cardiologue", "Endocrinologue", "Généraliste"],
+    },
+    {
+        "brand_name": "Glucanor",
+        "molecule": "Metformine",
+        "therapeutic_class": "Antidiabétique oral — biguanide",
+        "form_dosage": "Comprimés 500 mg, 850 mg et 1000 mg LP",
+        "description": "Traitement de première intention du diabète de type 2.",
+        "indications": [
+            "Diabète de type 2, en particulier chez le patient en surpoids",
+            "En monothérapie ou en association aux autres antidiabétiques ou à l'insuline",
+        ],
+        "key_messages": [
+            "Première intention recommandée dans le diabète de type 2",
+            "Forme LP : meilleure tolérance digestive, une prise le soir",
+            "Pas de prise de poids, pas d'hypoglycémie en monothérapie",
+        ],
+        "target_specialties": ["Endocrinologue", "Généraliste"],
+    },
+    {
+        "brand_name": "Amoxira",
+        "molecule": "Amoxicilline",
+        "therapeutic_class": "Antibiotique — pénicilline (aminopénicilline)",
+        "form_dosage": "Gélules 500 mg, comprimés dispersibles 1 g, poudre pour suspension buvable 250 mg/5 ml",
+        "description": "Antibiotique à large spectre pour les infections courantes.",
+        "indications": [
+            "Angines et otites aiguës",
+            "Sinusites aiguës",
+            "Pneumopathies communautaires",
+            "Infections urinaires non compliquées",
+        ],
+        "key_messages": [
+            "Forme suspension au goût fruité, bien acceptée par les enfants",
+            "Comprimé dispersible 1 g : observance facilitée chez l'adulte",
+            "Rapport efficacité / coût optimal en première intention",
+        ],
+        "target_specialties": ["Généraliste", "Pédiatre", "ORL"],
+    },
+    {
+        "brand_name": "Gastrozen",
+        "molecule": "Oméprazole",
+        "therapeutic_class": "Inhibiteur de la pompe à protons (IPP)",
+        "form_dosage": "Gélules gastro-résistantes 20 mg — boîtes de 14 et 28",
+        "description": "IPP pour les troubles acido-dépendants.",
+        "indications": [
+            "Reflux gastro-œsophagien",
+            "Ulcère gastrique et duodénal",
+            "Éradication d'Helicobacter pylori (en association)",
+            "Prévention des lésions gastriques sous AINS",
+        ],
+        "key_messages": [
+            "Soulagement rapide des symptômes du RGO",
+            "Gastroprotection des patients sous AINS au long cours",
+            "Boîte de 28 adaptée aux traitements de 4 semaines",
+        ],
+        "target_specialties": ["Gastro-entérologue", "Généraliste", "Rhumatologue"],
+    },
+    {
+        "brand_name": "Respiflow",
+        "molecule": "Salbutamol",
+        "therapeutic_class": "Bronchodilatateur — bêta-2 agoniste de courte durée d'action",
+        "form_dosage": "Suspension pour inhalation en flacon pressurisé 100 µg/dose — 200 doses",
+        "description": "Traitement de la crise d'asthme et du bronchospasme.",
+        "indications": [
+            "Traitement symptomatique de la crise d'asthme",
+            "Prévention de l'asthme d'effort",
+            "Exacerbations de BPCO",
+        ],
+        "key_messages": [
+            "Action rapide en moins de 5 minutes",
+            "Compatible avec chambre d'inhalation pour les enfants",
+            "Compteur de doses intégré",
+        ],
+        "target_specialties": ["Pneumologue", "Pédiatre", "Généraliste"],
+    },
+    {
+        "brand_name": "Calmapyr",
+        "molecule": "Paracétamol",
+        "therapeutic_class": "Antalgique — antipyrétique",
+        "form_dosage": "Comprimés 500 mg et 1 g, sachets 1 g, sirop pédiatrique 2,4 %",
+        "description": "Antalgique de palier 1 pour la douleur et la fièvre.",
+        "indications": [
+            "Douleurs légères à modérées",
+            "États fébriles de l'adulte et de l'enfant",
+        ],
+        "key_messages": [
+            "Gamme complète du nourrisson à l'adulte",
+            "Sirop dosé au poids avec pipette graduée",
+            "Excellent profil de tolérance aux doses recommandées",
+        ],
+        "target_specialties": ["Généraliste", "Pédiatre", "Rhumatologue", "ORL"],
+    },
+    {
+        "brand_name": "Artrinol",
+        "molecule": "Diclofénac",
+        "therapeutic_class": "Anti-inflammatoire non stéroïdien (AINS)",
+        "form_dosage": "Comprimés gastro-résistants 50 mg, comprimés LP 75 mg, gel 1 %",
+        "description": "AINS pour les douleurs inflammatoires et rhumatismales.",
+        "indications": [
+            "Arthrose et polyarthrite rhumatoïde (traitement symptomatique)",
+            "Lombalgies et tendinites",
+            "Douleurs post-traumatiques",
+        ],
+        "key_messages": [
+            "Forme LP 75 mg : une à deux prises par jour",
+            "Gel 1 % pour les douleurs localisées, sans exposition systémique",
+            "Associer un IPP (Gastrozen) chez le patient à risque digestif",
+        ],
+        "target_specialties": ["Rhumatologue", "Généraliste"],
+    },
+    {
+        "brand_name": "Cutalis",
+        "molecule": "Bétaméthasone (dipropionate)",
+        "therapeutic_class": "Dermocorticoïde d'activité forte",
+        "form_dosage": "Crème et pommade 0,05 % — tubes de 30 g",
+        "description": "Dermocorticoïde pour les dermatoses inflammatoires.",
+        "indications": [
+            "Eczéma de contact et dermatite atopique (poussées)",
+            "Psoriasis en plaques localisé",
+            "Lichen plan",
+        ],
+        "key_messages": [
+            "Crème pour les lésions suintantes, pommade pour les lésions sèches",
+            "Une à deux applications par jour suffisent",
+            "Tube de 30 g adapté aux traitements courts",
+        ],
+        "target_specialties": ["Dermatologue", "Généraliste", "Pédiatre"],
+    },
+    {
+        "brand_name": "Gestavia",
+        "molecule": "Fumarate ferreux + acide folique",
+        "therapeutic_class": "Antianémique — supplémentation de la grossesse",
+        "form_dosage": "Comprimés 200 mg / 0,4 mg — boîtes de 30",
+        "description": "Prévention de la carence en fer et en folates pendant la grossesse.",
+        "indications": [
+            "Prévention de la carence martiale et folique chez la femme enceinte",
+            "Anémie ferriprive",
+        ],
+        "key_messages": [
+            "Un seul comprimé par jour : fer et acide folique associés",
+            "Couvre les besoins recommandés pendant la grossesse",
+            "Bonne tolérance digestive",
+        ],
+        "target_specialties": ["Gynécologue", "Généraliste"],
+    },
+]
