@@ -94,16 +94,16 @@ SUPERVISOR = {
 DELEGATES = [
     {"name": "Youssef El Idrissi", "email": "youssef.elidrissi@noor-demo.ma", "region": "Casablanca",
      "phone": "06 62 45 12 87", "interval_factor": 0.8, "neglect_a": 0.0, "neglect_b": 0.12, "cancel_rate": 0.05,
-     "achievement": (1.04, 1.16), "pending": 1, "doctors": 52, "vacation": (8, 3)},
+     "achievement": (1.06, 1.16), "pending": 1, "doctors": 52, "vacation": (8, 3)},
     {"name": "Salma Berrada", "email": "salma.berrada@noor-demo.ma", "region": "Rabat-Salé",
      "phone": "06 70 33 21 54", "interval_factor": 1.0, "neglect_a": 0.08, "neglect_b": 0.2, "cancel_rate": 0.07,
-     "achievement": (0.93, 1.02), "pending": 2, "doctors": 48, "vacation": (7, 20)},
+     "achievement": (0.90, 0.96), "pending": 2, "doctors": 48, "vacation": (7, 20)},
     {"name": "Hamza Ait Lahcen", "email": "hamza.aitlahcen@noor-demo.ma", "region": "Marrakech",
      "phone": "06 61 98 76 05", "interval_factor": 1.25, "neglect_a": 0.3, "neglect_b": 0.35, "cancel_rate": 0.09,
-     "achievement": (0.70, 0.83), "pending": 5, "doctors": 46, "vacation": (8, 10)},
+     "achievement": (0.64, 0.76), "pending": 5, "doctors": 46, "vacation": (8, 10)},
     {"name": "Imane Fassi Fihri", "email": "imane.fassifihri@noor-demo.ma", "region": "Fès-Meknès",
      "phone": "06 64 07 58 19", "interval_factor": 1.1, "neglect_a": 0.15, "neglect_b": 0.3, "cancel_rate": 0.15,
-     "achievement": (0.72, 0.84), "pending": 3, "doctors": 44, "vacation": (8, 17)},
+     "achievement": (0.68, 0.80), "pending": 3, "doctors": 44, "vacation": (8, 17)},
 ]
 
 # Jours fériés marocains (les dates des fêtes religieuses sont approximatives)
@@ -222,8 +222,9 @@ def mobile_phone() -> str:
 
 
 def is_off_day(d: date, vacation: tuple[int, int]) -> bool:
-    """Week-end, jour férié ou congés du délégué (2 semaines l'été)."""
-    if not is_working_day(d) or (d.month, d.day) in HOLIDAYS:
+    """Dimanche, jour férié ou congés du délégué (2 semaines l'été).
+    Le samedi matin est travaillé (beaucoup de cabinets sont ouverts le samedi matin au Maroc)."""
+    if d.weekday() == 6 or (d.month, d.day) in HOLIDAYS:
         return True
     vac_start = date(d.year, vacation[0], vacation[1])
     return vac_start <= d < vac_start + timedelta(days=14)
@@ -456,6 +457,8 @@ def _schedule_day(chosen: list[Doctor], day: date) -> list[tuple[Doctor, datetim
     planned = []
     for doctor in chosen:
         slot = doctor.preferred_slot if RNG.random() < 0.7 else RNG.choice(list(SLOT_HOURS))
+        if day.weekday() == 5:
+            slot = "matin"  # samedi : matinée uniquement
         planned.append((doctor, datetime.combine(day, random_time_in(slot))))
     planned.sort(key=lambda x: x[1])
     for i in range(1, len(planned)):  # au moins 30 min entre deux visites
@@ -500,7 +503,12 @@ def create_visits(db, delegates, by_delegate, products, pairs):
             future = day > TODAY
             due = [d for d in doctors if next_due[d.id] <= day and not (future and d.id in neglected)]
             due.sort(key=lambda d: (seg_order[d.segment], next_due[d.id]))
-            capacity = RNG.randint(5, 6) if day == TODAY else RNG.randint(3, 6) if future else RNG.randint(4, 7)
+            if day.weekday() == 5:  # samedi matin : tournée courte
+                capacity = 3 if day == TODAY else RNG.randint(1, 3)
+            elif day == TODAY:
+                capacity = RNG.randint(5, 6)
+            else:
+                capacity = RNG.randint(3, 6) if future else RNG.randint(4, 7)
             chosen = due[:capacity]
             # Journée trop creuse : le délégué avance des visites prévues prochainement
             # (aujourd'hui, on veut une tournée complète pour la démo)

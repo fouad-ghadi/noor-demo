@@ -155,7 +155,7 @@ export function DoctorFormPage() {
   if (isEdit && existing.isError) return <ErrorState error={existing.error} />;
 
   return (
-    <>
+    <div className="mx-auto max-w-3xl">
       <PageHeader
         backTo={isEdit ? `/medecins/${editId}` : "/medecins"}
         title={isEdit ? `Modifier Dr ${existing.data?.first_name} ${existing.data?.last_name}` : "Nouveau médecin"}
@@ -163,7 +163,7 @@ export function DoctorFormPage() {
       />
 
       <form
-        className="mx-auto max-w-3xl space-y-5"
+        className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
           if (!form.city || !form.district) return toast.error("Choisissez la ville et le quartier");
@@ -334,6 +334,6 @@ export function DoctorFormPage() {
           </Button>
         </div>
       </form>
-    </>
+    </div>
   );
 }

@@ -11,6 +11,8 @@ import { DoctorDetailPage } from "@/pages/doctors/DoctorDetailPage";
 import { DoctorFormPage } from "@/pages/doctors/DoctorFormPage";
 import { DoctorsPage } from "@/pages/doctors/DoctorsPage";
 import { LoginPage } from "@/pages/LoginPage";
+import { PlanningPage } from "@/pages/planning/PlanningPage";
+import { VisitReportPage } from "@/pages/visits/VisitReportPage";
 
 /** Redirige vers /login si personne n'est connecté. */
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -41,8 +43,8 @@ export default function App() {
         <Route path="medecins/nouveau" element={<DoctorFormPage />} />
         <Route path="medecins/:id" element={<DoctorDetailPage />} />
         <Route path="medecins/:id/modifier" element={<DoctorFormPage />} />
-        <Route path="planning" element={<ComingSoonPage title="Planning" step={3} />} />
-        <Route path="visites/:id/compte-rendu" element={<ComingSoonPage title="Compte-rendu de visite" step={3} />} />
+        <Route path="planning" element={<PlanningPage />} />
+        <Route path="visites/:id/compte-rendu" element={<VisitReportPage />} />
         <Route path="produits" element={<ComingSoonPage title="Produits" step={4} />} />
         <Route path="objectifs" element={<ComingSoonPage title="Objectifs" step={4} />} />
         <Route path="equipe" element={<ComingSoonPage title="Vue équipe" step={4} />} />
