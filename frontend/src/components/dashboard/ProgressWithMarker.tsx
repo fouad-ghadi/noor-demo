@@ -1,6 +1,8 @@
 /**
  * Barre de progression avec un repère « attendu à date ».
  * Ex. : 34 visites sur 62 (55 %) alors que 54 % étaient attendus aujourd'hui.
+ *
+ * `onDark` : version pour le bandeau vert pin du tableau de bord (piste claire, repère blanc).
  */
 import { cn } from "@/lib/utils";
 
@@ -8,6 +10,7 @@ interface Props {
   value: number; // % réalisé (peut dépasser 100)
   expected?: number; // % attendu à date (repère vertical)
   tone?: "good" | "warning" | "critical" | "neutral";
+  onDark?: boolean;
   className?: string;
 }
 
@@ -18,16 +21,24 @@ const TONE = {
   neutral: "bg-teal-600",
 };
 
-export function ProgressWithMarker({ value, expected, tone = "neutral", className }: Props) {
+/** Sur fond pin, des teintes plus claires pour garder le contraste. */
+const TONE_ON_DARK = {
+  good: "bg-mint",
+  warning: "bg-amber-300",
+  critical: "bg-rose-300",
+  neutral: "bg-mint",
+};
+
+export function ProgressWithMarker({ value, expected, tone = "neutral", onDark = false, className }: Props) {
   return (
-    <div className={cn("relative h-2 w-full rounded-full bg-slate-100", className)}>
+    <div className={cn("relative h-2 w-full rounded-full", onDark ? "bg-white/15" : "bg-slate-100", className)}>
       <div
-        className={cn("h-full rounded-full transition-all", TONE[tone])}
+        className={cn("h-full rounded-full transition-all", (onDark ? TONE_ON_DARK : TONE)[tone])}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
       {expected !== undefined && expected > 0 && expected < 100 && (
         <div
-          className="absolute -top-1 h-4 w-0.5 rounded-full bg-slate-700"
+          className={cn("absolute -top-1 h-4 w-0.5 rounded-full", onDark ? "bg-white" : "bg-slate-700")}
           style={{ left: `calc(${expected}% - 1px)` }}
           title={`Attendu à date : ${Math.round(expected)} %`}
         />

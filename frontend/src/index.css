@@ -12,7 +12,8 @@
 :root {
   --radius: 0.625rem;
 
-  --background: oklch(0.985 0.002 197);
+  /* Fond « papier » de la page de connexion (#FAFBF9) */
+  --background: oklch(0.987 0.003 145);
   --foreground: oklch(0.21 0.02 230);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.21 0.02 230);
@@ -45,15 +46,22 @@
   --chart-4: oklch(0.78 0.14 75);
   --chart-5: oklch(0.65 0.02 230);
 
-  --sidebar: oklch(0.255 0.04 205);
+  /* Identité NOOR (page de connexion) : vert pin, menthe sur fond pin,
+     safran RÉSERVÉ à « l'arrêt en cours » de la tournée, encre des titres. */
+  --pine: #0f3d3e;
+  --mint: #9fe3d6;
+  --saffron: #e8a33d;
+  --ink: #0e2a2b;
+
+  --sidebar: var(--pine);
   --sidebar-foreground: oklch(0.93 0.015 190);
   --sidebar-muted: oklch(0.7 0.03 195);
-  --sidebar-accent: oklch(0.32 0.05 195);
+  --sidebar-accent: oklch(0.36 0.05 195);
 }
 
 @theme inline {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  /* Police de titre (page de connexion, logo) */
+  /* Police de titre (connexion, logo, titres des pages et des sections, chiffres clés) */
   --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -85,6 +93,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-pine: var(--pine);
+  --color-mint: var(--mint);
+  --color-saffron: var(--saffron);
+  --color-ink: var(--ink);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted: var(--sidebar-muted);

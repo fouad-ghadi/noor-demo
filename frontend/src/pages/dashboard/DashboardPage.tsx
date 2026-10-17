@@ -5,26 +5,31 @@
  * - /equipe/:delegueId        → le superviseur consulte un délégué (lecture seule)
  *
  * Toutes les données viennent d'UN seul appel : GET /api/stats/dashboard (calculs côté serveur).
+ *
+ * Mise en page :
+ *  1. bandeau vert pin : bonjour, rythme du mois (visites / objectif) et tournée du jour ;
+ *  2. un panneau avec les autres indicateurs (couverture A, comptes-rendus, annulations) ;
+ *  3. ce qui demande une action (comptes-rendus à rédiger, médecins à revoir, alertes) ;
+ *  4. l'historique (visites par semaine).
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarCheck2, CalendarX2, Eye, FileClock, Target, Users } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { ArrowLeft, CalendarX2, Eye, FileClock, Target, Users } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
 
 import { api } from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { AlertsList } from "@/components/dashboard/AlertsList";
 import { DoctorsToRevisit } from "@/components/dashboard/DoctorsToRevisit";
-import { KpiCard, type KpiStatus } from "@/components/dashboard/KpiCard";
-import { paceTone } from "@/components/dashboard/ProgressWithMarker";
+import { DayRoute } from "@/components/dashboard/DayRoute";
+import { HeroBand, HeroPace } from "@/components/dashboard/HeroBand";
+import { KpiCard, KpiStatusLine, KpiStrip, type KpiStatus } from "@/components/dashboard/KpiCard";
+import { paceTone, ProgressWithMarker } from "@/components/dashboard/ProgressWithMarker";
 import { PendingReports } from "@/components/dashboard/PendingReports";
-import { TodayAgenda } from "@/components/dashboard/TodayAgenda";
 import { TopObjections } from "@/components/dashboard/TopObjections";
 import { VisitsPerWeekChart } from "@/components/dashboard/VisitsPerWeekChart";
-import { PageHeader } from "@/components/shared/PageHeader";
 import { ErrorState, LoadingState } from "@/components/shared/states";
-import { Badge } from "@/components/ui/badge";
 import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
 import { useVisitDialogs } from "@/components/visits/useVisitDialogs";
 import { formatLongDay } from "@/lib/format";
@@ -64,8 +69,8 @@ export function DashboardPage() {
     level: visitsTone,
     text:
       visitsTone === "good"
-        ? k.visits_done >= k.visits_expected_to_date
-          ? `En avance (+${k.visits_done - k.visits_expected_to_date} vs attendu)`
+        ? k.visits_done > k.visits_expected_to_date
+          ? `En avance de ${k.visits_done - k.visits_expected_to_date} visite(s) sur le rythme`
           : "Dans les temps"
         : `${k.visits_expected_to_date - k.visits_done} visite(s) de retard`,
   };
@@ -75,51 +80,62 @@ export function DashboardPage() {
       ? { level: "good", text: "Objectif atteint" }
       : { level: coverageGap > -15 ? "warning" : "critical", text: `${Math.round(-coverageGap)} pts sous l'objectif` };
 
+  const caption = o ? `Objectif de visites, ${o.label}` : "Visites du mois";
+
   return (
     <>
-      <PageHeader
-        backTo={readOnly ? "/equipe" : undefined}
-        backLabel="Vue équipe"
-        title={
-          readOnly ? (
-            <span className="flex flex-wrap items-center gap-2">
-              Tableau de bord de {d.delegue_name}
-              <Badge variant="outline" className="gap-1 font-normal">
-                <Eye className="size-3" /> Lecture seule
-              </Badge>
-            </span>
-          ) : (
-            `Bonjour ${firstName} 👋`
-          )
-        }
-        description={
-          <span className="first-letter:uppercase">
-            {formatLongDay(d.today)} · {d.region}
-            {o && ` · Objectifs de ${o.label}`}
-          </span>
-        }
-      />
+      {readOnly && (
+        <Link to="/equipe" className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm">
+          <ArrowLeft className="size-4" /> Vue équipe
+        </Link>
+      )}
 
-      <div className="flex flex-col gap-5">
-        {/* KPIs : en 2e position sur mobile (l'agenda d'abord), en 1re sur ordinateur */}
-        <div className="order-2 grid grid-cols-2 gap-3 lg:order-1 lg:grid-cols-4 lg:gap-4">
+      <div className="flex flex-col gap-5 lg:gap-6">
+        {/* Bandeau : qui, quel jour, le rythme du mois et la tournée du jour */}
+        <HeroBand
+          title={
+            readOnly ? (
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                {d.delegue_name}
+                <span className="inline-flex items-center gap-1 rounded-full border border-white/25 px-2.5 py-0.5 font-sans text-xs font-normal tracking-normal text-white/80">
+                  <Eye className="size-3" /> Lecture seule
+                </span>
+              </span>
+            ) : (
+              `Bonjour ${firstName}`
+            )
+          }
+          subtitle={
+            <>
+              <span className="first-letter:uppercase inline-block">{formatLongDay(d.today)}</span>, {d.region}
+            </>
+          }
+          summary={
+            k.visits_target ? (
+              <HeroPace
+                caption={caption}
+                done={k.visits_done}
+                target={k.visits_target}
+                unit="visites"
+                progress={<ProgressWithMarker onDark value={visitsPct} expected={expectedPct} tone={visitsTone} />}
+                status={<KpiStatusLine onDark status={visitsStatus} />}
+                detail={`${k.visits_planned_remaining} encore planifiée(s) d'ici la fin du mois. Le trait blanc indique le rythme attendu.`}
+              />
+            ) : undefined
+          }
+          aside={<DayRoute visits={d.today_visits} readOnly={readOnly} onVisitClick={openVisit} onPlan={() => setPlanOpen(true)} />}
+        />
+
+        {/* Les autres indicateurs du mois, dans un seul panneau */}
+        <KpiStrip className="grid-cols-1 sm:grid-cols-3">
           <KpiCard
-            label="Visites du mois"
-            icon={CalendarCheck2}
-            value={k.visits_done}
-            suffix={k.visits_target ? `/ ${k.visits_target}` : undefined}
-            progress={k.visits_target ? { value: visitsPct, expected: expectedPct } : undefined}
-            status={k.visits_target ? visitsStatus : undefined}
-            detail={`${k.visits_planned_remaining} encore planifiée(s) ce mois`}
-          />
-          <KpiCard
-            label="Couverture médecins A"
+            label="Couverture des médecins A"
             icon={Target}
             value={`${Math.round(k.coverage_a)} %`}
-            suffix={k.coverage_a_target ? `obj. ${k.coverage_a_target} %` : undefined}
+            suffix={k.coverage_a_target ? `objectif ${k.coverage_a_target} %` : undefined}
             progress={{ value: k.coverage_a }}
             status={k.coverage_a_target ? coverageStatus : undefined}
-            detail={o ? `${o.a_doctors_visited} / ${o.a_doctors_total} médecins A vus ce mois` : undefined}
+            detail={o ? `${o.a_doctors_visited} médecins A vus sur ${o.a_doctors_total} ce mois` : undefined}
           />
           <KpiCard
             label="Comptes-rendus en attente"
@@ -129,13 +145,13 @@ export function DashboardPage() {
               k.pending_reports === 0
                 ? { level: "good", text: "À jour" }
                 : k.late_reports > 0
-                  ? { level: "critical", text: `${k.late_reports} en retard (> 48 h)` }
+                  ? { level: "critical", text: `${k.late_reports} en retard (plus de 48 h)` }
                   : { level: "warning", text: "À rédiger rapidement" }
             }
             onClick={k.pending_reports ? () => document.getElementById("comptes-rendus")?.scrollIntoView({ behavior: "smooth" }) : undefined}
           />
           <KpiCard
-            label="Visites annulées / reportées"
+            label="Visites annulées ou reportées"
             icon={CalendarX2}
             value={k.cancelled_month}
             detail={
@@ -144,31 +160,21 @@ export function DashboardPage() {
                 : "Ce mois-ci"
             }
           />
-        </div>
+        </KpiStrip>
 
-        {/* Agenda + comptes-rendus + alertes */}
-        <div className="order-1 grid gap-5 lg:order-2 lg:grid-cols-5">
+        {/* Ce qui demande une action : comptes-rendus et alertes */}
+        <div className="grid gap-5 lg:grid-cols-5 lg:gap-6">
           <div className="space-y-5 lg:col-span-3">
-            <TodayAgenda visits={d.today_visits} readOnly={readOnly} onVisitClick={openVisit} onPlan={() => setPlanOpen(true)} />
             <PendingReports delegueId={d.delegue_id} readOnly={readOnly} />
-          </div>
-          <div className="lg:col-span-2">
-            <AlertsList alerts={d.alerts} readOnly={readOnly} />
-          </div>
-        </div>
-
-        <div className="order-3 grid gap-5 lg:grid-cols-5">
-          <div className="lg:col-span-3">
             <DoctorsToRevisit rows={d.doctors_to_revisit} total={d.doctors_to_revisit_total} readOnly={readOnly} />
           </div>
-          <div className="lg:col-span-2">
+          <div className="space-y-5 lg:col-span-2">
+            <AlertsList alerts={d.alerts} readOnly={readOnly} />
             <TopObjections items={d.top_objections} />
           </div>
         </div>
 
-        <div className="order-4">
-          <VisitsPerWeekChart data={d.visits_per_week} />
-        </div>
+        <VisitsPerWeekChart data={d.visits_per_week} />
       </div>
 
       {readOnly && (

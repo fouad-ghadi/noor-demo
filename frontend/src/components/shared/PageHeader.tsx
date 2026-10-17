@@ -24,7 +24,7 @@ export function PageHeader({ title, description, actions, backTo, backLabel = "R
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight lg:text-2xl">{title}</h1>
+          <h1 className="font-display text-ink text-2xl font-semibold tracking-[-0.02em] lg:text-[1.75rem]">{title}</h1>
           {description && <div className="text-muted-foreground mt-1 text-sm">{description}</div>}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

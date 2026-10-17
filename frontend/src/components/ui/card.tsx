@@ -6,7 +6,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
-      className={cn("bg-card text-card-foreground flex flex-col gap-4 rounded-xl border py-5 shadow-xs", className)}
+      className={cn("bg-card text-card-foreground flex flex-col gap-4 rounded-xl border py-5", className)}
       {...props}
     />
   );
@@ -26,7 +26,8 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="card-title" className={cn("leading-none font-semibold", className)} {...props} />;
+  // Titres de section : police de titre (Bricolage Grotesque), comme la page de connexion
+  return <div data-slot="card-title" className={cn("font-display text-ink leading-none font-semibold tracking-[-0.01em]", className)} {...props} />;
 }
 
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {

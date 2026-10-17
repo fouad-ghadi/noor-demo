@@ -166,7 +166,7 @@ export function AppLayout() {
         {!open && (
           <Button
             onClick={() => setOpen(true)}
-            className="fixed right-6 bottom-6 z-20 hidden rounded-full bg-gradient-to-br from-teal-600 to-teal-800 shadow-lg lg:inline-flex"
+            className="bg-pine hover:bg-pine/90 fixed right-6 bottom-6 z-20 hidden rounded-full shadow-lg lg:inline-flex"
             size="lg"
           >
             <Sparkles /> Assistant NOOR

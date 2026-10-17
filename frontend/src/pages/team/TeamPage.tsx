@@ -3,8 +3,9 @@
  * évolution sur 6 mois et couverture par région / segment.
  * Clic sur un délégué → son tableau de bord en lecture seule.
  */
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarCheck2, ChevronRight, FileClock, Target, TrendingUp } from "lucide-react";
+import { CalendarX2, ChevronRight, FileClock, Target, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Bar,
@@ -25,11 +26,11 @@ import { api } from "@/api/client";
 import type { Team, TeamMember } from "@/api/types";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { ChartTooltip } from "@/components/dashboard/ChartTooltip";
-import { KpiCard } from "@/components/dashboard/KpiCard";
+import { HeroBand, HeroPace } from "@/components/dashboard/HeroBand";
+import { KpiStatusLine } from "@/components/dashboard/KpiCard";
 import { paceTone, ProgressWithMarker } from "@/components/dashboard/ProgressWithMarker";
 import { TopObjections } from "@/components/dashboard/TopObjections";
 import { ProgressStatusBadge } from "@/components/shared/badges";
-import { PageHeader } from "@/components/shared/PageHeader";
 import { ErrorState, LoadingState } from "@/components/shared/states";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,45 +55,52 @@ export function TeamPage() {
 
   return (
     <>
-      <PageHeader
+      {/* Bandeau : rythme de l'équipe sur le mois + les autres totaux */}
+      <HeroBand
+        className="mb-5 lg:mb-6"
         title="Vue équipe"
-        description={<span className="first-letter:uppercase">{t.period_label} · {t.members.length} délégués · {t.totals.doctors} médecins suivis</span>}
+        subtitle={
+          <>
+            <span className="first-letter:uppercase inline-block">{t.period_label}</span>, {t.members.length} délégués,{" "}
+            {t.totals.doctors} médecins suivis
+          </>
+        }
+        summary={
+          <HeroPace
+            caption="Visites de l'équipe ce mois"
+            done={t.totals.visits_done}
+            target={t.totals.visits_target}
+            unit="visites"
+            progress={<ProgressWithMarker onDark value={t.totals.achievement_pct} expected={t.totals.expected_pct} tone={totalTone} />}
+            status={
+              <KpiStatusLine
+                onDark
+                status={{
+                  level: totalTone,
+                  text: `${Math.round(t.totals.achievement_pct)} % réalisé, ${Math.round(t.totals.expected_pct)} % attendu à date`,
+                }}
+              />
+            }
+          />
+        }
+        aside={
+          <dl className="divide-y divide-white/10">
+            <HeroStat icon={Target} label="Couverture moyenne des médecins A" value={`${Math.round(t.totals.coverage_a)} %`} detail="Vus au moins une fois ce mois" />
+            <HeroStat
+              icon={FileClock}
+              label="Comptes-rendus en retard"
+              value={t.totals.late_reports}
+              detail={
+                <KpiStatusLine
+                  onDark
+                  status={t.totals.late_reports ? { level: "critical", text: `À relancer, ${t.totals.pending_reports} en attente au total` } : { level: "good", text: "À jour" }}
+                />
+              }
+            />
+            <HeroStat icon={CalendarX2} label="Visites annulées ou reportées" value={t.totals.cancelled} detail="Ce mois-ci, toute l'équipe" />
+          </dl>
+        }
       />
-
-      {/* Totaux de l'équipe */}
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <KpiCard
-          label="Visites de l'équipe"
-          icon={CalendarCheck2}
-          value={t.totals.visits_done}
-          suffix={`/ ${t.totals.visits_target}`}
-          progress={{ value: t.totals.achievement_pct, expected: t.totals.expected_pct }}
-          status={{
-            level: totalTone,
-            text: `${Math.round(t.totals.achievement_pct)} % réalisé · ${Math.round(t.totals.expected_pct)} % attendu`,
-          }}
-        />
-        <KpiCard
-          label="Couverture A moyenne"
-          icon={Target}
-          value={`${Math.round(t.totals.coverage_a)} %`}
-          progress={{ value: t.totals.coverage_a }}
-          detail="Médecins A visités au moins une fois ce mois"
-        />
-        <KpiCard
-          label="Comptes-rendus en retard"
-          icon={FileClock}
-          value={t.totals.late_reports}
-          detail={`${t.totals.pending_reports} en attente au total`}
-          status={t.totals.late_reports ? { level: "critical", text: "À relancer" } : { level: "good", text: "À jour" }}
-        />
-        <KpiCard
-          label="Annulations / reports"
-          icon={TrendingUp}
-          value={t.totals.cancelled}
-          detail="Ce mois-ci, toute l'équipe"
-        />
-      </div>
 
       {/* Tableau comparatif */}
       <Card className="mb-5 py-0">
@@ -181,6 +189,19 @@ export function TeamPage() {
         </div>
       </div>
     </>
+  );
+}
+
+/** Un total de l'équipe dans le bandeau (libellé, valeur, détail). */
+function HeroStat({ icon: Icon, label, value, detail }: { icon: LucideIcon; label: string; value: ReactNode; detail: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 py-3.5 first:pt-0 last:pb-0">
+      <dt className="flex items-center gap-2 text-sm text-[#CFEDE7]">
+        <Icon className="size-4 shrink-0" /> {label}
+      </dt>
+      <dd className="font-display tabular row-span-2 text-3xl font-semibold tracking-tight">{value}</dd>
+      <dd className="mt-0.5 text-[13px] text-white/60">{detail}</dd>
+    </div>
   );
 }
 

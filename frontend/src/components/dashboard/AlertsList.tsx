@@ -60,8 +60,9 @@ export function AlertsList({ alerts, readOnly }: { alerts: Alert[]; readOnly?: b
                 <S.icon className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-                  {TYPE_LABEL[a.type]} · Gravité {S.label.toLowerCase()} · {formatAgo(a.created_at)}
+                <p className="text-muted-foreground text-xs">
+                  <span className="text-foreground/80 font-medium">{TYPE_LABEL[a.type]}</span>, gravité {S.label.toLowerCase()},{" "}
+                  {formatAgo(a.created_at)}
                 </p>
                 <Link to={target} className="text-sm font-medium hover:underline">
                   {a.title}

@@ -43,6 +43,10 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
   - Couleurs des graphiques **validées** (daltonisme/contraste) dans `src/lib/chartColors.ts` : ne pas les changer au hasard.
   - Page de connexion : design dédié (vert pin `#0F3D3E`, safran `#E8A33D` réservé à « l'arrêt en cours »,
     police de titre Bricolage Grotesque, emblème étoile à 8 branches `components/brand/NoorMark.tsx`).
+  - **Même identité dans l'application** : jetons `pine`, `mint`, `saffron`, `ink` (`src/index.css`, ex. `bg-pine`).
+    Tableaux de bord : bandeau vert pin `components/dashboard/HeroBand.tsx` (rythme du mois) +
+    tournée du jour dessinée comme un trajet `DayRoute.tsx` (safran = prochaine visite, et rien d'autre) ;
+    KPIs regroupés dans un seul panneau `KpiStrip`. Titres en Bricolage (`font-display`), pas de libellés en majuscules.
 - **Commits** en français, poussés sur `main` (pas de PR sauf demande).
 
 ## Données de démo (`backend/seed.py`)
@@ -76,13 +80,13 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
 
 Fait : étapes 1 à 5 du cahier des charges (backend, médecins, planning + carte, compte-rendu, tableaux de bord
 délégué/superviseur, produits, objectifs, points d'extension IA, README, refonte de la page de connexion,
-Dockerfile/Render).
+Dockerfile/Render, refonte des tableaux de bord délégué et superviseur).
 
 Pistes pour la suite (à valider avec Fouad) :
 1. Finaliser la mise en ligne (Render ou alternative).
 2. Implémenter les modules IA (un par étudiant, voir `docs/EXTENSIONS_IA.md`).
 3. Ajouter des tests automatisés (pytest pour les services, Playwright pour les parcours clés).
-4. Polir l'interface (même soin que la page de connexion sur le tableau de bord, mode sombre éventuel).
+4. Polir l'interface (étendre l'identité aux autres pages : médecins, planning, objectifs ; mode sombre éventuel).
 
 ## Pièges connus
 
