@@ -1,0 +1,12 @@
+# Configuration Render (« Blueprint ») : Render lit ce fichier pour créer le service.
+# Tableau de bord Render → New → Blueprint → choisir ce dépôt GitHub.
+services:
+  - type: web
+    name: noor-demo
+    runtime: docker
+    plan: free              # gratuit : se met en veille après 15 min sans visite (réveil ≈ 1 min)
+    region: frankfurt       # la plus proche du Maroc
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true        # chaque « git push » sur main met le site à jour
+    branch: main

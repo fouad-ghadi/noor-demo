@@ -15,6 +15,8 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true, // accessible depuis un téléphone sur le même Wi-Fi (http://<ip-du-pc>:5173)
+    // Partage temporaire par lien public (voir docs/DEPLOIEMENT.md, option B)
+    allowedHosts: [".trycloudflare.com", ".ngrok-free.app"],
     // Les appels à /api sont redirigés vers le backend FastAPI : pas de souci de CORS
     proxy: { "/api": "http://localhost:8000" },
   },

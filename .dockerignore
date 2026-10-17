@@ -1,0 +1,9 @@
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.pyc
+frontend/dist
+backend/noor.db
+seed_duplicates.md
+.git
+docs/screenshots

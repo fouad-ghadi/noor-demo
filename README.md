@@ -26,7 +26,8 @@ pour accueillir ensuite des **fonctionnalités d'IA** (voir [Points d'extension 
 5. [Architecture](#architecture)
 6. [Points d'extension IA](#points-dextension-ia)
 7. [Données de démo (seed)](#données-de-démo-seed)
-8. [Dépannage](#dépannage)
+8. [Mise en ligne](#mise-en-ligne)
+9. [Dépannage](#dépannage)
 
 ---
 
@@ -181,7 +182,10 @@ noor-demo/
 │       ├── hooks/           requêtes partagées (React Query)
 │       ├── lib/             dates en français, libellés, couleurs des graphiques
 │       └── pages/           un dossier par écran
+├── Dockerfile               image de mise en ligne (frontend compilé + API)
+├── render.yaml              configuration de l'hébergement Render
 ├── docs/
+│   ├── DEPLOIEMENT.md       guide de mise en ligne
 │   ├── products/            PDF des produits (RCP, notices) pour le futur assistant RAG
 │   ├── EXTENSIONS_IA.md     guide détaillé pour implémenter chaque module IA
 │   └── screenshots/         captures d'écran
@@ -287,6 +291,16 @@ même jour (hasard « figé »), quelle que soit l'heure.
 Les doublons et les comptes-rendus « pharmacovigilance » (avec leurs identifiants) sont listés dans
 **`seed_duplicates.md`**, à la racine du projet. Ce fichier est **créé par `python seed.py`** (il n'est
 pas dans Git car les identifiants dépendent de la date du seed).
+
+---
+
+## Mise en ligne
+
+Pour que toute l'équipe voie l'application sans rien installer : **[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md)**.
+
+- **Render (recommandé)** : adresse fixe, gratuite, mise à jour automatique à chaque `git push`
+  (`Dockerfile` + `render.yaml` déjà prêts — 5 minutes de mise en place).
+- **Lien temporaire** depuis votre PC : `cloudflared tunnel --url http://localhost:5173`.
 
 ---
 

@@ -34,3 +34,29 @@ for module in (users, meta, doctors, visits, products, objectives, alerts, stats
 @app.get("/api/health", tags=["Système"])
 def health():
     return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Mise en ligne : le backend sert aussi le frontend compilé (frontend/dist).
+# En local, ce dossier n'existe pas (on utilise `npm run dev`) : ce bloc ne fait rien.
+# En production (Docker / Render), une seule adresse sert l'application ET l'API.
+# ---------------------------------------------------------------------------
+import os  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+from fastapi import HTTPException  # noqa: E402
+from fastapi.responses import FileResponse  # noqa: E402
+
+FRONTEND_DIST = Path(os.environ.get("FRONTEND_DIST", Path(__file__).resolve().parents[2] / "frontend" / "dist"))
+
+if (FRONTEND_DIST / "index.html").is_file():
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def serve_frontend(path: str):
+        """Fichiers du frontend ; toute autre URL renvoie index.html (le routeur React prend le relais)."""
+        if path.startswith("api/"):
+            raise HTTPException(404, "Route API inconnue")
+        file = (FRONTEND_DIST / path).resolve()
+        if path and file.is_file() and FRONTEND_DIST.resolve() in file.parents:
+            return FileResponse(file)
+        return FileResponse(FRONTEND_DIST / "index.html")
