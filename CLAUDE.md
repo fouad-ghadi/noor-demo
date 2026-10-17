@@ -17,6 +17,10 @@ scan de cartes de visite + doublons, recommandations de visites).
 
 ## Démarrage
 
+Aussi sous Cursor / VS Code : `Terminal → Run Task… → NOOR : lancer l'application` (`.vscode/tasks.json`) ;
+règles Cursor dans `.cursor/rules/projet-noor.mdc` (elles renvoient vers ce fichier).
+
+
 ```
 backend/   python seed.py ; uvicorn app.main:app --reload     → http://localhost:8000/docs
 frontend/  npm install ; npm run dev                           → http://localhost:5173

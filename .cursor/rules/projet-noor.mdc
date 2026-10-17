@@ -1,0 +1,25 @@
+---
+description: Contexte et conventions du projet NOOR Demo (CRM pharma pour délégués médicaux)
+alwaysApply: true
+---
+
+# Projet NOOR Demo
+
+Le contexte complet du projet (objectif, architecture, données de démo, état d'avancement,
+pistes pour la suite) est dans @CLAUDE.md : le lire avant toute modification importante.
+Documentation : @README.md, @docs/EXTENSIONS_IA.md (modules IA), @docs/DEPLOIEMENT.md (mise en ligne).
+
+## Règles essentielles
+
+- L'utilisateur (Fouad) travaille sous **Windows / PowerShell** et débute avec git, venv et npm :
+  donner des commandes PowerShell exactes, une étape à la fois.
+- **Interface 100 % en français** ; **commentaires du code en français** ; code lisible pour un jury.
+- Backend FastAPI : toute la logique métier dans `backend/app/services/`, les routes `app/api/` restent fines.
+  Les droits d'accès passent par `services/access.py`.
+- Frontend React : après une modification de visite, appeler `invalidateVisitData(queryClient)` ;
+  chaque page appelle `usePageContext(...)` ; dates via `src/lib/format.ts`.
+- Ne pas changer au hasard les couleurs des graphiques (`src/lib/chartColors.ts`, validées pour les daltoniens).
+- Modules IA : implémenter les fonctions de `backend/app/ai/*.py` (formats dans `schemas.py`) ;
+  les routes `/api/ai/...` fonctionnent alors automatiquement.
+- Après un changement : `npx tsc -b` dans `frontend/`, et vérifier le backend sur http://localhost:8000/docs.
+- Commits en français sur `main`.

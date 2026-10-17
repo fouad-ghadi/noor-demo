@@ -1,0 +1,9 @@
+{
+  // Extensions recommandées (Cursor les propose à l'ouverture du projet)
+  "recommendations": [
+    "ms-python.python",
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "mechatroner.rainbow-csv"
+  ]
+}

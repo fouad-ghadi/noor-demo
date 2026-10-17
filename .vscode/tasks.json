@@ -1,0 +1,38 @@
+{
+  // Terminal → Run Task… → « NOOR : lancer l'application » démarre le backend ET le frontend.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "NOOR : backend (API)",
+      "type": "shell",
+      "command": ".venv\\Scripts\\python.exe -m uvicorn app.main:app --reload",
+      "osx": { "command": ".venv/bin/python -m uvicorn app.main:app --reload" },
+      "linux": { "command": ".venv/bin/python -m uvicorn app.main:app --reload" },
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "NOOR : frontend (site)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "NOOR : lancer l'application",
+      "dependsOn": ["NOOR : backend (API)", "NOOR : frontend (site)"],
+      "problemMatcher": []
+    },
+    {
+      "label": "NOOR : réinitialiser les données de démo (seed)",
+      "type": "shell",
+      "command": ".venv\\Scripts\\python.exe seed.py",
+      "osx": { "command": ".venv/bin/python seed.py" },
+      "linux": { "command": ".venv/bin/python seed.py" },
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": []
+    }
+  ]
+}

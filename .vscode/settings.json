@@ -1,0 +1,11 @@
+{
+  // Interpréteur Python du backend (créé par : cd backend ; py -3.13 -m venv .venv)
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
+  "python.terminal.activateEnvironment": true,
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/node_modules": true
+  },
+  "editor.formatOnSave": false,
+  "files.associations": { "*.css": "tailwindcss" }
+}
