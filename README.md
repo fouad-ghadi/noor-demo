@@ -185,7 +185,7 @@ noor-demo/
 │   ├── products/            PDF des produits (RCP, notices) pour le futur assistant RAG
 │   ├── EXTENSIONS_IA.md     guide détaillé pour implémenter chaque module IA
 │   └── screenshots/         captures d'écran
-└── seed_duplicates.md       doublons de médecins et comptes-rendus « pharmacovigilance » du seed
+└── seed_duplicates.md       (généré par seed.py, non versionné) doublons et comptes-rendus « pharmacovigilance »
 ```
 
 ### Comment circule une requête
@@ -285,7 +285,8 @@ même jour (hasard « figé »), quelle que soit l'heure.
 - **7 comptes-rendus mentionnant un effet indésirable** (pour tester la pharmacovigilance).
 
 Les doublons et les comptes-rendus « pharmacovigilance » (avec leurs identifiants) sont listés dans
-**[seed_duplicates.md](seed_duplicates.md)**, régénéré à chaque seed.
+**`seed_duplicates.md`**, à la racine du projet. Ce fichier est **créé par `python seed.py`** (il n'est
+pas dans Git car les identifiants dépendent de la date du seed).
 
 ---
 
@@ -293,6 +294,8 @@ Les doublons et les comptes-rendus « pharmacovigilance » (avec leurs identifia
 
 | Problème | Solution |
 |---|---|
+| `git pull` refuse : « Your local changes ... would be overwritten » | `git stash` puis `git pull` (ou `git checkout -- <fichier>` pour annuler la modification locale) |
+| Rien n'a changé après un `git pull` | Vérifier avec `git log --oneline -1` ; redémarrer `uvicorn` et `npm run dev` ; recharger la page avec Ctrl+F5 |
 | `Microsoft Visual C++ 14.0 is required` / `Failed building wheel` | Version de Python trop récente (preview). Installer Python 3.13, supprimer `backend/.venv`, puis `py -3.13 -m venv .venv` |
 | `Activate.ps1 ... l'exécution de scripts est désactivée` | Une fois : `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` |
 | `npm` / `node` n'est pas reconnu | Installer Node.js LTS (nodejs.org ou `winget install OpenJS.NodeJS.LTS`), **rouvrir** le terminal |

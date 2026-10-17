@@ -16,3 +16,6 @@ dist/
 .vscode/
 .idea/
 .DS_Store
+
+# Généré par backend/seed.py (change selon la date) : non versionné
+seed_duplicates.md

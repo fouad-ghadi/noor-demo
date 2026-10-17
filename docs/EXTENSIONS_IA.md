@@ -32,7 +32,7 @@ Règles :
 |---|---|---|---|
 | 🎤 Compte-rendu dicté | `voice_report.py` | ★★★ | n'importe quelle visite « compte-rendu à faire » |
 | 💬 Assistant produit (RAG) | `rag_assistant.py` | ★★★ | 10 produits, 30 documents (déposer les PDF dans `docs/products/`) |
-| ⚠️ Pharmacovigilance | `pharmacovigilance.py` | ★★ | 7 comptes-rendus avec effet indésirable (`seed_duplicates.md`, section 2) |
+| ⚠️ Pharmacovigilance | `pharmacovigilance.py` | ★★ | 7 comptes-rendus avec effet indésirable (`seed_duplicates.md`, section 2 — fichier créé par `python seed.py`) |
 | 📷 Carte de visite + doublons | `card_scanner.py` | ★★ | 10 paires de doublons (`seed_duplicates.md`, section 1) |
 | ✨ Recommandations | `recommendations.py` | ★★ | 6 mois d'historique, créneaux, prescriptions, objectifs |
 
