@@ -18,9 +18,16 @@ noor-demo/
 └── seed_duplicates.md  Doublons et notes de pharmacovigilance générés par le seed
 ```
 
+## Récupérer le projet
+
+```bash
+git clone https://github.com/fouad-ghadi/noor-demo.git
+cd noor-demo
+```
+
 ## Lancer le backend
 
-Prérequis : **Python 3.11+**.
+Prérequis : **Python 3.11+** (sous Windows, cocher « Add python.exe to PATH » à l'installation).
 
 ```bash
 cd backend
@@ -30,6 +37,18 @@ pip install -r requirements.txt
 
 python seed.py                   # crée / réinitialise noor.db avec les données de démo
 uvicorn app.main:app --reload    # API sur http://localhost:8000
+```
+
+Sous **Windows (PowerShell)** :
+
+```powershell
+cd backend
+py -m venv .venv
+.venv\Scripts\Activate.ps1      # si « l'exécution de scripts est désactivée » :
+                                # Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+pip install -r requirements.txt
+python seed.py
+uvicorn app.main:app --reload
 ```
 
 Documentation interactive de l'API : **http://localhost:8000/docs**
