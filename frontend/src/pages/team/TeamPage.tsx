@@ -105,7 +105,7 @@ export function TeamPage() {
       {/* Tableau comparatif */}
       <Card className="mb-5 py-0">
         <CardHeader className="pt-5">
-          <CardTitle className="text-base">Comparaison des délégués</CardTitle>
+          <CardTitle>Comparaison des délégués</CardTitle>
           <CardDescription>Cliquez sur un délégué pour ouvrir son tableau de bord. Le trait noir indique l'objectif attendu à date.</CardDescription>
         </CardHeader>
         {/* Ordinateur */}
@@ -185,7 +185,7 @@ export function TeamPage() {
           <RegionCoverageChart team={t} />
         </div>
         <div className="lg:col-span-2">
-          <TopObjections items={t.top_objections} description="Toute l'équipe · 3 derniers mois" />
+          <TopObjections items={t.top_objections} description="Toute l'équipe, sur les 3 derniers mois" />
         </div>
       </div>
     </>
@@ -246,8 +246,8 @@ function AchievementChart({ team, colorOf }: { team: Team; colorOf: (id: number)
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Atteinte de l'objectif — mois en cours</CardTitle>
-        <CardDescription>% de l'objectif de visites réalisé · trait pointillé : {expected} % attendu à date</CardDescription>
+        <CardTitle>Atteinte de l'objectif ce mois-ci</CardTitle>
+        <CardDescription>Part de l'objectif de visites réalisée. Le pointillé marque les {expected} % attendus à date.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-64">
@@ -289,8 +289,8 @@ function TrendChart({ team, colorOf }: { team: Team; colorOf: (id: number) => st
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Évolution sur les mois précédents</CardTitle>
-        <CardDescription>% de l'objectif de visites atteint chaque mois terminé · pointillé : objectif (100 %)</CardDescription>
+        <CardTitle>Évolution sur les mois précédents</CardTitle>
+        <CardDescription>Part de l'objectif atteinte chaque mois terminé. Le pointillé marque l'objectif (100 %).</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="text-muted-foreground mb-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
@@ -333,7 +333,7 @@ function RegionCoverageChart({ team }: { team: Team }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Couverture par région et segment</CardTitle>
+        <CardTitle>Couverture par région et segment</CardTitle>
         <CardDescription>% des médecins de chaque segment visités au moins une fois ce mois</CardDescription>
       </CardHeader>
       <CardContent>

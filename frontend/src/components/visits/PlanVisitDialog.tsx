@@ -85,7 +85,7 @@ export function PlanVisitDialog({ open, onOpenChange, doctor, defaultDate, defau
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CalendarPlus className="size-5 text-teal-700" /> Planifier une visite
+            <CalendarPlus className="size-5 text-pine" /> Planifier une visite
           </DialogTitle>
           <DialogDescription>{doctor ? doctor.name : "Choisissez le médecin, la date et l'heure."}</DialogDescription>
         </DialogHeader>
@@ -115,7 +115,7 @@ export function PlanVisitDialog({ open, onOpenChange, doctor, defaultDate, defau
                 <SelectContent className="max-h-72">
                   {doctors.data?.map((d) => (
                     <SelectItem key={d.id} value={String(d.id)}>
-                      Dr {d.first_name} {d.last_name} · {d.specialty} ({d.segment})
+                      Dr {d.first_name} {d.last_name}, {d.specialty.toLowerCase()} ({d.segment})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -145,7 +145,7 @@ export function PlanVisitDialog({ open, onOpenChange, doctor, defaultDate, defau
             </div>
           </div>
           {selected?.preferred_slot && (
-            <p className="rounded-md bg-teal-50 px-3 py-2 text-xs text-teal-800">
+            <p className="rounded-md bg-mint-wash px-3 py-2 text-xs text-pine">
               💡 Créneau préféré de ce médecin : <strong>{TIME_SLOT[selected.preferred_slot]}</strong>
             </p>
           )}

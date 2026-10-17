@@ -25,7 +25,7 @@ export function VisitHistoryItem({ visit, readOnly = false }: { visit: Visit; re
   return (
     <li className="relative pb-6 pl-7 last:pb-0">
       {/* Trait vertical + pastille de la frise */}
-      <span className="bg-border absolute top-2 bottom-0 left-[5px] w-px" aria-hidden />
+      <span className="bg-line absolute top-2 bottom-0 left-[5px] w-0.5" aria-hidden />
       <span
         className={cn("absolute top-1.5 left-0 size-[11px] rounded-full ring-4 ring-white", DOT_COLOR[visit.status],
           visit.report_pending && "bg-orange-500")}
@@ -46,7 +46,7 @@ export function VisitHistoryItem({ visit, readOnly = false }: { visit: Visit; re
       </div>
 
       {visit.status === "realisee" && (
-        <div className="mt-2 space-y-2 rounded-lg border bg-white p-3 text-sm">
+        <div className="border-line mt-2 space-y-2 rounded-lg border bg-white p-3 text-sm">
           <div className="flex flex-wrap items-center gap-1.5">
             <Package className="text-muted-foreground size-3.5" />
             {visit.products.map((p) => (
@@ -83,7 +83,7 @@ export function VisitHistoryItem({ visit, readOnly = false }: { visit: Visit; re
           )}
 
           {(visit.samples.length > 0 || visit.next_step) && (
-            <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 border-t pt-2 text-xs">
+            <div className="text-muted-foreground border-line flex flex-wrap gap-x-4 gap-y-1 border-t pt-2 text-xs">
               {visit.samples.length > 0 && (
                 <span>
                   Échantillons : {visit.samples.map((s) => `${s.brand_name} ×${s.quantity}`).join(", ")}

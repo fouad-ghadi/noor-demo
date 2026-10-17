@@ -15,6 +15,7 @@ import type { DoctorListItem } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { SegmentBadge } from "@/components/shared/badges";
+import { NextVisit } from "@/components/shared/NextVisit";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/states";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMeta, useProducts, useTeamUsers } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/useDebounce";
-import { formatRelativeDay, formatShortDate } from "@/lib/format";
 import { LAST_VISIT_FILTERS, PRESCRIBING } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -37,10 +37,10 @@ type FilterKey = (typeof FILTER_KEYS)[number];
 
 /** Texte + couleur de la « dernière visite » (rouge si > 60 j, orange si > 30 j). */
 function LastVisit({ days }: { days: number | null }) {
-  if (days === null) return <span className="text-sm font-medium text-rose-600">Jamais visité</span>;
-  const color = days > 60 ? "text-rose-600" : days > 30 ? "text-amber-600" : "text-foreground";
+  if (days === null) return <span className="font-medium text-rose-700">Jamais visité</span>;
+  const color = days > 60 ? "font-medium text-rose-700" : days > 30 ? "font-medium text-amber-700" : "text-ink";
   return (
-    <span className={cn("tabular text-sm", color)}>
+    <span className={cn("tabular", color)}>
       {days === 0 ? "Aujourd'hui" : `il y a ${days} j`}
     </span>
   );
@@ -234,7 +234,7 @@ export function DoctorsPage() {
       </div>
 
       {/* Filtres : en ligne sur ordinateur, dans un panneau sur mobile */}
-      <Card className="mb-5 hidden p-4 lg:block">
+      <div className="border-line mb-5 hidden rounded-xl border bg-white p-4 lg:block">
         {/* Grille auto : autant de colonnes de 10rem que la largeur le permet */}
         <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">{filterFields}</div>
         {activeCount > 0 && (
@@ -242,7 +242,7 @@ export function DoctorsPage() {
             <X /> Effacer les filtres
           </Button>
         )}
-      </Card>
+      </div>
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
         <SheetContent side="bottom">
           <SheetHeader>
@@ -269,13 +269,12 @@ export function DoctorsPage() {
       {sorted.length > 0 && (
         <>
           {/* Ordinateur : tableau */}
-          <Card className="hidden py-0 lg:block">
+          <Card className="hidden overflow-hidden py-0 lg:block">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Médecin</TableHead>
                   <TableHead>Localisation</TableHead>
-                  <TableHead>Segment</TableHead>
                   <TableHead>Prescrit régulièrement</TableHead>
                   <TableHead>Dernière visite</TableHead>
                   <TableHead>Prochaine visite</TableHead>
@@ -287,33 +286,32 @@ export function DoctorsPage() {
                 {sorted.map((d) => (
                   <TableRow key={d.id} className="cursor-pointer" onClick={() => navigate(`/medecins/${d.id}`)}>
                     <TableCell>
-                      <p className="font-medium">
-                        Dr {d.first_name} {d.last_name}
-                      </p>
-                      <p className="text-muted-foreground text-xs">{d.specialty}</p>
+                      <div className="flex items-center gap-3">
+                        <SegmentBadge segment={d.segment} />
+                        <div>
+                          <p className="text-ink font-medium">
+                            Dr {d.first_name} {d.last_name}
+                          </p>
+                          <p className="text-muted-foreground text-xs">{d.specialty}</p>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <p className="text-sm">{d.city}</p>
                       <p className="text-muted-foreground text-xs">{d.district}</p>
                     </TableCell>
-                    <TableCell>
-                      <SegmentBadge segment={d.segment} />
+                    <TableCell className="max-w-56 text-sm whitespace-normal">
+                      {d.regular_products.length === 0 ? (
+                        <span className="text-muted-foreground">Aucun</span>
+                      ) : (
+                        d.regular_products.join(", ")
+                      )}
                     </TableCell>
-                    <TableCell className="max-w-56 whitespace-normal">
-                      <div className="flex flex-wrap gap-1">
-                        {d.regular_products.length === 0 && <span className="text-muted-foreground text-xs">—</span>}
-                        {d.regular_products.map((p) => (
-                          <Badge key={p} variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-                            {p}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
+                    <TableCell className="text-sm">
                       <LastVisit days={d.days_since_last_visit} />
                     </TableCell>
                     <TableCell className="text-sm">
-                      {d.next_visit_at ? formatRelativeDay(d.next_visit_at) : <span className="text-muted-foreground">—</span>}
+                      <NextVisit at={d.next_visit_at} />
                     </TableCell>
                     {isSupervisor && <TableCell className="text-sm">{d.delegue_name}</TableCell>}
                     <TableCell>
@@ -325,8 +323,8 @@ export function DoctorsPage() {
             </Table>
           </Card>
 
-          {/* Mobile : cartes */}
-          <div className="space-y-2 lg:hidden">
+          {/* Mobile : une seule feuille, une ligne par médecin */}
+          <div className="divide-line border-line divide-y overflow-hidden rounded-xl border bg-white lg:hidden">
             {sorted.map((d) => (
               <DoctorCard key={d.id} doctor={d} />
             ))}
@@ -338,37 +336,42 @@ export function DoctorsPage() {
 }
 
 function DoctorCard({ doctor: d }: { doctor: DoctorListItem }) {
-  // Toute la carte est cliquable grâce à un lien « étiré » (absolute inset-0) ;
+  // Toute la ligne est cliquable grâce à un lien « étiré » (absolute inset-0) ;
   // le bouton « Appeler » est placé au-dessus (z-10) : pas de lien imbriqué dans un lien.
   return (
-    <Card className="relative gap-2 px-4 py-3 active:bg-muted/50">
-      <Link to={`/medecins/${d.id}`} className="absolute inset-0 rounded-xl" aria-label={`Dr ${d.first_name} ${d.last_name}`} />
+    <div className="active:bg-mint-wash/60 relative px-4 py-3">
+      <Link to={`/medecins/${d.id}`} className="absolute inset-0" aria-label={`Dr ${d.first_name} ${d.last_name}`} />
       <div className="flex items-start gap-3">
         <SegmentBadge segment={d.segment} className="mt-0.5" />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">
+          <p className="text-ink truncate font-medium">
             Dr {d.first_name} {d.last_name}
           </p>
-          <p className="text-muted-foreground truncate text-xs">
-            {d.specialty} · {d.district}, {d.city}
+          <p className="text-muted-foreground truncate text-[13px]">
+            {d.specialty}, {d.district}
           </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+            <span className="text-muted-foreground">
+              {d.days_since_last_visit !== null && "Vu "}
+              <LastVisit days={d.days_since_last_visit} />
+            </span>
+            {d.next_visit_at && (
+              <span className="text-muted-foreground">
+                Prochaine : <NextVisit at={d.next_visit_at} className="text-ink" />
+              </span>
+            )}
+          </div>
         </div>
         {d.phone && (
           <a
             href={`tel:${d.phone.replace(/[^\d+]/g, "")}`}
-            className="relative z-10 rounded-full bg-teal-50 p-2 text-teal-700"
-            aria-label="Appeler"
+            className="bg-mint-wash text-pine relative z-10 rounded-full p-2.5"
+            aria-label={`Appeler Dr ${d.last_name}`}
           >
             <Phone className="size-4" />
           </a>
         )}
       </div>
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">
-          Dernière visite : <LastVisit days={d.days_since_last_visit} />
-        </span>
-        {d.next_visit_at && <span className="text-teal-700">Prévue {formatShortDate(d.next_visit_at)}</span>}
-      </div>
-    </Card>
+    </div>
   );
 }

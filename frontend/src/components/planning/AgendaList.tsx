@@ -2,7 +2,7 @@
  * Liste chronologique des visites, groupées par jour.
  * Utilisée pour la vue « jour », et pour la vue « semaine » sur mobile.
  */
-import { isSameDay, parseISO } from "date-fns";
+import { isSameDay, isToday, parseISO } from "date-fns";
 import { ChevronRight, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -30,16 +30,17 @@ export function AgendaList({ days, visits, readOnly, onVisitClick, numbered }: P
         return (
           <section key={day.toISOString()}>
             {days.length > 1 && (
-              <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+              <h3 className={cn("font-display text-ink mb-2 flex items-center gap-2 text-[15px] font-semibold first-letter:uppercase", isToday(day) && "text-saffron-ink")}>
+                {isToday(day) && <span className="bg-saffron size-2 rounded-full" aria-hidden="true" />}
                 {formatRelativeDay(day)}
               </h3>
             )}
             {dayVisits.length === 0 && (
-              <p className="text-muted-foreground rounded-xl border border-dashed p-6 text-center text-sm">
+              <p className="text-muted-foreground border-line rounded-xl border border-dashed p-6 text-center text-sm">
                 Aucune visite ce jour-là.
               </p>
             )}
-            <div className="space-y-2">
+            <div className="divide-line border-line divide-y overflow-hidden rounded-xl border bg-white">
               {dayVisits.map((v) => {
                 const active = v.status !== "annulee" && v.status !== "reportee";
                 if (active) n += 1;
@@ -48,14 +49,14 @@ export function AgendaList({ days, visits, readOnly, onVisitClick, numbered }: P
                     key={v.id}
                     onClick={() => onVisitClick(v)}
                     className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-xl border bg-white px-3 py-2.5 transition hover:border-teal-300",
+                      "hover:bg-mint-wash/50 flex cursor-pointer items-center gap-3 px-3 py-3 transition-colors",
                       !active && "opacity-60",
                     )}
                   >
                     <div className="w-12 shrink-0 text-center">
                       <p className="tabular text-sm font-semibold">{formatTime(v.planned_at)}</p>
                       {numbered && active && (
-                        <span className="mx-auto mt-0.5 flex size-5 items-center justify-center rounded-full bg-teal-700 text-[10px] font-bold text-white">
+                        <span className="bg-pine mx-auto mt-0.5 flex size-5 items-center justify-center rounded-full text-[10px] font-bold text-white">
                           {n}
                         </span>
                       )}
@@ -63,10 +64,10 @@ export function AgendaList({ days, visits, readOnly, onVisitClick, numbered }: P
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className={cn("truncate text-sm font-medium", !active && "line-through")}>{v.doctor_name}</p>
-                        <SegmentBadge segment={v.doctor_segment} className="h-5" />
+                        <SegmentBadge segment={v.doctor_segment} className="size-5 text-[10px]" />
                       </div>
                       <p className="text-muted-foreground truncate text-xs">
-                        {v.doctor_specialty} · {v.doctor_district}, {v.doctor_city}
+                        {v.doctor_specialty}, {v.doctor_district}
                       </p>
                       <div className="mt-1">
                         <VisitStatusBadge status={v.status} pending={v.report_pending} />

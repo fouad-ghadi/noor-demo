@@ -1,7 +1,8 @@
 /** États génériques : chargement, erreur, liste vide. */
 import type { ReactNode } from "react";
-import { AlertTriangle, Inbox } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
+import { NoorMark } from "@/components/brand/NoorMark";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -37,9 +38,10 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
 
 export function EmptyState({ title, description, action }: { title: string; description?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed p-8 text-center">
-      <Inbox className="text-muted-foreground size-8" />
-      <p className="font-medium">{title}</p>
+    <div className="border-line flex flex-col items-center gap-2 rounded-xl border border-dashed bg-white/60 p-8 text-center">
+      {/* L'étoile NOOR, en filigrane menthe */}
+      <NoorMark className="size-9" color="#C9EDE5" core="#FFFFFF" />
+      <p className="font-display text-ink text-[17px] font-semibold">{title}</p>
       {description && <p className="text-muted-foreground text-sm">{description}</p>}
       {action}
     </div>

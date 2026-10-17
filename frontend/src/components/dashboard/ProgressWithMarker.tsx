@@ -31,14 +31,14 @@ const TONE_ON_DARK = {
 
 export function ProgressWithMarker({ value, expected, tone = "neutral", onDark = false, className }: Props) {
   return (
-    <div className={cn("relative h-2 w-full rounded-full", onDark ? "bg-white/15" : "bg-slate-100", className)}>
+    <div className={cn("relative h-2 w-full rounded-full", onDark ? "bg-white/15" : "bg-secondary", className)}>
       <div
         className={cn("h-full rounded-full transition-all", (onDark ? TONE_ON_DARK : TONE)[tone])}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
       {expected !== undefined && expected > 0 && expected < 100 && (
         <div
-          className={cn("absolute -top-1 h-4 w-0.5 rounded-full", onDark ? "bg-white" : "bg-slate-700")}
+          className={cn("absolute -top-1 h-4 w-0.5 rounded-full", onDark ? "bg-white" : "bg-ink")}
           style={{ left: `calc(${expected}% - 1px)` }}
           title={`Attendu à date : ${Math.round(expected)} %`}
         />

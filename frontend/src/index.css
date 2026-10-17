@@ -1,7 +1,13 @@
 /*
  * Styles globaux : Tailwind CSS v4 + variables de thème (format shadcn/ui).
- * Couleur d'accent : teal (sarcelle). Pour changer la couleur de la marque,
- * il suffit de modifier --primary et --ring ci-dessous.
+ *
+ * Identité NOOR (la même que la page de connexion) :
+ *  - vert pin  #0F3D3E : la structure (barre latérale, boutons principaux, bandeaux) ;
+ *  - menthe    #9FE3D6 : les accents posés sur le vert pin ;
+ *  - papier    #FAFBF9 : le fond des pages ; encre #0E2A2B : le texte ;
+ *  - safran    #E8A33D : RÉSERVÉ à « maintenant » (prochaine visite, aujourd'hui dans le
+ *    planning, l'heure actuelle, le mois en cours). Ne jamais l'utiliser ailleurs.
+ * Pour changer la marque : modifier les variables ci-dessous, pas les composants.
  */
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
@@ -10,53 +16,55 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
+  /* Arrondis hiérarchisés : contrôles 8 px, feuilles (cartes) 14 px, pastilles rondes */
+  --radius: 0.5rem;
 
-  /* Fond « papier » de la page de connexion (#FAFBF9) */
-  --background: oklch(0.987 0.003 145);
-  --foreground: oklch(0.21 0.02 230);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.02 230);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.02 230);
+  --pine: #0f3d3e;
+  --pine-soft: #1b5253; /* survol sur fond pin */
+  --mint: #9fe3d6;
+  --mint-wash: #e6f4f1; /* fond menthe très clair (survol, sélection) */
+  --saffron: #e8a33d;
+  --saffron-ink: #9a5b00; /* safran lisible sur fond clair (texte) */
+  --ink: #0e2a2b;
+  --paper: #fafbf9;
+  --line: #e1e7e3; /* filets */
 
-  /* Teal 700 (#0f766e) */
-  --primary: oklch(0.511 0.086 186.4);
-  --primary-foreground: oklch(0.985 0.01 180);
-  --secondary: oklch(0.962 0.012 190);
-  --secondary-foreground: oklch(0.3 0.04 200);
-  --muted: oklch(0.967 0.004 220);
-  --muted-foreground: oklch(0.52 0.02 230);
-  --accent: oklch(0.955 0.025 182);
-  --accent-foreground: oklch(0.38 0.07 186);
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+
+  --primary: var(--pine);
+  --primary-foreground: #ffffff;
+  --secondary: #eef3f0;
+  --secondary-foreground: var(--ink);
+  --muted: #f1f4f2;
+  --muted-foreground: #586b6b;
+  --accent: var(--mint-wash);
+  --accent-foreground: var(--pine);
   --destructive: oklch(0.577 0.215 27);
-  --border: oklch(0.917 0.006 220);
-  --input: oklch(0.89 0.008 220);
-  --ring: oklch(0.6 0.1 186);
+  --border: var(--line);
+  --input: #d3dcd7;
+  --ring: #0d9488;
 
   /* Couleurs sémantiques des indicateurs */
   --success: oklch(0.6 0.13 155);
   --warning: oklch(0.75 0.15 70);
   --danger: oklch(0.6 0.2 25);
 
-  /* Graphiques */
+  /* Graphiques (voir aussi src/lib/chartColors.ts, palettes validées) */
   --chart-1: oklch(0.511 0.086 186.4);
   --chart-2: oklch(0.72 0.11 182);
   --chart-3: oklch(0.55 0.12 250);
   --chart-4: oklch(0.78 0.14 75);
   --chart-5: oklch(0.65 0.02 230);
 
-  /* Identité NOOR (page de connexion) : vert pin, menthe sur fond pin,
-     safran RÉSERVÉ à « l'arrêt en cours » de la tournée, encre des titres. */
-  --pine: #0f3d3e;
-  --mint: #9fe3d6;
-  --saffron: #e8a33d;
-  --ink: #0e2a2b;
-
   --sidebar: var(--pine);
-  --sidebar-foreground: oklch(0.93 0.015 190);
-  --sidebar-muted: oklch(0.7 0.03 195);
-  --sidebar-accent: oklch(0.36 0.05 195);
+  --sidebar-foreground: #e4f3ef;
+  --sidebar-muted: #9cbcb7;
+  --sidebar-accent: var(--pine-soft);
 }
 
 @theme inline {
@@ -64,9 +72,9 @@
   /* Police de titre (connexion, logo, titres des pages et des sections, chiffres clés) */
   --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -94,9 +102,14 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-pine: var(--pine);
+  --color-pine-soft: var(--pine-soft);
   --color-mint: var(--mint);
+  --color-mint-wash: var(--mint-wash);
   --color-saffron: var(--saffron);
+  --color-saffron-ink: var(--saffron-ink);
   --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-line: var(--line);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted: var(--sidebar-muted);
@@ -110,6 +123,16 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv11", "ss01";
+  }
+  /* Sélection de texte aux couleurs de la marque */
+  ::selection {
+    background: var(--mint);
+    color: var(--ink);
+  }
+  /* Un élément de grille ne doit jamais élargir la page (texte long, nom tronqué...) :
+     sans cela, sur téléphone, certaines pages débordaient horizontalement. */
+  main .grid > * {
+    min-width: 0;
   }
   /* Chiffres alignés dans les tableaux et KPIs */
   .tabular {

@@ -22,6 +22,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useCurrentUser, useAuth } from "@/auth/AuthContext";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { formatLongDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { NAV_ITEMS } from "./navigation";
@@ -35,9 +36,14 @@ function Sidebar() {
 
   return (
     <aside className="bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-30 hidden w-64 flex-col lg:flex">
-      <div className="px-5 py-5">
+      <div className="px-5 pt-5 pb-4">
         <Logo light />
       </div>
+      {/* La date du jour : le point safran signifie « maintenant », comme partout dans l'application */}
+      <p className="text-sidebar-muted mx-5 mb-3 flex items-center gap-2 border-t border-white/10 pt-4 text-[13px]">
+        <span className="bg-saffron size-1.5 rounded-full" aria-hidden="true" />
+        <span className="first-letter:uppercase">{formatLongDay(new Date())}</span>
+      </p>
       <nav className="flex-1 space-y-1 px-3 py-2">
         {NAV_ITEMS[user.role].map(({ to, label, icon: Icon }) => (
           <NavLink
@@ -45,9 +51,9 @@ function Sidebar() {
             to={to}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-mint/60 focus-visible:outline-none",
                 isActive
-                  ? "bg-sidebar-accent text-white shadow-sm"
+                  ? "bg-sidebar-accent text-white before:bg-mint before:absolute before:inset-y-2 before:-left-3 before:w-1 before:rounded-r-full"
                   : "text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-white",
               )
             }
@@ -59,11 +65,11 @@ function Sidebar() {
       </nav>
       <div className="border-t border-white/10 p-3">
         <div className="flex items-center gap-3 rounded-lg px-2 py-2">
-          <UserAvatar name={user.name} className="bg-teal-500/20 text-teal-100" />
+          <UserAvatar name={user.name} className="bg-mint text-pine" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white">{user.name}</p>
             <p className="text-sidebar-muted truncate text-xs">
-              {ROLE_LABEL[user.role]} · {user.role === "delegue" ? user.region : "Équipe"}
+              {user.role === "delegue" ? user.region : ROLE_LABEL[user.role]}
             </p>
           </div>
           <Button
@@ -91,23 +97,23 @@ function MobileTopBar() {
   const { setOpen } = useAssistant();
   const navigate = useNavigate();
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-white/95 px-4 py-2.5 backdrop-blur lg:hidden">
-      <Logo />
+    <header className="bg-pine sticky top-0 z-30 flex items-center justify-between px-4 py-2.5 lg:hidden">
+      <Logo light />
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Ouvrir l'assistant NOOR">
-          <Sparkles className="text-teal-700" />
+        <Button variant="ghost" size="icon" className="text-mint hover:bg-white/10 hover:text-white" onClick={() => setOpen(true)} aria-label="Ouvrir l'assistant NOOR">
+          <Sparkles />
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="cursor-pointer rounded-full" aria-label="Menu utilisateur">
-              <UserAvatar name={user.name} className="size-8 text-xs" />
+            <button className="cursor-pointer rounded-full focus-visible:ring-2 focus-visible:ring-mint focus-visible:outline-none" aria-label="Menu utilisateur">
+              <UserAvatar name={user.name} className="bg-mint text-pine size-8 text-xs" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <p>{user.name}</p>
               <p className="text-muted-foreground text-xs font-normal">
-                {ROLE_LABEL[user.role]} · {user.region}
+                {ROLE_LABEL[user.role]}, {user.region}
               </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -130,7 +136,7 @@ function MobileTopBar() {
 function MobileBottomNav() {
   const user = useCurrentUser();
   return (
-    <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t bg-white lg:hidden">
+    <nav className="pb-safe border-line fixed inset-x-0 bottom-0 z-30 border-t bg-white lg:hidden">
       <div className="grid grid-cols-5">
         {NAV_ITEMS[user.role].map(({ to, short, icon: Icon }) => (
           <NavLink
@@ -138,12 +144,15 @@ function MobileBottomNav() {
             to={to}
             className={({ isActive }) =>
               cn(
-                "flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
-                isActive ? "text-teal-700" : "text-muted-foreground",
+                "group flex flex-col items-center gap-0.5 py-1.5 text-[11px] font-medium",
+                isActive ? "text-pine" : "text-muted-foreground",
               )
             }
           >
-            <Icon className="size-5" />
+            {/* Onglet actif : pastille menthe derrière l'icône */}
+            <span className="group-aria-[current=page]:bg-mint flex h-7 w-12 items-center justify-center rounded-full transition-colors">
+              <Icon className="size-5" />
+            </span>
             {short}
           </NavLink>
         ))}

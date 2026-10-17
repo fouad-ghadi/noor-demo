@@ -49,7 +49,7 @@ export function RescheduleDialog({ visit, onOpenChange }: Props) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CalendarClock className="size-5 text-teal-700" /> Déplacer la visite
+            <CalendarClock className="size-5 text-pine" /> Déplacer la visite
           </DialogTitle>
           <DialogDescription>
             {visit?.doctor_name} — actuellement le {visit && formatDateTime(visit.planned_at)}

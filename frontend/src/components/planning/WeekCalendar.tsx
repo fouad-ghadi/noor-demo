@@ -64,9 +64,9 @@ export function WeekCalendar({ weekStart, visits, readOnly, onVisitClick, onMove
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-white">
+    <div className="border-line overflow-hidden rounded-xl border bg-white">
       {/* En-têtes des jours */}
-      <div className="grid border-b" style={{ gridTemplateColumns: `56px repeat(${days.length}, 1fr)` }}>
+      <div className="border-line grid border-b" style={{ gridTemplateColumns: `56px repeat(${days.length}, 1fr)` }}>
         <div />
         {days.map((d) => {
           const today = isSameDay(d, now);
@@ -75,14 +75,14 @@ export function WeekCalendar({ weekStart, visits, readOnly, onVisitClick, onMove
             <button
               key={d.toISOString()}
               onClick={() => onDayClick(d)}
-              className="hover:bg-muted/50 flex cursor-pointer flex-col items-center gap-0.5 border-l py-2"
+              className={cn("hover:bg-mint-wash/60 border-line flex cursor-pointer flex-col items-center gap-0.5 border-l py-2.5", today && "bg-saffron/8")}
               title="Voir la journée"
             >
-              <span className="text-muted-foreground text-xs uppercase">{format(d, "EEE", { locale: fr })}</span>
+              <span className={cn("text-xs first-letter:uppercase", today ? "text-saffron-ink font-medium" : "text-muted-foreground")}>{format(d, "EEE", { locale: fr })}</span>
               <span
                 className={cn(
-                  "flex size-8 items-center justify-center rounded-full text-sm font-semibold",
-                  today && "bg-teal-700 text-white",
+                  "font-display text-ink flex size-8 items-center justify-center rounded-full text-base font-semibold",
+                  today && "bg-saffron text-ink",
                 )}
               >
                 {format(d, "d")}
@@ -111,7 +111,7 @@ export function WeekCalendar({ weekStart, visits, readOnly, onVisitClick, onMove
             return (
               <div
                 key={day.toISOString()}
-                className={cn("relative border-l", isToday && "bg-teal-50/40", dragOverDay === i && "bg-sky-50")}
+                className={cn("border-line relative border-l", isToday && "bg-saffron/5", dragOverDay === i && "bg-mint-wash")}
                 style={{ height: hours.length * HOUR_HEIGHT }}
                 onDragOver={(e) => {
                   if (readOnly) return;
@@ -123,12 +123,12 @@ export function WeekCalendar({ weekStart, visits, readOnly, onVisitClick, onMove
               >
                 {/* Lignes des heures */}
                 {hours.map((h) => (
-                  <div key={h} className="border-b border-dashed border-slate-100" style={{ height: HOUR_HEIGHT }} />
+                  <div key={h} className="border-line/70 border-b border-dashed" style={{ height: HOUR_HEIGHT }} />
                 ))}
 
                 {isToday && now.getHours() >= START_HOUR && now.getHours() < END_HOUR && (
-                  <div className="absolute inset-x-0 z-10 h-0.5 bg-rose-500" style={{ top: topFor(now) }}>
-                    <span className="absolute -top-1 -left-1 size-2.5 rounded-full bg-rose-500" />
+                  <div className="bg-saffron absolute inset-x-0 z-10 h-0.5" style={{ top: topFor(now) }} aria-label="Heure actuelle">
+                    <span className="bg-saffron absolute -top-1 -left-1 size-2.5 rounded-full" />
                   </div>
                 )}
 
@@ -146,7 +146,7 @@ export function WeekCalendar({ weekStart, visits, readOnly, onVisitClick, onMove
                       }}
                       onClick={() => onVisitClick(v)}
                       className={cn(
-                        "absolute inset-x-1 z-[5] cursor-pointer overflow-hidden rounded-md border px-1.5 py-0.5 text-left text-[11px] leading-tight shadow-xs transition hover:z-20 hover:shadow-md",
+                        "border-line absolute inset-x-1 z-[5] cursor-pointer overflow-hidden rounded-md border border-l-[3px] px-1.5 py-0.5 text-left text-[11px] leading-tight transition hover:z-20 hover:shadow-md hover:shadow-pine/10",
                         visitBlockClass(v),
                         draggable && "cursor-grab active:cursor-grabbing",
                       )}

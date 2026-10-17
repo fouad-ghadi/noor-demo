@@ -16,7 +16,7 @@
  */
 import { BookOpenText, Mic, ScanLine, ShieldAlert, Sparkles, X } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { NoorMark } from "@/components/brand/NoorMark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PageContext } from "./AssistantContext";
@@ -47,39 +47,35 @@ function describeContext(ctx: PageContext): string {
 export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
   return (
     <div className="flex h-full flex-col bg-white">
-      <div className="flex items-center justify-between border-b px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-teal-800 text-white">
-            <Sparkles className="size-4" />
-          </div>
+      <div className="bg-pine flex items-center justify-between px-4 py-3.5 text-white">
+        <div className="flex items-center gap-2.5">
+          <NoorMark className="size-8" color="#9FE3D6" core="#0F3D3E" />
           <div>
-            <p className="text-sm font-semibold">Assistant NOOR</p>
-            <p className="text-muted-foreground text-xs">Intelligence artificielle</p>
+            <p className="font-display text-[17px] font-semibold">Assistant NOOR</p>
+            <p className="text-xs text-[#CFEDE7]">Questions sur les produits, avec sources</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fermer l'assistant">
+        <Button variant="ghost" size="icon" className="text-mint hover:bg-white/10 hover:text-white" onClick={onClose} aria-label="Fermer l'assistant">
           <X />
         </Button>
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
-        <div className="rounded-lg border border-dashed border-teal-300 bg-teal-50/60 p-4 text-center">
-          <Badge className="mb-2 bg-teal-700">Bientôt disponible</Badge>
-          <p className="text-sm text-teal-900">
-            L'assistant IA de NOOR est en cours de développement.
-          </p>
+        <div className="border-mint bg-mint-wash/60 rounded-xl border p-4">
+          <p className="font-display text-ink font-semibold">Bientôt disponible</p>
+          <p className="text-ink/80 mt-1 text-sm">L'assistant IA de NOOR est en cours de développement.</p>
         </div>
 
-        <div className="rounded-md bg-muted px-3 py-2 text-xs">
+        <div className="bg-paper border-line rounded-lg border px-3 py-2 text-xs">
           <span className="text-muted-foreground">Contexte transmis : </span>
           <span className="font-medium" data-testid="assistant-context">{describeContext(context)}</span>
         </div>
 
         <div className="space-y-3">
-          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">Fonctionnalités prévues</p>
+          <p className="font-display text-ink text-[15px] font-semibold">Ce que l'assistant saura faire</p>
           {UPCOMING.map(({ icon: Icon, title, text }) => (
             <div key={title} className="flex gap-3">
-              <Icon className="mt-0.5 size-4 shrink-0 text-teal-700" />
+              <Icon className="mt-0.5 size-4 shrink-0 text-pine" />
               <div>
                 <p className="text-sm font-medium">{title}</p>
                 <p className="text-muted-foreground text-xs leading-relaxed">{text}</p>
@@ -89,7 +85,7 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
         </div>
       </div>
 
-      <div className="border-t p-3">
+      <div className="border-line border-t p-3">
         <Input disabled placeholder="Posez une question sur un produit…" />
       </div>
     </div>

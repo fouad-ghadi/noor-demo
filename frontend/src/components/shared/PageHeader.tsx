@@ -13,7 +13,7 @@ interface PageHeaderProps {
 /** En-tête standard des pages : titre, sous-titre, actions à droite, lien retour. */
 export function PageHeader({ title, description, actions, backTo, backLabel = "Retour" }: PageHeaderProps) {
   return (
-    <div className="mb-5 lg:mb-7">
+    <div className="mb-6 lg:mb-8">
       {backTo && (
         <Link
           to={backTo}
@@ -24,8 +24,8 @@ export function PageHeader({ title, description, actions, backTo, backLabel = "R
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="font-display text-ink text-2xl font-semibold tracking-[-0.02em] lg:text-[1.75rem]">{title}</h1>
-          {description && <div className="text-muted-foreground mt-1 text-sm">{description}</div>}
+          <h1 className="font-display text-ink text-[1.7rem] leading-tight font-semibold tracking-[-0.02em] text-balance lg:text-[2.1rem]">{title}</h1>
+          {description && <div className="text-muted-foreground mt-1.5 text-[15px]">{description}</div>}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>

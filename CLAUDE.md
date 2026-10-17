@@ -43,10 +43,16 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
   - Couleurs des graphiques **validées** (daltonisme/contraste) dans `src/lib/chartColors.ts` : ne pas les changer au hasard.
   - Page de connexion : design dédié (vert pin `#0F3D3E`, safran `#E8A33D` réservé à « l'arrêt en cours »,
     police de titre Bricolage Grotesque, emblème étoile à 8 branches `components/brand/NoorMark.tsx`).
-  - **Même identité dans l'application** : jetons `pine`, `mint`, `saffron`, `ink` (`src/index.css`, ex. `bg-pine`).
-    Tableaux de bord : bandeau vert pin `components/dashboard/HeroBand.tsx` (rythme du mois) +
-    tournée du jour dessinée comme un trajet `DayRoute.tsx` (safran = prochaine visite, et rien d'autre) ;
-    KPIs regroupés dans un seul panneau `KpiStrip`. Titres en Bricolage (`font-display`), pas de libellés en majuscules.
+  - **Même identité dans toute l'application** (refonte complète du gabarit) : jetons `pine`, `mint`, `mint-wash`,
+    `saffron`, `saffron-ink`, `ink`, `paper`, `line` (`src/index.css`, ex. `bg-pine`, `border-line`).
+    **Règle du safran = « maintenant »** : prochaine visite, aujourd'hui et l'heure actuelle dans le planning,
+    mois en cours, date du jour dans la barre latérale (`components/shared/NextVisit.tsx`). Jamais ailleurs.
+  - Boutons principaux vert pin ; cartes = « feuilles » à filet (titre séparé par un filet, sans ombre) ;
+    statuts = point de couleur + libellé (`StatusPill` dans `shared/badges.tsx`, `dot` dans `lib/labels.ts`) ;
+    segments = tuiles A (pin plein) / B (menthe) / C (contour). Titres en Bricolage (`font-display`),
+    pas de libellés en majuscules, pas de « · » entre les informations (phrases simples).
+  - Tableaux de bord : bandeau `HeroBand` + tournée `DayRoute` ; fiche médecin avec monogramme ;
+    compte-rendu en étapes reliées par un rail. Règle CSS `main .grid > * { min-width: 0 }` : évite les débordements mobiles.
 - **Commits** en français, poussés sur `main` (pas de PR sauf demande).
 
 ## Données de démo (`backend/seed.py`)
@@ -80,13 +86,13 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
 
 Fait : étapes 1 à 5 du cahier des charges (backend, médecins, planning + carte, compte-rendu, tableaux de bord
 délégué/superviseur, produits, objectifs, points d'extension IA, README, refonte de la page de connexion,
-Dockerfile/Render, refonte des tableaux de bord délégué et superviseur).
+Dockerfile/Render, refonte complète du gabarit : toutes les pages).
 
 Pistes pour la suite (à valider avec Fouad) :
 1. Finaliser la mise en ligne (Render ou alternative).
 2. Implémenter les modules IA (un par étudiant, voir `docs/EXTENSIONS_IA.md`).
 3. Ajouter des tests automatisés (pytest pour les services, Playwright pour les parcours clés).
-4. Polir l'interface (étendre l'identité aux autres pages : médecins, planning, objectifs ; mode sombre éventuel).
+4. Polir l'interface (mode sombre éventuel, tests visuels Playwright).
 
 ## Pièges connus
 

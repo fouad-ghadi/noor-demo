@@ -19,9 +19,9 @@ export function VisitsPerWeekChart({ data }: { data: Dashboard["visits_per_week"
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Visites par semaine</CardTitle>
+        <CardTitle>Visites par semaine</CardTitle>
         <CardDescription>
-          3 derniers mois · {total} visites réalisées · moyenne {avg} / semaine
+          {total} visites réalisées en 3 mois, soit {avg} par semaine en moyenne
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -17,8 +17,8 @@ export function DoctorsToRevisit({ rows, total, readOnly }: { rows: Row[]; total
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <UserRoundSearch className="size-4 text-teal-700" /> Médecins à revoir
+        <CardTitle className="flex items-center gap-2">
+          <UserRoundSearch className="size-4 text-pine" /> Médecins à revoir
         </CardTitle>
         <CardDescription>Segments A et B non visités depuis 30 jours ou plus</CardDescription>
         {total > rows.length && (
@@ -31,25 +31,25 @@ export function DoctorsToRevisit({ rows, total, readOnly }: { rows: Row[]; total
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
-          <p className="rounded-lg border border-dashed p-6 text-center text-sm text-emerald-700">
-            ✓ Tous vos médecins A et B ont été vus il y a moins de 30 jours.
+          <p className="text-muted-foreground border-line rounded-lg border border-dashed p-6 text-center text-sm">
+            Tous vos médecins A et B ont été vus il y a moins de 30 jours.
           </p>
         ) : (
-          <div className="divide-y">
+          <div className="divide-line divide-y">
             {rows.map((r) => (
               <div key={r.doctor_id} className="flex items-center gap-3 py-2.5">
                 <SegmentBadge segment={r.segment} />
                 <Link to={`/medecins/${r.doctor_id}`} className="min-w-0 flex-1 hover:underline">
                   <p className="truncate text-sm font-medium">{r.doctor_name}</p>
                   <p className="text-muted-foreground truncate text-xs">
-                    {r.specialty} · {r.district}
+                    {r.specialty}, {r.district}
                   </p>
                 </Link>
                 <span className="tabular shrink-0 text-right text-xs font-medium text-rose-700">
                   {r.days_since_last_visit === null ? "Jamais vu" : `${r.days_since_last_visit} j`}
                 </span>
                 {r.next_visit_at ? (
-                  <span className="flex w-24 shrink-0 items-center justify-end gap-1 text-xs text-teal-700">
+                  <span className="flex w-24 shrink-0 items-center justify-end gap-1 text-xs text-pine">
                     <CalendarCheck className="size-3.5" /> {formatShortDate(r.next_visit_at)}
                   </span>
                 ) : !readOnly ? (

@@ -28,12 +28,12 @@ export function AiFeatureButton({ icon, label, description, enabled = false, onC
       variant="outline"
       disabled={!enabled}
       onClick={onClick}
-      className={cn("border-dashed border-teal-300 bg-teal-50/50 text-teal-900 disabled:opacity-70", className)}
+      className={cn("border-mint text-pine bg-white hover:bg-mint-wash disabled:opacity-80", className)}
       data-ai-extension-point
     >
       <span aria-hidden>{icon}</span>
       {label}
-      <span className="rounded bg-teal-700 px-1.5 py-px text-[10px] font-semibold text-white">IA</span>
+      <span className="bg-pine text-mint rounded px-1.5 py-px text-[10px] font-semibold">IA</span>
     </Button>
   );
   if (enabled) return button;
@@ -41,7 +41,7 @@ export function AiFeatureButton({ icon, label, description, enabled = false, onC
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span tabIndex={0} className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:outline-none">
+        <span tabIndex={0} className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none">
           {button}
         </span>
       </TooltipTrigger>

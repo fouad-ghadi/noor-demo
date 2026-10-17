@@ -13,7 +13,7 @@ import { formatTime } from "@/lib/format";
 
 /** Marqueur rond numéroté (HTML), couleur selon le statut. */
 function numberedIcon(n: number, v: Visit) {
-  const color = v.report_pending ? "#f97316" : v.status === "realisee" ? "#10b981" : "#0f766e";
+  const color = v.report_pending ? "#f97316" : v.status === "realisee" ? "#10b981" : "#0F3D3E";
   return L.divIcon({
     className: "",
     html: `<div style="background:${color};color:white;width:28px;height:28px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.35)">${n}</div>`,
@@ -54,14 +54,14 @@ export function VisitsMap({ visits, onVisitClick }: { visits: Visit[]; onVisitCl
       center={points[0]}
       zoom={13}
       scrollWheelZoom={false}
-      className="z-0 h-full min-h-72 w-full rounded-xl border"
+      className="border-line z-0 h-full min-h-72 w-full rounded-xl border"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FitBounds points={points} />
-      <Polyline positions={points} pathOptions={{ color: "#0f766e", weight: 3, opacity: 0.5, dashArray: "6 8" }} />
+      <Polyline positions={points} pathOptions={{ color: "#0F3D3E", weight: 3, opacity: 0.6, dashArray: "6 8" }} />
       {located.map((v, i) => (
         <Marker
           key={v.id}
@@ -74,7 +74,7 @@ export function VisitsMap({ visits, onVisitClick }: { visits: Visit[]; onVisitCl
               {formatTime(v.planned_at)} — {v.doctor_name}
             </strong>
             <br />
-            {v.doctor_specialty} · {v.doctor_district}
+            {v.doctor_specialty}, {v.doctor_district}
           </Tooltip>
         </Marker>
       ))}

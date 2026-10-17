@@ -39,11 +39,12 @@ export function VisitDetailDialog({ visit, readOnly, onOpenChange, onMove, onCan
     <Dialog open={!!visit} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 pr-6">
-            {visit.doctor_name} <SegmentBadge segment={visit.doctor_segment} />
+          <DialogTitle className="flex items-center gap-2.5 pr-6">
+            <SegmentBadge segment={visit.doctor_segment} /> {visit.doctor_name}
           </DialogTitle>
-          <DialogDescription className="first-letter:uppercase">
-            {formatLongDay(visit.planned_at)} à {formatTime(visit.planned_at)} · {visit.doctor_specialty}
+          <DialogDescription>
+            <span className="inline-block first-letter:uppercase">{formatLongDay(visit.planned_at)}</span> à{" "}
+            <span className="text-ink font-medium">{formatTime(visit.planned_at)}</span>, {visit.doctor_specialty.toLowerCase()}
           </DialogDescription>
         </DialogHeader>
 
@@ -53,8 +54,7 @@ export function VisitDetailDialog({ visit, readOnly, onOpenChange, onMove, onCan
             <span>
               {visit.doctor_address}
               <span className="text-muted-foreground">
-                {" "}
-                — {visit.doctor_district}, {visit.doctor_city}
+                , {visit.doctor_district}, {visit.doctor_city}
               </span>
             </span>
           </div>

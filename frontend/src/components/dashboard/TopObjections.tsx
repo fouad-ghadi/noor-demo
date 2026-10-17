@@ -8,7 +8,7 @@ export function TopObjections({ items, description = "3 derniers mois" }: { item
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Objections les plus fréquentes</CardTitle>
+        <CardTitle>Objections les plus fréquentes</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -19,7 +19,7 @@ export function TopObjections({ items, description = "3 derniers mois" }: { item
               <span>{i.label}</span>
               <span className="tabular font-semibold">{i.count}</span>
             </div>
-            <div className="h-2 rounded-full bg-slate-100">
+            <div className="h-2 rounded-full bg-secondary">
               <div className="h-full rounded-full" style={{ width: `${(i.count / max) * 100}%`, background: DONE_COLOR }} />
             </div>
           </div>

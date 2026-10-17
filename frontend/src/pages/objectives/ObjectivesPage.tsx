@@ -45,7 +45,17 @@ export function ObjectivesPage() {
     <>
       <PageHeader
         title="Objectifs"
-        description={current ? <span className="first-letter:uppercase">Mois en cours : {current.label}</span> : "Suivi mensuel"}
+        description={
+          current ? (
+            // Point safran : « maintenant » (le mois en cours)
+            <span className="inline-flex items-center gap-2">
+              <span className="bg-saffron size-2 rounded-full" aria-hidden="true" />
+              Mois en cours : {current.label}
+            </span>
+          ) : (
+            "Suivi mensuel"
+          )
+        }
         actions={
           isSupervisor && (
             <Select value={delegueId ? String(delegueId) : ""} onValueChange={(v) => setParams({ delegue: v }, { replace: true })}>
@@ -94,7 +104,7 @@ function ObjectiveRow({ label, done, target, pct, expected, unit = "" }: {
           <span className="text-muted-foreground">
             {" "}
             / {target}
-            {unit} · {Math.round(pct)} %
+            {unit}, {Math.round(pct)} %
           </span>
         </span>
       </div>
@@ -109,9 +119,9 @@ function CurrentMonth({ o }: { o: ObjectiveProgress }) {
     <div className="mb-5 grid gap-5 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between gap-2 text-base">
+          <CardTitle className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-2">
-              <CalendarCheck2 className="size-4 text-teal-700" /> Visites et couverture
+              <CalendarCheck2 className="size-4 text-pine" /> Visites et couverture
             </span>
             <ProgressStatusBadge status={o.status} />
           </CardTitle>
@@ -121,7 +131,7 @@ function CurrentMonth({ o }: { o: ObjectiveProgress }) {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-end gap-2">
-            <p className="tabular text-4xl font-semibold tracking-tight">{o.done_visits}</p>
+            <p className="font-display tabular text-ink text-5xl font-semibold tracking-[-0.03em]">{o.done_visits}</p>
             <p className="text-muted-foreground pb-1">/ {o.target_visits} visites réalisées</p>
           </div>
           <ObjectiveRow
@@ -134,7 +144,7 @@ function CurrentMonth({ o }: { o: ObjectiveProgress }) {
           <div className="space-y-1.5">
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <span className="flex items-center gap-1.5 font-medium">
-                <Target className="size-4 text-teal-700" /> Couverture des médecins A
+                <Target className="size-4 text-pine" /> Couverture des médecins A
               </span>
               <span className="tabular">
                 <span className="font-semibold">{Math.round(o.coverage_a)} %</span>
@@ -151,8 +161,8 @@ function CurrentMonth({ o }: { o: ObjectiveProgress }) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Package className="size-4 text-teal-700" /> Objectifs par produit
+          <CardTitle className="flex items-center gap-2">
+            <Package className="size-4 text-pine" /> Objectifs par produit
           </CardTitle>
           <CardDescription>Nombre de présentations du produit pendant le mois</CardDescription>
         </CardHeader>
@@ -186,7 +196,7 @@ function History({ all, history }: { all: ObjectiveProgress[]; history: Objectiv
     <div className="grid gap-5 lg:grid-cols-5">
       <Card className="lg:col-span-3">
         <CardHeader>
-          <CardTitle className="text-base">Historique des visites</CardTitle>
+          <CardTitle>Historique des visites</CardTitle>
           <CardDescription>Visites réalisées par mois et objectif fixé (le mois en cours n'est pas terminé)</CardDescription>
         </CardHeader>
         <CardContent>
@@ -195,7 +205,7 @@ function History({ all, history }: { all: ObjectiveProgress[]; history: Objectiv
               <span className="size-2.5 rounded-sm" style={{ background: DONE_COLOR }} /> Réalisées
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-4 rounded-full bg-slate-700" /> Objectif
+              <span className="bg-ink h-0.5 w-4 rounded-full" /> Objectif
             </span>
           </div>
           <div className="h-60">
@@ -218,7 +228,7 @@ function History({ all, history }: { all: ObjectiveProgress[]; history: Objectiv
 
       <Card className="py-0 lg:col-span-2">
         <CardHeader className="pt-5">
-          <CardTitle className="text-base">Mois précédents</CardTitle>
+          <CardTitle>Mois précédents</CardTitle>
         </CardHeader>
         <Table>
           <TableHeader>

@@ -5,11 +5,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   Building2,
-  CalendarClock,
   CalendarPlus,
   Clock,
-  FileText,
   Mail,
   MapPin,
   Pencil,
@@ -23,14 +22,13 @@ import type { DoctorDetail } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { PrescribingBadge, SegmentBadge } from "@/components/shared/badges";
-import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
 import { VisitHistory } from "@/components/visits/VisitHistory";
 import { useProducts } from "@/hooks/queries";
-import { formatDate, formatLongDay, formatTime } from "@/lib/format";
+import { formatDate, formatLongDay, formatShortDate, formatTime, initials } from "@/lib/format";
 import { PRACTICE_TYPE, SEGMENT, SOURCE, TIME_SLOT } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -53,17 +51,35 @@ export function DoctorDetailPage() {
 
   return (
     <>
-      <PageHeader
-        backTo="/medecins"
-        backLabel="Médecins"
-        title={
-          <span className="flex items-center gap-2.5">
-            {name} <SegmentBadge segment={d.segment} />
-          </span>
-        }
-        description={`${d.specialty} · ${PRACTICE_TYPE[d.practice_type]} · ${d.district}, ${d.city}`}
-        actions={
-          <>
+      <Link to="/medecins" className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm">
+        <ArrowLeft className="size-4" /> Médecins
+      </Link>
+
+      {/* En-tête « fiche » : monogramme, identité, actions, puis les chiffres clés sur un filet */}
+      <section className="border-line mb-5 overflow-hidden rounded-xl border bg-white lg:mb-6">
+        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center lg:p-6">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
+            <span className="bg-pine font-display text-mint flex size-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-semibold tracking-tight">
+              {initials(name)}
+            </span>
+            <div className="min-w-0">
+              <h1 className="font-display text-ink text-[1.6rem] leading-tight font-semibold tracking-[-0.02em] lg:text-[2rem]">{name}</h1>
+              <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px]">
+                <SegmentBadge segment={d.segment} className="size-5 text-[11px]" />
+                <span>
+                  {d.specialty}, {PRACTICE_TYPE[d.practice_type].toLowerCase()}, {d.district}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {d.phone && (
+              <Button variant="outline" asChild className="sm:hidden">
+                <a href={`tel:${d.phone.replace(/[^\d+]/g, "")}`}>
+                  <Phone /> Appeler
+                </a>
+              </Button>
+            )}
             <Button variant="outline" asChild>
               <Link to={`/medecins/${d.id}/modifier`}>
                 <Pencil /> Modifier
@@ -74,23 +90,18 @@ export function DoctorDetailPage() {
                 <CalendarPlus /> Planifier une visite
               </Button>
             )}
-          </>
-        }
-      />
-
-      {/* Chiffres clés */}
-      <div className="mb-5 grid grid-cols-3 gap-3">
-        <MiniStat label="Visites réalisées" value={String(d.visits_count)} />
-        <MiniStat
-          label="Dernière visite"
-          value={d.days_since_last_visit === null ? "Jamais" : `il y a ${d.days_since_last_visit} j`}
-          tone={d.days_since_last_visit === null || d.days_since_last_visit > 30 ? "warning" : "default"}
-        />
-        <MiniStat
-          label="Prochaine visite"
-          value={d.next_visit ? formatDate(d.next_visit.planned_at) : "—"}
-        />
-      </div>
+          </div>
+        </div>
+        <dl className="border-line bg-line grid grid-cols-3 gap-px border-t">
+          <MiniStat label="Visites réalisées" value={String(d.visits_count)} />
+          <MiniStat
+            label="Dernière visite"
+            value={d.days_since_last_visit === null ? "Jamais" : `il y a ${d.days_since_last_visit} j`}
+            tone={d.days_since_last_visit === null || d.days_since_last_visit > 30 ? "warning" : "default"}
+          />
+          <MiniStat label="Prochaine visite" value={d.next_visit ? formatShortDate(d.next_visit.planned_at) : "Non planifiée"} />
+        </dl>
+      </section>
 
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Colonne gauche : infos */}
@@ -102,15 +113,13 @@ export function DoctorDetailPage() {
         {/* Colonne droite : prochaine visite, prescriptions, historique */}
         <div className="space-y-5 lg:col-span-2">
           {upcoming.length > 0 && (
-            <Card className="border-teal-200 bg-teal-50/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <CalendarClock className="size-4 text-teal-700" /> Visites planifiées
-                </CardTitle>
+            <Card className="border-mint bg-mint-wash/60">
+              <CardHeader className="border-mint">
+                <CardTitle>Visites planifiées</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {upcoming.map((v) => (
-                  <div key={v.id} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm">
+                  <div key={v.id} className="border-mint/60 flex items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm">
                     <span className="first-letter:uppercase">
                       {formatLongDay(v.planned_at)} à <strong>{formatTime(v.planned_at)}</strong>
                     </span>
@@ -125,9 +134,7 @@ export function DoctorDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="size-4" /> Historique des visites
-              </CardTitle>
+              <CardTitle>Historique des visites</CardTitle>
               <CardDescription>{history.length} visite(s), de la plus récente à la plus ancienne</CardDescription>
             </CardHeader>
             <CardContent>
@@ -152,10 +159,12 @@ export function DoctorDetailPage() {
 
 function MiniStat({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "warning" }) {
   return (
-    <Card className="gap-1 px-4 py-3">
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className={cn("tabular text-base font-semibold lg:text-lg", tone === "warning" && "text-amber-600")}>{value}</p>
-    </Card>
+    <div className="bg-paper px-4 py-3 lg:px-6">
+      <dt className="text-muted-foreground text-xs sm:text-[13px]">{label}</dt>
+      <dd className={cn("font-display tabular text-ink mt-0.5 text-base font-semibold sm:text-xl", tone === "warning" && "text-amber-700")}>
+        {value}
+      </dd>
+    </div>
   );
 }
 
@@ -172,7 +181,7 @@ function InfoCard({ doctor: d }: { doctor: DoctorDetail }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Coordonnées</CardTitle>
+        <CardTitle>Coordonnées</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <InfoRow icon={MapPin}>
@@ -183,7 +192,7 @@ function InfoCard({ doctor: d }: { doctor: DoctorDetail }) {
         </InfoRow>
         <InfoRow icon={Phone}>
           {d.phone ? (
-            <a className="text-teal-700 hover:underline" href={`tel:${d.phone.replace(/[^\d+]/g, "")}`}>
+            <a className="text-[#0D7F75] hover:underline" href={`tel:${d.phone.replace(/[^\d+]/g, "")}`}>
               {d.phone}
             </a>
           ) : (
@@ -192,7 +201,7 @@ function InfoCard({ doctor: d }: { doctor: DoctorDetail }) {
         </InfoRow>
         <InfoRow icon={Mail}>
           {d.email ? (
-            <a className="break-all text-teal-700 hover:underline" href={`mailto:${d.email}`}>
+            <a className="break-all text-[#0D7F75] hover:underline" href={`mailto:${d.email}`}>
               {d.email}
             </a>
           ) : (
@@ -206,10 +215,10 @@ function InfoCard({ doctor: d }: { doctor: DoctorDetail }) {
         <InfoRow icon={UserRound}>
           <p>Délégué : {d.delegue_name}</p>
           <p className="text-muted-foreground text-xs">
-            {SEGMENT[d.segment].label} · Fiche créée le {formatDate(d.created_at)} ({SOURCE[d.source]})
+            {SEGMENT[d.segment].label}. Fiche créée le {formatDate(d.created_at)} ({SOURCE[d.source].toLowerCase()})
           </p>
         </InfoRow>
-        {d.notes && <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">📝 {d.notes}</p>}
+        {d.notes && <p className="bg-paper border-line text-ink rounded-lg border px-3 py-2 text-[13px] leading-relaxed">{d.notes}</p>}
       </CardContent>
     </Card>
   );
@@ -222,7 +231,7 @@ function ReceptivityCard({ doctor: d }: { doctor: DoctorDetail }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Réceptivité par créneau</CardTitle>
+        <CardTitle>Réceptivité par créneau</CardTitle>
         <CardDescription>% de visites avec un retour favorable</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -230,16 +239,16 @@ function ReceptivityCard({ doctor: d }: { doctor: DoctorDetail }) {
         {d.slot_stats.map((s) => (
           <div key={s.slot} className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span className={cn(best?.slot === s.slot && "font-semibold text-teal-800")}>
-                {TIME_SLOT[s.slot]} {best?.slot === s.slot && "⭐"}
+              <span className={cn(best?.slot === s.slot && "text-pine font-semibold")}>
+                {TIME_SLOT[s.slot]} {best?.slot === s.slot && "(le meilleur)"}
               </span>
               <span className="text-muted-foreground tabular">
-                {s.visits ? `${Math.round(s.favorable_rate)} % · ${s.visits} visite(s)` : "—"}
+                {s.visits ? `${Math.round(s.favorable_rate)} % sur ${s.visits} visite(s)` : "Aucune visite"}
               </span>
             </div>
             <div className="bg-muted h-2 overflow-hidden rounded-full">
               <div
-                className={cn("h-full rounded-full", best?.slot === s.slot ? "bg-teal-600" : "bg-teal-300")}
+                className={cn("h-full rounded-full", best?.slot === s.slot ? "bg-pine" : "bg-mint")}
                 style={{ width: `${s.favorable_rate}%` }}
               />
             </div>
@@ -261,7 +270,7 @@ function PrescriptionsCard({ doctor: d }: { doctor: DoctorDetail }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Statut de prescription par produit</CardTitle>
+        <CardTitle>Statut de prescription par produit</CardTitle>
         <CardDescription>Les produits ciblant la spécialité « {d.specialty} » apparaissent en premier.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-2 sm:grid-cols-2">
@@ -270,7 +279,7 @@ function PrescriptionsCard({ doctor: d }: { doctor: DoctorDetail }) {
             to={`/produits/${p.product_id}`}
             key={p.product_id}
             className={cn(
-              "flex items-center justify-between gap-2 rounded-lg border px-3 py-2 transition hover:border-teal-300",
+              "border-line hover:bg-mint-wash/50 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 transition-colors",
               !targeted.has(p.product_id) && "opacity-60",
             )}
           >

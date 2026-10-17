@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const SEVERITY = {
   haute: { icon: AlertTriangle, label: "Haute", className: "text-rose-700 bg-rose-50" },
   moyenne: { icon: CircleAlert, label: "Moyenne", className: "text-amber-700 bg-amber-50" },
-  faible: { icon: Info, label: "Faible", className: "text-slate-600 bg-slate-100" },
+  faible: { icon: Info, label: "Faible", className: "text-slate-600 bg-secondary" },
 };
 
 const TYPE_LABEL: Record<Alert["type"], string> = {
@@ -38,14 +38,14 @@ export function AlertsList({ alerts, readOnly }: { alerts: Alert[]; readOnly?: b
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Bell className="size-4 text-teal-700" /> Alertes
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="size-4 text-pine" /> Alertes
         </CardTitle>
         <CardDescription>{alerts.length ? `${alerts.length} alerte(s) ouverte(s)` : "Aucune alerte"}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="divide-line divide-y">
         {alerts.length === 0 && (
-          <p className="rounded-lg border border-dashed p-6 text-center text-sm text-emerald-700">✓ Rien à signaler.</p>
+          <p className="text-muted-foreground border-line rounded-lg border border-dashed p-6 text-center text-sm">Rien à signaler.</p>
         )}
         {alerts.map((a) => {
           const S = SEVERITY[a.severity];
@@ -55,7 +55,7 @@ export function AlertsList({ alerts, readOnly }: { alerts: Alert[]; readOnly?: b
               ? `/medecins/${a.doctor_id}`
               : "/objectifs";
           return (
-            <div key={a.id} className={cn("group flex gap-3 rounded-lg border p-3", a.status === "nouvelle" && "border-l-4 border-l-teal-600")}>
+            <div key={a.id} className="group flex gap-3 py-3 first:pt-0 last:pb-0">
               <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full", S.className)}>
                 <S.icon className="size-4" />
               </span>
@@ -64,7 +64,8 @@ export function AlertsList({ alerts, readOnly }: { alerts: Alert[]; readOnly?: b
                   <span className="text-foreground/80 font-medium">{TYPE_LABEL[a.type]}</span>, gravité {S.label.toLowerCase()},{" "}
                   {formatAgo(a.created_at)}
                 </p>
-                <Link to={target} className="text-sm font-medium hover:underline">
+                <Link to={target} className={cn("text-ink block text-sm hover:underline", a.status === "nouvelle" ? "font-semibold" : "font-medium")}>
+                  {a.status === "nouvelle" && <span className="bg-pine mr-1.5 inline-block size-1.5 rounded-full align-middle" title="Nouvelle" />}
                   {a.title}
                 </Link>
                 {a.message && <p className="text-muted-foreground text-xs">{a.message}</p>}

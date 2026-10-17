@@ -58,8 +58,8 @@ function Chip({ selected, onClick, children, className }: {
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition",
-        selected ? "border-teal-700 bg-teal-700 text-white shadow-sm" : "bg-white hover:border-teal-300 hover:bg-teal-50",
+        "border-input inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition",
+        selected ? "border-pine bg-pine text-white" : "bg-white hover:border-pine/30 hover:bg-mint-wash",
         className,
       )}
     >
@@ -69,19 +69,33 @@ function Chip({ selected, onClick, children, className }: {
   );
 }
 
-/** Titre de section numéroté. */
+/**
+ * Étape numérotée du compte-rendu.
+ * Sur ordinateur, les étapes sont reliées par un rail vertical (comme le trajet de la tournée) ;
+ * sur téléphone, le numéro passe dans le titre pour garder toute la largeur.
+ */
 function Section({ n, title, description, children }: { n: number; title: string; description?: string; children: React.ReactNode }) {
+  const number = (
+    <span className="bg-pine text-mint font-display flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold">{n}</span>
+  );
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <span className="flex size-6 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">{n}</span>
-          {title}
-        </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+    <section className="group/step relative sm:grid sm:grid-cols-[2rem_minmax(0,1fr)] sm:gap-x-4">
+      <div className="relative hidden justify-center sm:flex" aria-hidden="true">
+        <span className="relative z-10 mt-4">{number}</span>
+        {/* Rail jusqu'à l'étape suivante (absent après la dernière) */}
+        <span className="bg-line absolute top-12 -bottom-4 w-0.5 group-last-of-type/step:hidden" />
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2.5">
+            <span className="sm:hidden">{number}</span>
+            {title}
+          </CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </CardHeader>
+        <CardContent>{children}</CardContent>
+      </Card>
+    </section>
   );
 }
 
@@ -228,12 +242,12 @@ function ReportForm({ visit, products, objectionCategories }: {
         title={isEdit ? "Modifier le compte-rendu" : "Compte-rendu de visite"}
         description={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Link to={`/medecins/${visit.doctor_id}`} className="font-medium text-teal-700 hover:underline">
+            <SegmentBadge segment={visit.doctor_segment} className="size-5 text-[11px]" />
+            <Link to={`/medecins/${visit.doctor_id}`} className="text-ink font-medium underline-offset-4 hover:underline">
               {visit.doctor_name}
             </Link>
-            <SegmentBadge segment={visit.doctor_segment} />
             <span>
-              {visit.doctor_specialty} · {visit.doctor_district} — prévue {formatLongDay(visit.planned_at)} à {formatTime(visit.planned_at)}
+              {visit.doctor_specialty}, {visit.doctor_district}. Prévue {formatLongDay(visit.planned_at)} à {formatTime(visit.planned_at)}
             </span>
           </span>
         }
@@ -243,8 +257,8 @@ function ReportForm({ visit, products, objectionCategories }: {
         {/* ═══ POINT D'EXTENSION IA : dictée vocale (backend/app/ai/voice_report.py) ═══
             Plus tard : enregistrer l'audio, appeler aiApi.voiceReport(visit.id, audio),
             puis pré-remplir ce formulaire avec `draft` (report_source = "dictee"). */}
-        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-teal-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-muted-foreground text-sm">
+        <div className="bg-pine flex flex-col gap-3 rounded-xl p-4 text-white sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <p className="text-[15px] text-[#CFEDE7]">
             Pressé ? Dictez votre compte-rendu, en darija ou en français : NOOR remplira le formulaire.
           </p>
           <AiFeatureButton
@@ -309,13 +323,13 @@ function ReportForm({ visit, products, objectionCategories }: {
           </div>
           {/* Rappel des messages clés des produits sélectionnés */}
           {presented.length > 0 && (
-            <div className="mt-4 space-y-2 rounded-lg bg-teal-50/70 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-teal-900">
+            <div className="mt-4 space-y-2 rounded-lg bg-mint-wash/70 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-ink">
                 <Lightbulb className="size-3.5" /> Messages clés à passer
               </p>
               {presented.map((p) => (
-                <div key={p.id} className="text-xs text-teal-900">
-                  <span className="font-semibold">{p.brand_name} :</span> {p.key_messages.slice(0, 2).join(" · ")}
+                <div key={p.id} className="text-xs text-ink">
+                  <span className="font-semibold">{p.brand_name} :</span> {p.key_messages.slice(0, 2).join(" ; ")}
                 </div>
               ))}
             </div>
@@ -332,7 +346,7 @@ function ReportForm({ visit, products, objectionCategories }: {
                 aria-pressed={feedback === f}
                 className={cn(
                   "flex cursor-pointer flex-col items-center gap-1 rounded-xl border p-2 text-center transition",
-                  feedback === f ? "border-teal-700 bg-teal-50 ring-2 ring-teal-700/20" : "bg-white hover:bg-muted/50",
+                  feedback === f ? "border-pine bg-mint-wash ring-pine/15 ring-2" : "border-line bg-white hover:bg-mint-wash/50",
                 )}
               >
                 <span className="text-2xl">{FEEDBACK[f].emoji}</span>
@@ -451,13 +465,13 @@ function ReportForm({ visit, products, objectionCategories }: {
                 </p>
               </div>
               {!isEdit && alreadyPlanned && (
-                <p className="rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm text-teal-900">
+                <p className="rounded-lg border border-mint bg-mint-wash p-3 text-sm text-ink">
                   Une visite est déjà planifiée le <strong>{formatDate(alreadyPlanned.planned_at)}</strong> à{" "}
                   {formatTime(alreadyPlanned.planned_at)} : pas de nouvelle visite créée.
                 </p>
               )}
               {!isEdit && !alreadyPlanned && (
-                <label className="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm">
+                <label className="border-line flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm">
                   <Checkbox checked={planNext} onCheckedChange={(c) => setPlanNext(c === true)} className="mt-0.5" />
                   <span>
                     Planifier automatiquement cette visite
@@ -470,9 +484,9 @@ function ReportForm({ visit, products, objectionCategories }: {
         </Section>
 
         {/* Barre de validation fixe (au-dessus de la navigation mobile) */}
-        <div className="sticky bottom-16 z-10 flex items-center justify-between gap-3 rounded-xl border bg-white/95 p-3 shadow-sm backdrop-blur lg:bottom-4">
-          <p className="text-muted-foreground hidden text-xs sm:block">
-            {productIds.length} produit(s) · {feedback ? FEEDBACK[feedback].label : "accueil non renseigné"}
+        <div className="border-line shadow-pine/10 sticky bottom-20 z-10 flex items-center justify-between gap-3 rounded-xl border bg-white/95 p-3 shadow-lg backdrop-blur lg:bottom-4">
+          <p className="text-muted-foreground hidden text-[13px] sm:block">
+            {productIds.length} produit(s) présenté(s), accueil : {feedback ? FEEDBACK[feedback].label.toLowerCase() : "non renseigné"}
           </p>
           <div className="flex flex-1 justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => navigate(-1)}>
@@ -480,7 +494,7 @@ function ReportForm({ visit, products, objectionCategories }: {
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
               {mutation.isPending ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
-              {isEdit ? "Enregistrer" : "Valider — visite réalisée"}
+              {isEdit ? "Enregistrer" : "Valider la visite"}
             </Button>
           </div>
         </div>

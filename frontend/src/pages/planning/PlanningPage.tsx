@@ -23,7 +23,6 @@ import { WeekCalendar } from "@/components/planning/WeekCalendar";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ErrorState, LoadingState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
@@ -106,7 +105,7 @@ export function PlanningPage() {
         title="Planning"
         description={
           visits.data
-            ? `${stats.planned} planifiée(s) · ${stats.done} réalisée(s)${stats.pending ? ` · ${stats.pending} compte(s)-rendu(s) à faire` : ""}`
+            ? `${stats.planned} planifiée(s), ${stats.done} réalisée(s)${stats.pending ? `, ${stats.pending} compte(s)-rendu(s) à faire` : ""}`
             : "Vos visites de la semaine"
         }
         actions={
@@ -138,9 +137,9 @@ export function PlanningPage() {
               <ChevronRight />
             </Button>
           </div>
-          <p className="hidden font-medium first-letter:uppercase sm:block">{label}</p>
+          <p className="font-display text-ink hidden text-lg font-semibold first-letter:uppercase sm:block">{label}</p>
         </div>
-        <p className="font-medium first-letter:uppercase sm:hidden">{label}</p>
+        <p className="font-display text-ink text-lg font-semibold first-letter:uppercase sm:hidden">{label}</p>
 
         <div className="flex flex-wrap items-center gap-3">
           {isSupervisor && (
@@ -192,7 +191,7 @@ export function PlanningPage() {
             <AgendaList days={days} visits={visits.data} readOnly={isSupervisor} onVisitClick={openVisit} />
           )}
           {!isDesktop && visits.data.length === 0 && (
-            <p className="text-muted-foreground rounded-xl border border-dashed p-6 text-center text-sm">
+            <p className="text-muted-foreground border-line rounded-xl border border-dashed p-6 text-center text-sm">
               Aucune visite cette semaine.
             </p>
           )}
@@ -202,9 +201,9 @@ export function PlanningPage() {
       {visits.data && view === "jour" && (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
           <AgendaList days={[anchor]} visits={dayVisits} readOnly={isSupervisor} onVisitClick={openVisit} numbered />
-          <Card className="h-80 p-0 lg:sticky lg:top-8 lg:h-[calc(100dvh-240px)]">
+          <div className="h-80 lg:sticky lg:top-8 lg:h-[calc(100dvh-240px)]">
             <VisitsMap visits={dayVisits} onVisitClick={openVisit} />
-          </Card>
+          </div>
         </div>
       )}
 

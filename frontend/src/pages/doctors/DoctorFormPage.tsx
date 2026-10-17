@@ -176,8 +176,8 @@ export function DoctorFormPage() {
             Plus tard : photo → aiApi.scanCard(image) → pré-remplir le formulaire (source =
             "carte_de_visite") et afficher les doublons possibles avant d'enregistrer. */}
         {!isEdit && (
-          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-teal-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-muted-foreground text-sm">
+          <div className="bg-pine flex flex-col gap-3 rounded-xl p-4 text-white sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <p className="text-[15px] text-[#CFEDE7]">
               Vous avez sa carte de visite ? Photographiez-la : NOOR remplira la fiche et vérifiera les doublons.
             </p>
             <AiFeatureButton
@@ -191,7 +191,7 @@ export function DoctorFormPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Identité</CardTitle>
+            <CardTitle>Identité</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label="Prénom" htmlFor="first_name" required>
@@ -229,7 +229,7 @@ export function DoctorFormPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Lieu d'exercice</CardTitle>
+            <CardTitle>Lieu d'exercice</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label="Type d'exercice" required>
@@ -283,7 +283,7 @@ export function DoctorFormPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Contact et visites</CardTitle>
+            <CardTitle>Contact et visites</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label="Téléphone" htmlFor="phone">
@@ -320,12 +320,12 @@ export function DoctorFormPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Statut de prescription</CardTitle>
+            <CardTitle>Statut de prescription</CardTitle>
             <CardDescription>Ce que le médecin prescrit aujourd'hui, produit par produit.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             {products.data?.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+              <div key={p.id} className="border-line flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{p.brand_name}</p>
                   <p className="text-muted-foreground truncate text-xs">{p.molecule}</p>
@@ -342,7 +342,7 @@ export function DoctorFormPage() {
           </CardContent>
         </Card>
 
-        <div className="sticky bottom-16 z-10 flex justify-end gap-2 rounded-xl border bg-white/95 p-3 shadow-sm backdrop-blur lg:bottom-4">
+        <div className="border-line shadow-pine/10 sticky bottom-20 z-10 flex justify-end gap-2 rounded-xl border bg-white/95 p-3 shadow-lg backdrop-blur lg:bottom-4">
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>
             Annuler
           </Button>

@@ -27,9 +27,10 @@ const DOC_TYPE: Record<DocumentInfo["doc_type"], { label: string; icon: typeof F
 
 const ORDER: PrescribingStatus[] = ["regulier", "occasionnel", "non_prescripteur"];
 const BAR_COLOR: Record<PrescribingStatus, string> = {
-  regulier: "#0d9488",
-  occasionnel: "#14b8a6",
-  non_prescripteur: "#e2e8f0",
+  // Une teinte (pin) du plus plein au plus clair : régulier → non prescripteur
+  regulier: "#0f3d3e",
+  occasionnel: "#5fb8a8",
+  non_prescripteur: "#e1e7e3",
 };
 
 export function ProductDetailPage() {
@@ -48,25 +49,21 @@ export function ProductDetailPage() {
       <PageHeader
         backTo="/produits"
         backLabel="Produits"
-        title={
-          <span>
-            {p.brand_name} <span className="text-muted-foreground font-normal">— {p.molecule}</span>
-          </span>
-        }
-        description={p.therapeutic_class}
+        title={p.brand_name}
+        description={`${p.molecule}. ${p.therapeutic_class}`}
       />
 
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="space-y-5 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Messages clés</CardTitle>
+              <CardTitle>Messages clés</CardTitle>
               <CardDescription>À transmettre pendant la visite</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="divide-line divide-y">
               {p.key_messages.map((m, i) => (
-                <div key={m} className="flex gap-3 rounded-lg bg-teal-50/70 p-3 text-sm">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-teal-700 text-xs font-bold text-white">
+                <div key={m} className="text-ink flex gap-4 py-3 text-[15px] leading-snug first:pt-0 last:pb-0">
+                  <span className="font-display text-pine bg-mint flex size-7 shrink-0 items-center justify-center rounded-lg text-sm font-bold">
                     {i + 1}
                   </span>
                   {m}
@@ -77,13 +74,13 @@ export function ProductDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Indications</CardTitle>
+              <CardTitle>Indications</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm">
                 {p.indications.map((ind) => (
                   <li key={ind} className="flex gap-2">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-teal-700" /> {ind}
+                    <CheckCircle2 className="text-pine mt-0.5 size-4 shrink-0" /> {ind}
                   </li>
                 ))}
               </ul>
@@ -92,22 +89,22 @@ export function ProductDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Documents</CardTitle>
+              <CardTitle>Documents</CardTitle>
               <CardDescription>
                 Documents officiels du produit. Ils alimenteront l'assistant produit (réponses avec citations).
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="divide-line divide-y">
               {p.documents.map((doc) => {
                 const T = DOC_TYPE[doc.doc_type];
                 return (
-                  <div key={doc.id} className="flex items-center gap-3 rounded-lg border px-3 py-2.5">
-                    <T.icon className="size-5 shrink-0 text-teal-700" />
+                  <div key={doc.id} className="border-line flex items-center gap-3 rounded-lg border px-3 py-2.5">
+                    <T.icon className="text-pine size-5 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{doc.title}</p>
                       <p className="text-muted-foreground text-xs">
                         {T.label}
-                        {doc.version && ` · version ${doc.version}`}
+                        {doc.version && `, version ${doc.version}`}
                       </p>
                     </div>
                     {doc.file_path ? (
@@ -131,7 +128,7 @@ export function ProductDetailPage() {
         <div className="space-y-5">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-2">
                 <Package className="size-4" /> Présentation
               </CardTitle>
             </CardHeader>
@@ -153,7 +150,7 @@ export function ProductDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-2">
                 <Stethoscope className="size-4" /> Prescription
               </CardTitle>
               <CardDescription>Dans votre périmètre ({total} médecins)</CardDescription>
@@ -176,7 +173,7 @@ export function ProductDetailPage() {
                   <Link
                     key={k}
                     to={`/medecins?product_id=${p.id}&prescribing_status=${k}`}
-                    className="hover:bg-muted/60 -mx-2 flex items-center gap-2 rounded-md px-2 py-1"
+                    className="hover:bg-mint-wash/60 -mx-2 flex items-center gap-2 rounded-md px-2 py-1"
                   >
                     <span className="size-2.5 rounded-sm" style={{ background: BAR_COLOR[k] }} />
                     {PRESCRIBING[k].label}
@@ -184,13 +181,13 @@ export function ProductDetailPage() {
                   </Link>
                 ))}
               </div>
-              <div className="grid grid-cols-2 gap-3 border-t pt-3">
+              <div className="border-line grid grid-cols-2 gap-3 border-t pt-3">
                 <div>
-                  <p className="tabular text-xl font-semibold">{p.stats.presentations_last_30d}</p>
+                  <p className="font-display tabular text-ink text-2xl font-semibold">{p.stats.presentations_last_30d}</p>
                   <p className="text-muted-foreground text-xs">présentations (30 j)</p>
                 </div>
                 <div>
-                  <p className="tabular text-xl font-semibold">{p.stats.samples_last_30d}</p>
+                  <p className="font-display tabular text-ink text-2xl font-semibold">{p.stats.samples_last_30d}</p>
                   <p className="text-muted-foreground text-xs">échantillons remis (30 j)</p>
                 </div>
               </div>
