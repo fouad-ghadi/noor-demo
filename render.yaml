@@ -4,7 +4,7 @@ services:
   - type: web
     name: noor-demo
     runtime: docker
-    plan: free              # gratuit : se met en veille après 15 min sans visite (réveil ≈ 1 min)
+    plan: free              # gratuit : veille après 15 min sans visite (évitée avec UptimeRobot, voir docs/DEPLOIEMENT.md)
     region: frankfurt       # la plus proche du Maroc
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health

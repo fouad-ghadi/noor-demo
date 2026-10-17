@@ -16,11 +16,13 @@ RUN npm run build
 
 # --- Étape 2 : image finale Python ------------------------------------------------
 FROM python:3.13-slim
-# Heure du Maroc : « aujourd'hui », l'agenda du jour et les KPIs suivent l'heure locale
+# Heure du Maroc : « aujourd'hui », l'agenda du jour et les KPIs suivent l'heure locale.
+# NOOR_DAILY_RESEED=1 : données de démo régénérées chaque nuit à 4 h (backend/app/services/daily_reseed.py).
 ENV TZ=Africa/Casablanca \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8000
+    PORT=8000 \
+    NOOR_DAILY_RESEED=1
 RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
     && rm -rf /var/lib/apt/lists/*
 

@@ -4,16 +4,28 @@ Point d'entrée de l'API NOOR Demo.
 Lancer :  uvicorn app.main:app --reload   (depuis le dossier backend/)
 Doc interactive : http://localhost:8000/docs
 """
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import ai, alerts, doctors, meta, objectives, products, stats, users, visits
 from app.database import Base, engine
+from app.services import daily_reseed
 
 # Crée les tables si elles n'existent pas encore (le seed les recrée de toute façon)
 Base.metadata.create_all(bind=engine)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Au démarrage : en ligne, régénère les données de démo chaque nuit (voir daily_reseed.py)."""
+    daily_reseed.start()
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="NOOR Demo — API",
     description="CRM pharmaceutique de démonstration pour délégués médicaux.",
     version="0.1.0",

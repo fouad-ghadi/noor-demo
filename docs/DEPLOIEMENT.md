@@ -31,13 +31,34 @@ Le dépôt contient déjà tout le nécessaire :
 ### Ensuite
 
 - **Chaque `git push` sur `main` redéploie le site automatiquement** (2 à 5 minutes).
-- Si le site « dort » (personne depuis 15 min), la première visite prend ~1 minute : c'est normal.
-  Avant une démo, ouvrir l'adresse quelques minutes avant.
+- Sur l'offre gratuite, le site « dort » après 15 min sans visite ; la visite suivante prend alors
+  30 à 60 secondes. Pour l'éviter : voir **« Empêcher la mise en veille »** ci-dessous.
+
+### Empêcher la mise en veille (gratuit, 5 minutes, une seule fois)
+
+Un service de surveillance gratuit visite le site toutes les 5 minutes : il ne s'endort plus et
+s'ouvre toujours instantanément. L'offre gratuite de Render (750 h par mois) suffit pour un
+service allumé tout le mois (744 h au maximum).
+
+1. Créer un compte gratuit sur **https://uptimerobot.com** (aucune carte bancaire).
+2. **+ New monitor** (ou « Add New Monitor ») :
+   - **Monitor type** : `HTTP(s)` ;
+   - **URL** : `https://noor-demo.onrender.com/api/health`
+     (une page très légère prévue pour ça : elle répond `{"status": "ok"}`) ;
+   - **Monitoring interval** : `5 minutes` ;
+   - **Create monitor**.
+3. C'est tout. Bonus : UptimeRobot envoie un email si le site tombe en panne.
+
+**Et l'agenda du jour ?** Le site ne redémarrant plus, les données ne seraient plus régénérées
+au démarrage. Le serveur les régénère donc lui-même **chaque nuit à 4 h** (heure du Maroc) :
+le matin, l'agenda du jour et le planning sont à jour. Code : `backend/app/services/daily_reseed.py`,
+activé par `NOOR_DAILY_RESEED=1` dans le `Dockerfile`.
 
 ### À savoir
 
 - **Données partagées et réinitialisées** : tout le monde utilise la même base de démo. Elle est
-  régénérée (`python seed.py`) à chaque démarrage du service : redéploiement, réveil après la veille...
+  régénérée (`python seed.py`) à chaque démarrage du service (redéploiement, réveil après la veille)
+  et chaque nuit à 4 h.
   Les visites ajoutées en ligne ne sont donc pas conservées — c'est voulu pour une démo
   (les données restent toujours propres et à la date du jour).
 - **Pas de vraie sécurité** (connexion simulée) : l'adresse est publique, ne mettez **aucune donnée réelle**.
