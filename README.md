@@ -27,7 +27,9 @@ cd noor-demo
 
 ## Lancer le backend
 
-Prérequis : **Python 3.11+** (sous Windows, cocher « Add python.exe to PATH » à l'installation).
+Prérequis : **Python 3.11, 3.12 ou 3.13** (sous Windows, cocher « Add python.exe to PATH » à l'installation).
+> ⚠️ Évitez les versions « preview » (3.14+, 3.15) : certains paquets n'y sont pas encore disponibles
+> sous Windows (erreur « Microsoft Visual C++ 14.0 is required »). Sous Windows : `py -3.13 -m venv .venv`.
 
 ```bash
 cd backend
@@ -43,7 +45,7 @@ Sous **Windows (PowerShell)** :
 
 ```powershell
 cd backend
-py -m venv .venv
+py -3.13 -m venv .venv          # Python 3.13 (voir prérequis)
 .venv\Scripts\Activate.ps1      # si « l'exécution de scripts est désactivée » :
                                 # Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 pip install -r requirements.txt

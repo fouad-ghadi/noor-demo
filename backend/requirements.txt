@@ -1,5 +1,7 @@
 # Dépendances du backend NOOR Demo
+# Python recommandé : 3.11, 3.12 ou 3.13 (éviter les versions « preview » comme 3.14+/3.15,
+# pour lesquelles certains paquets n'ont pas encore de version précompilée sous Windows).
 fastapi>=0.115
-uvicorn[standard]>=0.30
+uvicorn>=0.30
 sqlalchemy>=2.0
 pydantic>=2.7
