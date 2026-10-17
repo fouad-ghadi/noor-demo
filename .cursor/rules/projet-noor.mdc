@@ -19,7 +19,11 @@ Documentation : @README.md, @docs/EXTENSIONS_IA.md (modules IA), @docs/DEPLOIEME
 - Frontend React : après une modification de visite, appeler `invalidateVisitData(queryClient)` ;
   chaque page appelle `usePageContext(...)` ; dates via `src/lib/format.ts`.
 - Ne pas changer au hasard les couleurs des graphiques (`src/lib/chartColors.ts`, validées pour les daltoniens).
+- Identité visuelle (détails dans CLAUDE.md) : jetons `pine`, `mint`, `ink`, `paper`, `line` ; **safran réservé
+  à « maintenant »** (prochaine visite, aujourd'hui, heure actuelle) ; titres en Bricolage (`font-display`) ;
+  pas de libellés en majuscules ni de « · » entre les informations. Vérifier l'interface sur ordinateur et mobile.
 - Modules IA : implémenter les fonctions de `backend/app/ai/*.py` (formats dans `schemas.py`) ;
   les routes `/api/ai/...` fonctionnent alors automatiquement.
 - Après un changement : `npx tsc -b` dans `frontend/`, et vérifier le backend sur http://localhost:8000/docs.
-- Commits en français sur `main`.
+- Commits en français sur `main` : **chaque push sur `main` redéploie le site en ligne** (https://noor-demo.onrender.com).
+  Avant de pousser : `npm run build` dans `frontend/` doit réussir.
