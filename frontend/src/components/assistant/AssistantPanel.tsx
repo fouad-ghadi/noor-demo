@@ -9,6 +9,10 @@
  *
  * Le panneau reçoit en props le contexte de la page courante
  * (médecin affiché, visite en cours...) : voir AssistantContext.tsx.
+ *
+ * Pour brancher le chatbot : activer le champ de saisie en bas, puis appeler
+ *   aiApi.ask(question, { page, doctor_id, visit_id, product_id })   (src/api/ai.ts)
+ * et afficher `answer` + la liste `citations` (titre du document, page, extrait).
  */
 import { BookOpenText, Mic, ScanLine, ShieldAlert, Sparkles, X } from "lucide-react";
 

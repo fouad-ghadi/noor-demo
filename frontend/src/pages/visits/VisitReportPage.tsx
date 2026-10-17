@@ -16,6 +16,7 @@ import { toast } from "sonner";
 
 import { api } from "@/api/client";
 import type { Feedback, Product, Visit } from "@/api/types";
+import { AiFeatureButton } from "@/components/ai/AiFeatureButton";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { SegmentBadge } from "@/components/shared/badges";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -239,6 +240,21 @@ function ReportForm({ visit, products, objectionCategories }: {
       />
 
       <form onSubmit={submit} className="space-y-4 pb-4">
+        {/* ═══ POINT D'EXTENSION IA : dictée vocale (backend/app/ai/voice_report.py) ═══
+            Plus tard : enregistrer l'audio, appeler aiApi.voiceReport(visit.id, audio),
+            puis pré-remplir ce formulaire avec `draft` (report_source = "dictee"). */}
+        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-teal-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground text-sm">
+            Pressé ? Dictez votre compte-rendu, en darija ou en français : NOOR remplira le formulaire.
+          </p>
+          <AiFeatureButton
+            icon="🎤"
+            label="Dicter le compte-rendu"
+            description="Dictez la visite en darija ou en français ; le formulaire sera pré-rempli et vous n'aurez plus qu'à le relire."
+            className="shrink-0"
+          />
+        </div>
+
         <Section n={1} title="Visite">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-[1fr_1fr_2fr]">
             <div className="space-y-2">

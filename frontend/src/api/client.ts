@@ -43,7 +43,7 @@ function currentUserId(): string | null {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+export async function apiRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = { Accept: "application/json" };
   const userId = currentUserId();
   if (userId) headers["X-User-Id"] = userId;
@@ -103,34 +103,34 @@ export const api = {
   storageKey: USER_KEY,
 
   // Utilisateurs
-  login: (email: string, password: string) => request<User>("POST", "/auth/login", { email, password }),
-  users: () => request<User[]>("GET", "/users"),
-  team: () => request<User[]>("GET", "/users/team"),
-  meta: () => request<Meta>("GET", "/meta"),
+  login: (email: string, password: string) => apiRequest<User>("POST", "/auth/login", { email, password }),
+  users: () => apiRequest<User[]>("GET", "/users"),
+  team: () => apiRequest<User[]>("GET", "/users/team"),
+  meta: () => apiRequest<Meta>("GET", "/meta"),
 
   // Médecins
-  doctors: (filters: DoctorFilters = {}) => request<DoctorListItem[]>("GET", `/doctors${qs({ ...filters })}`),
-  doctor: (id: number) => request<DoctorDetail>("GET", `/doctors/${id}`),
-  createDoctor: (data: DoctorInput) => request<Doctor>("POST", "/doctors", data),
-  updateDoctor: (id: number, data: DoctorInput) => request<Doctor>("PUT", `/doctors/${id}`, data),
+  doctors: (filters: DoctorFilters = {}) => apiRequest<DoctorListItem[]>("GET", `/doctors${qs({ ...filters })}`),
+  doctor: (id: number) => apiRequest<DoctorDetail>("GET", `/doctors/${id}`),
+  createDoctor: (data: DoctorInput) => apiRequest<Doctor>("POST", "/doctors", data),
+  updateDoctor: (id: number, data: DoctorInput) => apiRequest<Doctor>("PUT", `/doctors/${id}`, data),
 
   // Visites
-  visits: (filters: VisitFilters = {}) => request<Visit[]>("GET", `/visits${qs({ ...filters })}`),
-  visit: (id: number) => request<Visit>("GET", `/visits/${id}`),
+  visits: (filters: VisitFilters = {}) => apiRequest<Visit[]>("GET", `/visits${qs({ ...filters })}`),
+  visit: (id: number) => apiRequest<Visit>("GET", `/visits/${id}`),
   planVisit: (doctor_id: number, planned_at: string, notes?: string) =>
-    request<Visit>("POST", "/visits", { doctor_id, planned_at, notes }),
+    apiRequest<Visit>("POST", "/visits", { doctor_id, planned_at, notes }),
   rescheduleVisit: (id: number, planned_at: string) =>
-    request<Visit>("PATCH", `/visits/${id}/reschedule`, { planned_at }),
+    apiRequest<Visit>("PATCH", `/visits/${id}/reschedule`, { planned_at }),
   cancelVisit: (id: number, reason: string, postpone = false, new_planned_at?: string) =>
-    request<Visit>("POST", `/visits/${id}/cancel`, { reason, postpone, new_planned_at }),
-  submitReport: (id: number, data: VisitReportInput) => request<Visit>("PUT", `/visits/${id}/report`, data),
+    apiRequest<Visit>("POST", `/visits/${id}/cancel`, { reason, postpone, new_planned_at }),
+  submitReport: (id: number, data: VisitReportInput) => apiRequest<Visit>("PUT", `/visits/${id}/report`, data),
 
   // Produits, objectifs, alertes, statistiques
-  products: () => request<Product[]>("GET", "/products"),
-  product: (id: number) => request<ProductDetail>("GET", `/products/${id}`),
-  objectives: (delegue_id?: number) => request<ObjectiveProgress[]>("GET", `/objectives${qs({ delegue_id })}`),
-  alerts: (delegue_id?: number) => request<Alert[]>("GET", `/alerts${qs({ delegue_id })}`),
-  updateAlert: (id: number, status: string) => request<Alert>("PATCH", `/alerts/${id}`, { status }),
-  dashboard: (delegue_id?: number) => request<Dashboard>("GET", `/stats/dashboard${qs({ delegue_id })}`),
-  teamStats: () => request<Team>("GET", "/stats/team"),
+  products: () => apiRequest<Product[]>("GET", "/products"),
+  product: (id: number) => apiRequest<ProductDetail>("GET", `/products/${id}`),
+  objectives: (delegue_id?: number) => apiRequest<ObjectiveProgress[]>("GET", `/objectives${qs({ delegue_id })}`),
+  alerts: (delegue_id?: number) => apiRequest<Alert[]>("GET", `/alerts${qs({ delegue_id })}`),
+  updateAlert: (id: number, status: string) => apiRequest<Alert>("PATCH", `/alerts/${id}`, { status }),
+  dashboard: (delegue_id?: number) => apiRequest<Dashboard>("GET", `/stats/dashboard${qs({ delegue_id })}`),
+  teamStats: () => apiRequest<Team>("GET", "/stats/team"),
 };

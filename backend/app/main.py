@@ -7,7 +7,7 @@ Doc interactive : http://localhost:8000/docs
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import alerts, doctors, meta, objectives, products, stats, users, visits
+from app.api import ai, alerts, doctors, meta, objectives, products, stats, users, visits
 from app.database import Base, engine
 
 # Crée les tables si elles n'existent pas encore (le seed les recrée de toute façon)
@@ -27,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (users, meta, doctors, visits, products, objectives, alerts, stats):
+for module in (users, meta, doctors, visits, products, objectives, alerts, stats, ai):
     app.include_router(module.router, prefix="/api")
 
 

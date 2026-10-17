@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { api } from "@/api/client";
 import type { DoctorInput, PrescribingStatus } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
+import { AiFeatureButton } from "@/components/ai/AiFeatureButton";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ErrorState, LoadingState } from "@/components/shared/states";
@@ -171,6 +172,23 @@ export function DoctorFormPage() {
           mutation.mutate();
         }}
       >
+        {/* ═══ POINT D'EXTENSION IA : scan de carte de visite (backend/app/ai/card_scanner.py) ═══
+            Plus tard : photo → aiApi.scanCard(image) → pré-remplir le formulaire (source =
+            "carte_de_visite") et afficher les doublons possibles avant d'enregistrer. */}
+        {!isEdit && (
+          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-teal-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted-foreground text-sm">
+              Vous avez sa carte de visite ? Photographiez-la : NOOR remplira la fiche et vérifiera les doublons.
+            </p>
+            <AiFeatureButton
+              icon="📷"
+              label="Scanner une carte de visite"
+              description="Prenez la carte en photo : la fiche est pré-remplie et NOOR signale si le médecin existe déjà (ex. « Ouazzani » / « Wazzani »)."
+              className="shrink-0"
+            />
+          </div>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Identité</CardTitle>
