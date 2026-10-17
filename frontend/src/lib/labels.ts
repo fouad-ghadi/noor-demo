@@ -72,6 +72,7 @@ export const PROGRESS_STATUS: Record<ProgressStatus, { label: string; className:
 
 export const LAST_VISIT_FILTERS: Record<string, string> = {
   lt30: "Moins de 30 jours",
+  gt30: "30 jours ou plus (à revoir)",
   "30_60": "Entre 30 et 60 jours",
   gt60: "Plus de 60 jours",
   never: "Jamais visité",

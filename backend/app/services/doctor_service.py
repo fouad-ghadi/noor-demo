@@ -75,7 +75,7 @@ def list_doctors(
     segment: str | None = None,
     product_id: int | None = None,
     prescribing_status: str | None = None,
-    last_visit: str | None = None,   # "lt30" | "30_60" | "gt60" | "never"
+    last_visit: str | None = None,   # "lt30" | "gt30" | "30_60" | "gt60" | "never"
     delegue_id: int | None = None,
 ) -> list[DoctorListItem]:
     """Liste filtrée des médecins visibles par l'utilisateur."""
@@ -147,6 +147,8 @@ def list_doctors(
             continue
         if last_visit == "lt30" and (days is None or days >= 30):
             continue
+        if last_visit == "gt30" and (days is not None and days < 30):
+            continue  # "gt30" = 30 jours ou plus, ou jamais visité (« médecins à revoir »)
         if last_visit == "30_60" and (days is None or not 30 <= days <= 60):
             continue
         if last_visit == "gt60" and (days is not None and days <= 60):

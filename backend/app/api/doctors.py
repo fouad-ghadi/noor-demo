@@ -23,7 +23,7 @@ def list_doctors(
 ):
     """
     Liste filtrée des médecins visibles.
-    `last_visit` : `lt30` (< 30 j), `30_60`, `gt60` (> 60 j ou jamais), `never`.
+    `last_visit` : `lt30` (< 30 j), `gt30` (≥ 30 j ou jamais), `30_60`, `gt60` (> 60 j ou jamais), `never`.
     """
     return doctor_service.list_doctors(
         db, user, search=search, city=city, specialty=specialty, segment=segment,
