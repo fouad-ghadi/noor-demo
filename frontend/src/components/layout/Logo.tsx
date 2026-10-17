@@ -1,14 +1,13 @@
+import { NoorMark } from "@/components/brand/NoorMark";
 import { cn } from "@/lib/utils";
 
-/** Logo NOOR (« lumière » en arabe). */
+/** Logo NOOR : emblème (étoile à huit branches) + nom. */
 export function Logo({ className, light = false }: { className?: string; light?: boolean }) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-teal-700 font-bold text-white shadow-sm">
-        N
-      </div>
+      <NoorMark className="size-8" color={light ? "#5eead4" : "#0d9488"} core={light ? "#0f3d3e" : "#ffffff"} />
       <div className="leading-tight">
-        <p className={cn("text-base font-bold tracking-wide", light ? "text-white" : "text-foreground")}>NOOR</p>
+        <p className={cn("font-display text-[17px] font-bold tracking-wide", light ? "text-white" : "text-foreground")}>NOOR</p>
         <p className={cn("text-[11px]", light ? "text-sidebar-muted" : "text-muted-foreground")}>CRM Délégués médicaux</p>
       </div>
     </div>

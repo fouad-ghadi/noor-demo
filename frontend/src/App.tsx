@@ -10,7 +10,7 @@ import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { DoctorDetailPage } from "@/pages/doctors/DoctorDetailPage";
 import { DoctorFormPage } from "@/pages/doctors/DoctorFormPage";
 import { DoctorsPage } from "@/pages/doctors/DoctorsPage";
-import { LoginPage } from "@/pages/LoginPage";
+import { LoginPage } from "@/pages/login/LoginPage";
 import { ObjectivesPage } from "@/pages/objectives/ObjectivesPage";
 import { PlanningPage } from "@/pages/planning/PlanningPage";
 import { ProductDetailPage } from "@/pages/products/ProductDetailPage";

@@ -5,6 +5,7 @@
  */
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/bricolage-grotesque";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -52,6 +53,8 @@
 
 @theme inline {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Police de titre (page de connexion, logo) */
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -105,4 +108,30 @@
 /* Zone de sécurité en bas sur iPhone (barre de navigation mobile) */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ------------------------------------------------------------------
+   Page de connexion : le trajet de la tournée se dessine au chargement
+   (une seule animation, désactivée si l'utilisateur réduit les animations)
+   ------------------------------------------------------------------ */
+@keyframes route-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes stop-appear {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.route-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: route-draw 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.2s forwards;
+}
+.stop-appear {
+  opacity: 0;
+  animation: stop-appear 0.45s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-draw { animation: none; stroke-dashoffset: 0; }
+  .stop-appear { animation: none; opacity: 1; }
 }
