@@ -83,7 +83,7 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
 - `Dockerfile` (build frontend → image Python 3.13, seed au démarrage, TZ Africa/Casablanca) et `render.yaml`
   (Render, offre gratuite, Francfort, auto-deploy). Le backend sert `frontend/dist` s'il existe.
 - Guide : `docs/DEPLOIEMENT.md`. **État** : en ligne sur **https://noor-demo.onrender.com** (offre gratuite,
-  chaque push sur `main` redéploie). Anti-veille : moniteur UptimeRobot (5 min) sur `/api/health`, à créer par Fouad.
+  chaque push sur `main` redéploie). Anti-veille : **en place** depuis le 18 oct. 2026 (moniteur UptimeRobot toutes les 5 min, compte de Fouad).
   Comme le service ne redémarre plus, `app/services/daily_reseed.py` relance `seed.py` chaque nuit à 4 h
   (activé par `NOOR_DAILY_RESEED=1` dans le `Dockerfile` ; inactif en local).
   Alternatives étudiées sans carte : Azure for Students (100 $, 12 mois), Hugging Face Spaces (veille, offre incertaine).
@@ -95,7 +95,7 @@ délégué/superviseur, produits, objectifs, points d'extension IA, README, refo
 Dockerfile/Render, refonte complète du gabarit : toutes les pages).
 
 Pistes pour la suite (à valider avec Fouad) :
-1. Mise en ligne : vérifier le moniteur UptimeRobot et la régénération nocturne (journaux Render).
+1. Mise en ligne : vérifier une fois dans les journaux Render la ligne « Données de démo régénérées pour le … » (4 h du matin).
 2. Implémenter les modules IA (un par étudiant, voir `docs/EXTENSIONS_IA.md`).
 3. Ajouter des tests automatisés (pytest pour les services, Playwright pour les parcours clés).
 4. Polir l'interface (mode sombre éventuel, tests visuels Playwright).
