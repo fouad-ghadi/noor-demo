@@ -5,6 +5,7 @@ Logique métier des visites : planification, déplacement, annulation, compte-re
 (app/ai/voice_report.py) : il produira un `VisitReport` à partir de la dictée,
 puis appellera cette même fonction avec report_source="dictee".
 """
+import logging
 from datetime import datetime, time
 
 from fastapi import HTTPException
@@ -93,7 +94,20 @@ def reschedule_visit(db: Session, user: User, visit_id: int, data: VisitReschedu
     visit.planned_at = data.planned_at
     db.commit()
     alert_service.refresh_alerts(db, visit.delegue_id)
+    _scan_pharmacovigilance(db, visit)
     return get_visit(db, user, visit.id)
+
+
+def _scan_pharmacovigilance(db: Session, visit: Visit) -> None:
+    """IA : cherche un effet indésirable dans le compte-rendu et crée l'alerte de déclaration."""
+    # Import local : le module IA dépend lui-même des services (évite une importation circulaire)
+    from app.ai import pharmacovigilance
+
+    try:
+        pharmacovigilance.scan_visit(db, visit)
+    except Exception:  # noqa: BLE001 — l'analyse ne doit jamais empêcher d'enregistrer le compte-rendu
+        db.rollback()
+        logging.getLogger("uvicorn.error").exception("Analyse de pharmacovigilance impossible")
 
 
 def cancel_visit(db: Session, user: User, visit_id: int, data: VisitCancel) -> Visit:
@@ -122,7 +136,20 @@ def cancel_visit(db: Session, user: User, visit_id: int, data: VisitCancel) -> V
         visit.status = VisitStatus.ANNULEE
     db.commit()
     alert_service.refresh_alerts(db, visit.delegue_id)
+    _scan_pharmacovigilance(db, visit)
     return get_visit(db, user, visit.id)
+
+
+def _scan_pharmacovigilance(db: Session, visit: Visit) -> None:
+    """IA : cherche un effet indésirable dans le compte-rendu et crée l'alerte de déclaration."""
+    # Import local : le module IA dépend lui-même des services (évite une importation circulaire)
+    from app.ai import pharmacovigilance
+
+    try:
+        pharmacovigilance.scan_visit(db, visit)
+    except Exception:  # noqa: BLE001 — l'analyse ne doit jamais empêcher d'enregistrer le compte-rendu
+        db.rollback()
+        logging.getLogger("uvicorn.error").exception("Analyse de pharmacovigilance impossible")
 
 
 def submit_report(db: Session, user: User, visit_id: int, data: VisitReport) -> Visit:
@@ -184,5 +211,18 @@ def submit_report(db: Session, user: User, visit_id: int, data: VisitReport) -> 
 
     db.commit()
     alert_service.refresh_alerts(db, visit.delegue_id)
+    _scan_pharmacovigilance(db, visit)
     return get_visit(db, user, visit.id)
+
+
+def _scan_pharmacovigilance(db: Session, visit: Visit) -> None:
+    """IA : cherche un effet indésirable dans le compte-rendu et crée l'alerte de déclaration."""
+    # Import local : le module IA dépend lui-même des services (évite une importation circulaire)
+    from app.ai import pharmacovigilance
+
+    try:
+        pharmacovigilance.scan_visit(db, visit)
+    except Exception:  # noqa: BLE001 — l'analyse ne doit jamais empêcher d'enregistrer le compte-rendu
+        db.rollback()
+        logging.getLogger("uvicorn.error").exception("Analyse de pharmacovigilance impossible")
 

@@ -26,6 +26,18 @@ Règles :
   toujours relu avant enregistrement.
 - Toujours **expliquer** le résultat (citations, raisons, extraits).
 
+## État (octobre 2026)
+
+| Module | État | Méthode sans clé | Avec `ANTHROPIC_API_KEY` |
+|---|---|---|---|
+| 🎤 Compte-rendu dicté | ✅ implémenté | transcription par le navigateur + mots-clés (darija / français) | extraction structurée par Claude |
+| 💬 Assistant produit | ✅ implémenté | recherche BM25 dans les RCP simplifiés + réponse extraite, citée | réponse rédigée par Claude à partir des seuls passages trouvés |
+| ⚠️ Pharmacovigilance | ✅ implémenté | règles (symptôme + cas réel + exposition, sans « crainte ») : 7/7, 0 fausse alerte | détection par Claude (comptes-rendus enregistrés) |
+| ✨ Recommandations | ✅ implémenté | score expliqué (retard, potentiel, opportunités produit, créneau) | — |
+| 📷 Carte de visite | à faire | — | — |
+
+Code commun : `app/ai/llm.py` (appel à Claude, sorties JSON garanties, retour aux règles en cas d'erreur).
+
 ## Répartition possible (5 étudiants, 5 modules)
 
 | Module | Fichier | Difficulté | Données de test déjà dans la base |

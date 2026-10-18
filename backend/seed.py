@@ -23,6 +23,7 @@ from collections import Counter, defaultdict
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
+from app.ai import pharmacovigilance
 from app.database import Base, SessionLocal, engine
 from app.models import (
     Alert,
@@ -265,7 +266,9 @@ def create_products(db) -> list[Product]:
         product = Product(**data)
         name = data["brand_name"]
         product.documents = [
-            Document(title=f"RCP — {name} ({data['molecule']})", doc_type=DocumentType.RCP, version="2025-03"),
+            # Le RCP simplifié existe en texte (docs/products/) : c'est la source de l'assistant produit (RAG)
+            Document(title=f"RCP — {name} ({data['molecule']})", doc_type=DocumentType.RCP, version="2025-03",
+                     file_path=f"docs/products/{name}/rcp_{name}.md"),
             Document(title=f"Notice patient — {name}", doc_type=DocumentType.NOTICE, version="2025-03"),
             Document(title=f"Aide de visite {name} — {data['key_messages'][0]}",
                      doc_type=DocumentType.SUPPORT_PROMOTIONNEL, version="2026-01"),
@@ -690,6 +693,7 @@ def main() -> None:
         pv_notes = add_pharmacovigilance_notes(db)
         create_objectives(db, delegates)
         create_alerts(db, delegates)
+        n_pv = pharmacovigilance.scan_all(db)  # IA : alertes « effet indésirable à déclarer »
         write_duplicates_doc(pairs, pv_notes)
 
         # Résumé
@@ -701,7 +705,8 @@ def main() -> None:
         print(f"✓ {n_visits} visites du {HISTORY_START:%d/%m/%Y} au "
               f"{TODAY + timedelta(days=PLANNING_DAYS):%d/%m/%Y} : {dict(status_counts)}")
         print(f"✓ {db.query(Objective).count()} objectifs mensuels, {db.query(Alert).count()} alertes")
-        print(f"✓ {len(pv_notes)} notes de pharmacovigilance, seed_duplicates.md généré")
+        print(f"✓ {len(pv_notes)} notes de pharmacovigilance ({n_pv} alertes créées par le module IA), "
+              "seed_duplicates.md généré")
         print("\nComptes de démo (mot de passe : demo) :")
         print(f"  Superviseur : {supervisor.email}")
         for user, _ in delegates:

@@ -54,6 +54,14 @@ au démarrage. Le serveur les régénère donc lui-même **chaque nuit à 4 h** 
 le matin, l'agenda du jour et le planning sont à jour. Code : `backend/app/services/daily_reseed.py`,
 activé par `NOOR_DAILY_RESEED=1` dans le `Dockerfile`.
 
+### Activer Claude pour les modules d'IA (facultatif)
+
+Sans rien configurer, les modules d'IA fonctionnent avec des règles. Pour de meilleurs résultats :
+1. Créer une clé sur https://console.anthropic.com (payant à l'usage).
+2. Render → service **noor-demo** → **Environment** → **Add Environment Variable** :
+   nom `ANTHROPIC_API_KEY`, valeur `sk-ant-...` → **Save** (le service redémarre).
+3. Ne jamais mettre la clé dans le code ni sur GitHub.
+
 ### À savoir
 
 - **Données partagées et réinitialisées** : tout le monde utilise la même base de démo. Elle est

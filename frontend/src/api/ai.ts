@@ -2,12 +2,13 @@
  * ╔══════════════════════════════════════════════════════════════════╗
  * ║  POINT D'EXTENSION IA — appels aux routes /api/ai/...            ║
  * ╚══════════════════════════════════════════════════════════════════╝
- * Ces fonctions sont prêtes ; tant que le backend n'implémente pas le module,
- * elles échouent avec une ApiError de statut 501 (« Bientôt disponible »).
+ * Modules implémentés : dictée, assistant produit, pharmacovigilance (côté serveur),
+ * recommandations. Le scan de carte de visite n'est pas implémenté : sa route répond
+ * 501 (« Bientôt disponible »).
  * Formats : voir backend/app/ai/schemas.py.
  */
 import { apiRequest } from "./client";
-import type { VisitReportInput } from "./types";
+import type { TimeSlot, VisitReportInput } from "./types";
 
 export interface AiStatus {
   [feature: string]: { implemented: boolean; module: string };
@@ -15,8 +16,19 @@ export interface AiStatus {
 
 export interface AskResponse {
   answer: string;
-  citations: { document_id: number; document_title: string; page: number | null; excerpt: string }[];
+  citations: { document_id: number; document_title: string; page: number | null; section: string | null; excerpt: string }[];
   refused: boolean;
+}
+
+/** ✨ Une visite recommandée, avec ses raisons. */
+export interface VisitRecommendation {
+  doctor_id: number;
+  doctor_name: string;
+  suggested_date: string;
+  suggested_slot: TimeSlot;
+  product_ids: number[];
+  reasons: string[];
+  score: number;
 }
 
 export interface VoiceReportResult {
@@ -31,11 +43,17 @@ const post = <T,>(path: string, body: unknown) => apiRequest<T>("POST", path, bo
 export const aiApi = {
   /** Fonctionnalités IA disponibles (pour activer les boutons automatiquement). */
   status: () => apiRequest<AiStatus>("GET", "/ai/status"),
-  /** 🎤 Dictée → brouillon de compte-rendu. */
-  voiceReport: (visit_id: number, audio_base64: string, language_hint = "darija") =>
-    post<VoiceReportResult>("/ai/voice-report", { visit_id, audio_base64, language_hint }),
+  /** 🎤 Dictée (texte transcrit par le navigateur) → brouillon de compte-rendu. */
+  voiceReport: (visit_id: number, transcript: string) =>
+    post<VoiceReportResult>("/ai/voice-report", { visit_id, transcript }),
   /** 💬 Question produit (RAG avec citations). */
   ask: (question: string, context?: Record<string, unknown>) => post<AskResponse>("/ai/assistant/ask", { question, context }),
+  /** ✨ Visites recommandées (délégué connecté, ou délégué choisi par le superviseur). */
+  recommendations: (delegue_id?: number, limit = 5) =>
+    apiRequest<VisitRecommendation[]>(
+      "GET",
+      `/ai/recommendations?limit=${limit}${delegue_id !== undefined ? `&delegue_id=${delegue_id}` : ""}`,
+    ),
   /** 📷 Carte de visite → fiche médecin + doublons. */
   scanCard: (image_base64: string) => post<unknown>("/ai/card-scanner", { image_base64 }),
 };

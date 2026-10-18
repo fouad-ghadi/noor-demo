@@ -5,3 +5,5 @@ fastapi>=0.115
 uvicorn>=0.30
 sqlalchemy>=2.0
 pydantic>=2.7
+# IA : utilisé seulement si la variable ANTHROPIC_API_KEY est définie (voir app/ai/llm.py)
+anthropic>=1.15

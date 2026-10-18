@@ -139,6 +139,26 @@ To say to the jury
       toujours pourquoi. »
 
 
+HOW TO DEMO EACH MODULE (live site or local)
+--------------------------------------------
+Works without any API key (rules and text search). With an Anthropic API key
+(ANTHROPIC_API_KEY), Claude is used for better quality, with automatic fallback.
+
+1. Dictated report: log in as Salma -> dashboard -> "Comptes-rendus a rediger" ->
+   "Rediger" -> "Dicter le compte-rendu" -> "Charger un exemple en darija" (or speak,
+   in Chrome) -> "Remplir le formulaire". Show the pre-filled steps, then validate.
+2. Product assistant: open "Assistant NOOR" -> ask
+   "Peut-on donner Amoxira a un enfant de moins de 6 ans ?" -> answer + sources.
+   Then "Quel est le prix d'Amoxira ?" -> it says it does not know (not in documents).
+3. Pharmacovigilance: alerts "Effet indesirable a declarer" at the top of the alerts.
+   Live: dictate a report containing "une patiente avec des vertiges sous Cardiovex",
+   validate -> a new pharmacovigilance alert appears on the dashboard.
+   Measured result on the demo data: 7 of 7 found, 0 false alarm
+   (backend/scripts/evaluer_pharmacovigilance.py).
+4. Recommendations: log in as Hamza (behind schedule) -> card "Visites recommandees":
+   overdue segment A doctors first, with products and reasons -> "Planifier".
+
+
 QUESTIONS THE JURY WILL PROBABLY ASK
 ------------------------------------
 "Can the AI make mistakes?"

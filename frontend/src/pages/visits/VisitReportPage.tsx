@@ -15,6 +15,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { api } from "@/api/client";
+import type { VoiceReportResult } from "@/api/ai";
 import type { Feedback, Product, Visit } from "@/api/types";
 import { AiFeatureButton } from "@/components/ai/AiFeatureButton";
 import { usePageContext } from "@/components/assistant/AssistantContext";
@@ -29,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { TIME_OPTIONS } from "@/components/visits/PlanVisitDialog";
+import { VoiceDictationDialog } from "@/components/visits/VoiceDictationDialog";
 import { invalidateVisitData, useMeta, useProducts } from "@/hooks/queries";
 import { formatDate, formatLongDay, formatTime, toApiDateTime } from "@/lib/format";
 import { FEEDBACK } from "@/lib/labels";
@@ -99,6 +101,16 @@ function Section({ n, title, description, children }: { n: number; title: string
   );
 }
 
+/** Libellés des champs que la dictée n'a pas pu remplir avec certitude. */
+const UNCERTAIN_LABEL: Record<string, string> = {
+  product_ids: "produits présentés",
+  feedback: "accueil du médecin",
+  duration_min: "durée de l'entretien",
+  objections: "objections",
+  samples: "échantillons",
+  next_step: "suite à donner",
+};
+
 export function VisitReportPage() {
   const id = Number(useParams().id);
   const visit = useQuery({ queryKey: ["visit", id], queryFn: () => api.visit(id) });
@@ -168,6 +180,29 @@ function ReportForm({ visit, products, objectionCategories }: {
     visit.next_visit_date ?? format(addDays(start, NEXT_VISIT_DAYS[visit.doctor_segment]), "yyyy-MM-dd"),
   );
   const [planNext, setPlanNext] = useState(!isEdit);
+  // IA (dictée) : source du compte-rendu et champs à vérifier en priorité
+  const [reportSource, setReportSource] = useState<"manuel" | "dictee">(visit.report_source === "dictee" ? "dictee" : "manuel");
+  const [toCheck, setToCheck] = useState<string[] | null>(null);
+  const [dictationOpen, setDictationOpen] = useState(false);
+
+  /** Pré-remplit le formulaire avec le brouillon produit par la dictée (le délégué relit ensuite). */
+  const applyDraft = ({ draft, uncertain_fields }: VoiceReportResult) => {
+    setDuration(draft.duration_min);
+    setProductIds(draft.product_ids);
+    setFeedback(draft.feedback as Feedback);
+    setObjections(
+      Object.fromEntries(draft.objections.map((o) => [o.category, { comment: o.comment ?? "", product_id: o.product_id ?? null }])),
+    );
+    setSamples(Object.fromEntries(draft.samples.map((x) => [x.product_id, x.quantity])));
+    setNotes(draft.notes ?? "");
+    if (draft.next_step) setNextStep(draft.next_step);
+    if (draft.next_visit_date) setNextDate(draft.next_visit_date);
+    if (draft.product_ids.some((pid) => !targeted.some((p) => p.id === pid))) setShowOthers(true);
+    setReportSource("dictee");
+    setToCheck(uncertain_fields);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast.success("Formulaire pré-rempli par la dictée", { description: "Relisez-le avant de valider." });
+  };
 
   // Une visite est-elle déjà planifiée pour ce médecin ? (alors pas de création automatique)
   const upcoming = useQuery({
@@ -211,7 +246,7 @@ function ReportForm({ visit, products, objectionCategories }: {
         next_step: nextStep.trim() || null,
         next_visit_date: nextDate || null,
         plan_next_visit: planNext && !alreadyPlanned,
-        report_source: "manuel",
+        report_source: reportSource,
       }),
     onSuccess: () => {
       invalidateVisitData(queryClient);
@@ -254,9 +289,7 @@ function ReportForm({ visit, products, objectionCategories }: {
       />
 
       <form onSubmit={submit} className="space-y-4 pb-4">
-        {/* ═══ POINT D'EXTENSION IA : dictée vocale (backend/app/ai/voice_report.py) ═══
-            Plus tard : enregistrer l'audio, appeler aiApi.voiceReport(visit.id, audio),
-            puis pré-remplir ce formulaire avec `draft` (report_source = "dictee"). */}
+        {/* IA : dictée vocale (backend/app/ai/voice_report.py) → formulaire pré-rempli, relu par le délégué */}
         <div className="bg-pine flex flex-col gap-3 rounded-xl p-4 text-white sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <p className="text-[15px] text-[#CFEDE7]">
             Pressé ? Dictez votre compte-rendu, en darija ou en français : NOOR remplira le formulaire.
@@ -266,8 +299,22 @@ function ReportForm({ visit, products, objectionCategories }: {
             label="Dicter le compte-rendu"
             description="Dictez la visite en darija ou en français ; le formulaire sera pré-rempli et vous n'aurez plus qu'à le relire."
             className="shrink-0"
+            enabled
+            onClick={() => setDictationOpen(true)}
           />
         </div>
+
+        {/* Après la dictée : rappel de relire, et champs dont NOOR n'est pas sûr */}
+        {toCheck && (
+          <div className="border-mint bg-mint-wash/60 text-ink rounded-xl border px-4 py-3 text-sm">
+            <p className="font-medium">Formulaire pré-rempli par la dictée : relisez chaque étape avant de valider.</p>
+            {toCheck.length > 0 && (
+              <p className="text-ink/75 mt-0.5">
+                Non précisé dans la dictée, à compléter : {toCheck.map((f) => UNCERTAIN_LABEL[f] ?? f).join(", ")}.
+              </p>
+            )}
+          </div>
+        )}
 
         <Section n={1} title="Visite">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-[1fr_1fr_2fr]">
@@ -499,6 +546,7 @@ function ReportForm({ visit, products, objectionCategories }: {
           </div>
         </div>
       </form>
+      <VoiceDictationDialog open={dictationOpen} onOpenChange={setDictationOpen} visitId={visit.id} onDraft={applyDraft} />
     </div>
   );
 }

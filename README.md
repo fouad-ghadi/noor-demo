@@ -130,8 +130,15 @@ Durée : 5 à 7 minutes. Lancer `python seed.py` juste avant.
 6. **Fiche médecin** — statut de prescription par produit, réceptivité par créneau, historique.
 7. **Déconnexion → Nadia (superviseur)** — tableau comparatif : Youssef en avance, Hamza en retard ;
    cliquer sur Hamza → son tableau de bord en lecture seule.
-8. **Ouverture IA** — bouton **🎤 Dicter le compte-rendu**, **📷 Scanner une carte de visite**,
-   panneau **Assistant NOOR** : « voici où viendront nos modules d'IA ».
+8. **Les modules d'IA** (explications pour le jury : [docs/IA_explications_jury.txt](docs/IA_explications_jury.txt)) :
+   - **🎤 Dictée** : compte-rendu d'une visite passée → « Dicter le compte-rendu » → « Charger un exemple en darija »
+     → « Remplir le formulaire » : le formulaire est pré-rempli, on relit et on valide.
+   - **⚠️ Pharmacovigilance** : alertes « Effet indésirable à déclarer » en tête du tableau de bord ; dicter une phrase
+     comme « une patiente avec des vertiges sous Cardiovex » crée l'alerte automatiquement à la validation.
+   - **💬 Assistant NOOR** : « Peut-on donner Amoxira à un enfant de moins de 6 ans ? » → réponse avec ses sources ;
+     « Quel est le prix d'Amoxira ? » → l'assistant dit qu'il ne sait pas (pas dans les documents validés).
+   - **✨ Visites recommandées** (tableau de bord) : qui voir, quand, avec quels produits, et pourquoi ;
+     le plus parlant avec Hamza (en retard sur ses médecins A).
 
 ---
 
@@ -172,7 +179,7 @@ noor-demo/
 │       ├── schemas/         formats d'entrée / sortie de l'API (Pydantic)
 │       ├── services/        ⭐ TOUTE la logique métier (KPIs, alertes, droits d'accès...)
 │       ├── api/             routes REST /api/... (fines : elles appellent les services)
-│       ├── ai/              ⭐ modules IA à implémenter (points d'extension)
+│       ├── ai/              ⭐ modules IA (4 implémentés, scan de carte à venir)
 │       └── seed_data/       listes utilisées par le seed (noms, quartiers, produits, textes)
 ├── frontend/                Application web (React + Vite + TypeScript + Tailwind + shadcn/ui)
 │   └── src/
@@ -247,27 +254,31 @@ User (délégué / superviseur) ──< Doctor ──< DoctorProductStatus >─�
 | PUT | `/api/visits/{id}/report` | compte-rendu → visite « réalisée » |
 | GET | `/api/stats/dashboard` · `/api/stats/team` | tableau de bord délégué · vue équipe |
 | GET | `/api/objectives` · `/api/alerts` · `/api/products` | objectifs · alertes · produits |
-| * | `/api/ai/...` | fonctionnalités IA (501 tant qu'elles ne sont pas implémentées) |
+| * | `/api/ai/...` | fonctionnalités IA (le scan de carte de visite répond 501 : non implémenté) |
 
 ---
 
 ## Points d'extension IA
 
-Tout est en place pour ajouter les 5 modules d'IA **sans toucher au reste de l'application**.
-Guide détaillé, module par module : **[docs/EXTENSIONS_IA.md](docs/EXTENSIONS_IA.md)**.
+Quatre modules d'IA sont **implémentés** ; le cinquième (scan de carte de visite) reste un point d'extension.
+Guide détaillé : **[docs/EXTENSIONS_IA.md](docs/EXTENSIONS_IA.md)**. Explications simples pour le jury :
+**[docs/IA_explications_jury.txt](docs/IA_explications_jury.txt)**.
 
-| Fonctionnalité | Backend (à implémenter) | Route API (répond 501 pour l'instant) | Frontend (déjà en place) |
+| Fonctionnalité | Backend | Route API | Frontend |
 |---|---|---|---|
-| 🎤 Compte-rendu dicté (darija / français) | `app/ai/voice_report.py` | `POST /api/ai/voice-report` | bouton « Dicter le compte-rendu » — `pages/visits/VisitReportPage.tsx` |
-| 💬 Assistant produit (RAG + citations) | `app/ai/rag_assistant.py` | `POST /api/ai/assistant/ask` | panneau « Assistant NOOR » (toutes les pages, reçoit le contexte) — `components/assistant/` |
-| ⚠️ Pharmacovigilance | `app/ai/pharmacovigilance.py` | `POST /api/ai/pharmacovigilance/scan` | alertes du tableau de bord (type « pharmacovigilance » déjà prévu) |
-| 📷 Scan de carte de visite + doublons | `app/ai/card_scanner.py` | `POST /api/ai/card-scanner` | bouton « Scanner une carte de visite » — `pages/doctors/DoctorFormPage.tsx` |
-| ✨ Recommandations de visites | `app/ai/recommendations.py` | `GET /api/ai/recommendations` | à côté de « Médecins à revoir » (tableau de bord) |
+| 🎤 Compte-rendu dicté (darija / français) | `app/ai/voice_report.py` ✅ | `POST /api/ai/voice-report` | fenêtre « Dicter le compte-rendu » — `components/visits/VoiceDictationDialog.tsx` |
+| 💬 Assistant produit (RAG + citations) | `app/ai/rag_assistant.py` ✅ | `POST /api/ai/assistant/ask` | panneau « Assistant NOOR » — `components/assistant/AssistantPanel.tsx` |
+| ⚠️ Pharmacovigilance | `app/ai/pharmacovigilance.py` ✅ | `POST /api/ai/pharmacovigilance/scan` | alertes du tableau de bord (analyse automatique de chaque compte-rendu) |
+| ✨ Recommandations de visites | `app/ai/recommendations.py` ✅ | `GET /api/ai/recommendations` | carte « Visites recommandées » — `components/dashboard/RecommendedVisits.tsx` |
+| 📷 Scan de carte de visite + doublons | `app/ai/card_scanner.py` (non implémenté) | `POST /api/ai/card-scanner` (501) | bouton désactivé « Bientôt disponible » — `pages/doctors/DoctorFormPage.tsx` |
 
-Fonctionnement : chaque fonction IA lève aujourd'hui `NotImplementedError` ; la route le
-transforme en réponse **501 « Bientôt disponible »**. **Dès que la fonction est implémentée,
-la route fonctionne** — rien d'autre à brancher. `GET /api/ai/status` indique quels modules
-sont prêts. Les formats d'échange sont dans `app/ai/schemas.py`.
+**Sans clé d'API, tout fonctionne** (règles, recherche de texte BM25). Avec la variable d'environnement
+`ANTHROPIC_API_KEY`, les modules demandent en plus à Claude un résultat de meilleure qualité, et reviennent
+aux règles en cas d'erreur (`app/ai/llm.py`). La clé ne doit jamais être écrite dans le code.
+
+- Les documents de l'assistant sont des RCP simplifiés : `docs/products/<Produit>/rcp_<Produit>.md`.
+- Évaluation de la pharmacovigilance : `python scripts/evaluer_pharmacovigilance.py` (dans `backend/`).
+- La transcription vocale est faite par le navigateur (Chrome) ; le texte reste modifiable.
 
 Les points d'extension sont repérables dans le code par le commentaire `POINT D'EXTENSION IA`.
 

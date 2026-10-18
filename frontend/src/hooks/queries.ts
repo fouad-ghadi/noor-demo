@@ -19,7 +19,7 @@ export const useTeamUsers = () => useQuery({ queryKey: ["team-users"], queryFn: 
  * planning, fiche médecin, tableau de bord (KPIs), objectifs, alertes.
  */
 export function invalidateVisitData(queryClient: QueryClient) {
-  for (const key of ["visits", "visit", "doctor", "doctors", "dashboard", "objectives", "alerts", "team-stats", "product"]) {
+  for (const key of ["visits", "visit", "doctor", "doctors", "dashboard", "objectives", "alerts", "team-stats", "product", "recommendations"]) {
     queryClient.invalidateQueries({ queryKey: [key] });
   }
 }

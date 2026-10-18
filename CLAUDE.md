@@ -68,15 +68,20 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
   7 comptes-rendus mentionnant un effet indésirable.
 - `seed_duplicates.md` (racine) est **généré** par le seed et **non versionné** (il bloquait `git pull`).
 
-## Points d'extension IA (prêts, non implémentés)
+## Modules IA (4 implémentés sur 5)
 
-- `backend/app/ai/` : `voice_report.py`, `rag_assistant.py`, `pharmacovigilance.py`, `card_scanner.py`,
-  `recommendations.py` (docstrings détaillées) + formats `schemas.py`.
-- Routes `/api/ai/...` (`app/api/ai.py`) : `NotImplementedError` → 501 « Bientôt disponible » ;
-  fonctionnent automatiquement une fois la fonction implémentée. `GET /api/ai/status`.
-- Frontend : `AiFeatureButton` (🎤 sur `VisitReportPage`, 📷 sur `DoctorFormPage`), `src/api/ai.ts`,
-  `components/assistant/AssistantPanel.tsx` (reçoit le contexte de page).
-- Guide complet : `docs/EXTENSIONS_IA.md`.
+- `backend/app/ai/` : **implémentés** `voice_report.py`, `rag_assistant.py`, `pharmacovigilance.py`, `recommendations.py` ;
+  **non implémenté (choix de Fouad)** `card_scanner.py` (route 501, bouton 📷 désactivé). Formats : `schemas.py`.
+- Principe : **tout marche sans clé** (règles, BM25) ; si `ANTHROPIC_API_KEY` est définie, Claude (`claude-opus-5-5`,
+  sorties JSON structurées, `fallbacks: "default"`) via `app/ai/llm.py`, avec retour aux règles en cas d'erreur.
+- Dictée : transcription par le navigateur (Web Speech API, fr-FR / ar-MA) dans `components/visits/VoiceDictationDialog.tsx`,
+  extraction par mots-clés darija/français ; formulaire pré-rempli, `report_source="dictee"`, relu par le délégué.
+- Assistant : RCP simplifiés `docs/products/<Produit>/rcp_<Produit>.md` (8 sections ; liés aux documents RCP par `file_path`),
+  BM25 + citations (section), refus si hors documents (ex. prix). Panneau `components/assistant/AssistantPanel.tsx`.
+- Pharmacovigilance : analyse à chaque `submit_report` (`visit_service._scan_pharmacovigilance`) et `scan_all` à la fin du seed ;
+  alertes PV en tête de liste. Évaluation : `backend/scripts/evaluer_pharmacovigilance.py` (7/7, 0 fausse alerte).
+- Recommandations : carte « Visites recommandées » (`components/dashboard/RecommendedVisits.tsx`) avec « Planifier ».
+- Explications pour le jury : `docs/IA_explications_jury.txt` ; guide technique : `docs/EXTENSIONS_IA.md`.
 
 ## Mise en ligne
 
@@ -92,11 +97,11 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
 
 Fait : étapes 1 à 5 du cahier des charges (backend, médecins, planning + carte, compte-rendu, tableaux de bord
 délégué/superviseur, produits, objectifs, points d'extension IA, README, refonte de la page de connexion,
-Dockerfile/Render, refonte complète du gabarit : toutes les pages).
+Dockerfile/Render, refonte complète du gabarit : toutes les pages, 4 modules IA).
 
 Pistes pour la suite (à valider avec Fouad) :
 1. Mise en ligne : vérifier une fois dans les journaux Render la ligne « Données de démo régénérées pour le … » (4 h du matin).
-2. Implémenter les modules IA (un par étudiant, voir `docs/EXTENSIONS_IA.md`).
+2. IA : tester avec une clé `ANTHROPIC_API_KEY` ; scan de carte de visite si Fouad le souhaite plus tard.
 3. Ajouter des tests automatisés (pytest pour les services, Playwright pour les parcours clés).
 4. Polir l'interface (mode sombre éventuel, tests visuels Playwright).
 

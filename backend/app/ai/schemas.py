@@ -46,7 +46,8 @@ class AskRequest(BaseModel):
 class Citation(BaseModel):
     document_id: int
     document_title: str
-    page: int | None = None
+    page: int | None = None  # numéro de page (PDF) ou de section (fiche texte)
+    section: str | None = None  # titre de la section citée (ex. « Posologie et mode d'administration »)
     excerpt: str  # passage exact du document qui justifie la réponse
 
 

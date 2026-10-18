@@ -27,7 +27,7 @@ export const TIME_OPTIONS = Array.from({ length: 45 }, (_, i) => {
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 });
 
-const DEFAULT_TIME: Record<TimeSlot, string> = { matin: "09:30", midi: "12:30", apres_midi: "16:00" };
+export const DEFAULT_TIME: Record<TimeSlot, string> = { matin: "09:30", midi: "12:30", apres_midi: "16:00" };
 
 /** Prochain jour ouvré à partir de demain. */
 function nextWorkingDay(): Date {

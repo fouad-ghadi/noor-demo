@@ -9,7 +9,8 @@
  * Mise en page :
  *  1. bandeau vert pin : bonjour, rythme du mois (visites / objectif) et tournée du jour ;
  *  2. un panneau avec les autres indicateurs (couverture A, comptes-rendus, annulations) ;
- *  3. ce qui demande une action (comptes-rendus à rédiger, médecins à revoir, alertes) ;
+ *  3. ce qui demande une action (comptes-rendus à rédiger, visites recommandées par l'IA,
+ *     médecins à revoir, alertes) ;
  *  4. l'historique (visites par semaine).
  */
 import { useState } from "react";
@@ -27,6 +28,7 @@ import { HeroBand, HeroPace } from "@/components/dashboard/HeroBand";
 import { KpiCard, KpiStatusLine, KpiStrip, type KpiStatus } from "@/components/dashboard/KpiCard";
 import { paceTone, ProgressWithMarker } from "@/components/dashboard/ProgressWithMarker";
 import { PendingReports } from "@/components/dashboard/PendingReports";
+import { RecommendedVisits } from "@/components/dashboard/RecommendedVisits";
 import { TopObjections } from "@/components/dashboard/TopObjections";
 import { VisitsPerWeekChart } from "@/components/dashboard/VisitsPerWeekChart";
 import { ErrorState, LoadingState } from "@/components/shared/states";
@@ -166,6 +168,7 @@ export function DashboardPage() {
         <div className="grid gap-5 lg:grid-cols-5 lg:gap-6">
           <div className="space-y-5 lg:col-span-3">
             <PendingReports delegueId={d.delegue_id} readOnly={readOnly} />
+            <RecommendedVisits delegueId={readOnly ? d.delegue_id : undefined} readOnly={readOnly} />
             <DoctorsToRevisit rows={d.doctors_to_revisit} total={d.doctors_to_revisit_total} readOnly={readOnly} />
           </div>
           <div className="space-y-5 lg:col-span-2">

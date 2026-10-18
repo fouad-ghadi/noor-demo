@@ -11,7 +11,7 @@ ne sont plus d'actualité passent automatiquement en « traitée ». Une alerte 
 l'utilisateur a marquée « traitée » n'est pas recréée tant que la situation
 ne change pas (ex. : pour un médecin non visité, l'alerte est liée à sa
 dernière visite ; une nouvelle visite puis un nouveau retard = nouvelle alerte).
-Les alertes de pharmacovigilance (futur module IA) ne sont jamais touchées ici.
+Les alertes de pharmacovigilance (module IA app/ai/pharmacovigilance.py) ne sont jamais touchées ici.
 """
 from datetime import timedelta
 
@@ -183,7 +183,10 @@ def list_alerts(
     include_resolved: bool = False,
     limit: int | None = None,
 ) -> list[AlertOut]:
-    """Alertes ouvertes, triées par gravité puis de la plus récente à la plus ancienne."""
+    """
+    Alertes ouvertes : pharmacovigilance d'abord (obligation légale de déclaration),
+    puis par gravité, puis de la plus récente à la plus ancienne.
+    """
     delegue_ids = access.resolve_delegue_ids(db, user, delegue_id)
     q = (
         select(Alert)
@@ -194,7 +197,11 @@ def list_alerts(
         q = q.where(Alert.status != AlertStatus.TRAITEE)
     alerts = sorted(
         db.scalars(q),
-        key=lambda a: (_SEVERITY_ORDER.get(a.severity, 3), -a.created_at.timestamp()),
+        key=lambda a: (
+            a.type != AlertType.PHARMACOVIGILANCE,
+            _SEVERITY_ORDER.get(a.severity, 3),
+            -a.created_at.timestamp(),
+        ),
     )
     return [to_out(a) for a in (alerts[:limit] if limit else alerts)]
 
