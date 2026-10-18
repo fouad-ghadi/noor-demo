@@ -7,8 +7,13 @@ import { Toaster } from "sonner";
 import App from "./App";
 import { AuthProvider } from "./auth/AuthContext";
 import { AssistantProvider } from "./components/assistant/AssistantContext";
+import { ErrorBoundary } from "./components/shared/ErrorBoundary";
 import { TooltipProvider } from "./components/ui/tooltip";
+import { installTranslationGuard } from "./lib/translationGuard";
 import "./index.css";
+
+// Évite la page blanche quand le navigateur traduit automatiquement la page (voir le fichier)
+installTranslationGuard();
 
 /**
  * React Query gère les appels API : cache, rechargement, état de chargement.
@@ -28,7 +33,9 @@ createRoot(document.getElementById("root")!).render(
         <AuthProvider>
           <AssistantProvider>
             <TooltipProvider>
-              <App />
+              <ErrorBoundary>
+                <App />
+              </ErrorBoundary>
               <Toaster position="top-center" richColors closeButton />
             </TooltipProvider>
           </AssistantProvider>

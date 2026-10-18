@@ -5,10 +5,11 @@
  *  Téléphone  :  [ Barre du haut ] / [ Contenu ] / [ Barre de navigation en bas ]
  */
 import { LogOut, Sparkles } from "lucide-react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { AssistantPanel } from "@/components/assistant/AssistantPanel";
 import { useAssistant } from "@/components/assistant/AssistantContext";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -163,6 +164,7 @@ function MobileBottomNav() {
 
 export function AppLayout() {
   const { context, open, setOpen } = useAssistant();
+  const location = useLocation();
   const isWide = useMediaQuery("(min-width: 1280px)");
 
   return (
@@ -182,20 +184,27 @@ export function AppLayout() {
           </Button>
         )}
         <main className="mx-auto max-w-7xl px-4 pt-4 pb-24 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
-          <Outlet />
+          {/* Une page qui plante n'emporte pas le menu : message clair à la place de la page */}
+          <ErrorBoundary key={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
 
       {/* Assistant : colonne fixe sur grand écran, panneau coulissant ailleurs */}
       {open && isWide && (
         <aside className="fixed inset-y-0 right-0 z-30 w-96 border-l shadow-xl">
-          <AssistantPanel context={context} onClose={() => setOpen(false)} />
+          <ErrorBoundary compact title="L'assistant a rencontré un problème d'affichage.">
+            <AssistantPanel context={context} onClose={() => setOpen(false)} />
+          </ErrorBoundary>
         </aside>
       )}
       <Sheet open={open && !isWide} onOpenChange={setOpen}>
         <SheetContent side="right" className="p-0 [&>button:last-child]:hidden">
           <SheetTitle className="sr-only">Assistant NOOR</SheetTitle>
-          <AssistantPanel context={context} onClose={() => setOpen(false)} />
+          <ErrorBoundary compact title="L'assistant a rencontré un problème d'affichage.">
+            <AssistantPanel context={context} onClose={() => setOpen(false)} />
+          </ErrorBoundary>
         </SheetContent>
       </Sheet>
 
