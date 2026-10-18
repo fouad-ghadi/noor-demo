@@ -1,0 +1,158 @@
+NOOR DEMO - THE AI MODULES, EXPLAINED FOR THE JURY
+=================================================
+
+NOOR is a CRM for medical reps (delegues medicaux) of a Moroccan pharmaceutical lab.
+Four AI modules each answer a real problem in a rep's day.
+
+
+THE COMMON IDEA (say this first)
+--------------------------------
+"The AI proposes, the rep validates."
+
+- NOOR never saves anything on its own: a dictated report is always reread
+  by the rep before being saved.
+- Every AI result comes with its reasons or its sources.
+- This matters in pharma, where traceability and regulatory compliance are mandatory.
+
+How it is built: every module follows the same path
+    button in the app -> /api/ai/... route -> AI module -> existing business services
+So the AI goes through the same access rights and rules as the rest of the CRM.
+Each module is one file (backend/app/ai/...); the rest of the app was already ready.
+
+
+1. DICTATED VISIT REPORT (darija / French)
+------------------------------------------
+The problem
+    After each visit the rep must fill in a report: products presented, the
+    doctor's reaction, objections, samples, next steps. Typing on a phone between
+    two appointments takes time, so reports pile up and are written late.
+
+What NOOR does
+    The rep leaves the practice, taps the microphone and talks naturally, often
+    mixing darija and French:
+        "l'docteur kan mzyan, 3jbo Cardiovex, walakin gal lia prix ghali..."
+    NOOR fills in the form. The rep rereads it and validates.
+
+How it works (2 steps)
+    1. Speech-to-text: the audio becomes text.
+    2. Structured extraction: the text is turned into form fields
+       (product = Cardiovex, reaction = favourable, objection = "price too high").
+       NOOR knows the list of its products and objection categories, so it uses
+       the exact terms.
+
+Strong point
+    Darija is a real challenge (few models handle it well), and it is very Moroccan.
+
+To say to the jury
+    « Le délégué dicte en darija en sortant du cabinet, NOOR remplit le
+      compte-rendu, il n'a plus qu'à relire. »
+
+
+2. PRODUCT ASSISTANT WITH SOURCES (RAG)
+---------------------------------------
+The problem
+    A doctor asks a technical question (dosage, contraindication, interaction).
+    The rep must answer correctly and, legally, may only use APPROVED documents
+    (summary of product characteristics / RCP, patient leaflet, approved materials).
+    An AI that "makes up" an answer would be dangerous.
+
+What NOOR does
+    In the "Assistant NOOR" panel the rep asks, for example:
+        "Can Amoxira be given to a child under 6?"
+    NOOR answers ONLY from the official documents and CITES THE SOURCE
+    (document, page, excerpt). If the documents do not contain the answer,
+    it SAYS it does not know instead of inventing.
+
+How it works (RAG = Retrieval-Augmented Generation)
+    1. Indexing: the product documents are cut into small passages.
+    2. Retrieval: for a question, NOOR finds the passages closest in meaning.
+    3. Answer: the answer is written using ONLY those passages, and cites them.
+    The assistant also knows which page you are on: on a product page, it
+    searches that product first.
+
+Key point
+    The AI does not answer from "its memory". It answers from the lab's validated
+    documents, with proof.
+
+To say to the jury
+    « Un assistant qui ne répond qu'à partir des documents approuvés, cite
+      toujours sa source, et sait dire "je ne sais pas". »
+
+
+3. PHARMACOVIGILANCE (detecting adverse effects)
+------------------------------------------------
+The problem
+    When a doctor mentions that a patient had an adverse effect (rash, dizziness,
+    hospitalisation...), the lab has a LEGAL OBLIGATION to report it. This
+    information often gets lost in the free-text notes of a report.
+
+What NOOR does
+    Every report is analysed automatically. If NOOR spots an adverse effect, it
+    creates a "Pharmacovigilance" alert with HIGH severity on the rep's dashboard:
+    which product, which effect, which sentence of the report, how serious.
+
+How it works
+    1. Detection: NOOR reads the text and decides whether it mentions an adverse
+       effect; if so it extracts the product, the effect, the excerpt and the
+       severity (hospitalisation = serious).
+    2. Alert: NOOR creates the alert, which appears on the dashboard.
+
+Strong point: it can be measured
+    The demo database contains 7 reports with an adverse effect hidden among about
+    1,300 reports. We can show real numbers to the jury:
+        - recall    = how many of the 7 were found;
+        - precision = how many false alarms.
+
+To say to the jury
+    « Aucun effet indésirable mentionné dans un compte-rendu ne passe inaperçu :
+      NOOR le repère et crée l'alerte de déclaration. »
+
+
+4. VISIT RECOMMENDATIONS
+------------------------
+The problem
+    A rep has 50 to 60 doctors. Which ones to see first this week? At what time?
+    With which product? Today it is decided from memory or by intuition.
+
+What NOOR does
+    A "Recommended visits" list on the dashboard, for example:
+        "See Dr Bennani on Tuesday afternoon: segment A doctor, not visited for
+         45 days; most receptive in the afternoon (70% favourable visits); only
+         an occasional prescriber of Cardiovex, which is behind on your monthly
+         objective."
+    With a "Planifier" button to plan the visit in one click.
+
+How it works
+    NOOR combines data it already has:
+        - doctors not visited for 30 days or more;
+        - receptivity by time slot (morning / midday / afternoon);
+        - prescribing status per product (regular / occasional / non-prescriber);
+        - past objections (e.g. "price too high" three times -> prepare arguments);
+        - products behind on the monthly objectives.
+    Version 1: a score with clear rules. Version 2: a model that learns from history.
+
+Key point
+    Every recommendation explains its "why", so the rep understands and trusts it.
+
+To say to the jury
+    « NOOR dit au délégué qui voir, quand, et avec quel produit, en expliquant
+      toujours pourquoi. »
+
+
+QUESTIONS THE JURY WILL PROBABLY ASK
+------------------------------------
+"Can the AI make mistakes?"
+    Yes, which is why it always proposes and the human validates. And we show its
+    sources (assistant) or its reasons (recommendations, pharmacovigilance).
+
+"How do you know it works?"
+    The demo data contains known cases (7 adverse effects among ~1,300 reports):
+    we measure precision and recall.
+
+"What about medical data privacy?"
+    The demo data is fictitious. In real use we would choose models hosted in a
+    compliant way and minimise what is sent to them (Moroccan personal-data law 09-08).
+
+"Why these modules?"
+    Each covers a different AI family: speech, document search, text
+    classification, recommendation.
