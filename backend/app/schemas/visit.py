@@ -17,6 +17,7 @@ class VisitProductOut(ORMModel):
 class SampleIn(BaseModel):
     product_id: int
     quantity: int = Field(ge=1, le=50)
+    lot_number: str | None = Field(default=None, max_length=30)
 
 
 class SampleOut(SampleIn):
@@ -41,6 +42,7 @@ class VisitOut(BaseModel):
     doctor_name: str
     doctor_specialty: str
     doctor_segment: str
+    doctor_frequency: str | None
     doctor_city: str
     doctor_district: str
     doctor_address: str
@@ -51,6 +53,7 @@ class VisitOut(BaseModel):
     status: str
     duration_min: int | None
     feedback: str | None
+    prescription_feedback: str | None
     notes: str | None
     next_step: str | None
     next_visit_date: date | None
@@ -73,6 +76,7 @@ class VisitOut(BaseModel):
             doctor_name=d.full_name,
             doctor_specialty=d.specialty,
             doctor_segment=d.segment,
+            doctor_frequency=d.frequency,
             doctor_city=d.city,
             doctor_district=d.district,
             doctor_address=d.address,
@@ -83,6 +87,7 @@ class VisitOut(BaseModel):
             status=v.status,
             duration_min=v.duration_min,
             feedback=v.feedback,
+            prescription_feedback=v.prescription_feedback,
             notes=v.notes,
             next_step=v.next_step,
             next_visit_date=v.next_visit_date,
@@ -94,7 +99,8 @@ class VisitOut(BaseModel):
                 for p in v.products
             ],
             samples=[
-                SampleOut(product_id=s.product_id, quantity=s.quantity, brand_name=s.product.brand_name)
+                SampleOut(product_id=s.product_id, quantity=s.quantity, lot_number=s.lot_number,
+                          brand_name=s.product.brand_name)
                 for s in v.samples
             ],
             objections=[
@@ -138,6 +144,7 @@ class VisitReport(BaseModel):
     duration_min: int = Field(ge=1, le=180)
     product_ids: list[int] = Field(min_length=1)
     feedback: str
+    prescription_feedback: str | None = None   # enums.PrescriptionFeedback
     objections: list[ObjectionIn] = []
     samples: list[SampleIn] = []
     notes: str | None = None

@@ -104,5 +104,5 @@ class VisitRecommendation(BaseModel):
     suggested_date: date
     suggested_slot: str      # "matin" | "midi" | "apres_midi"
     product_ids: list[int]   # produits à présenter en priorité
-    reasons: list[str]       # explications lisibles (ex. « segment A non vu depuis 45 jours »)
+    reasons: list[str]       # explications lisibles (ex. « médecin ciblé F2 non visité depuis 19 jours »)
     score: float

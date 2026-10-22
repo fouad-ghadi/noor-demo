@@ -21,7 +21,7 @@ import { api } from "@/api/client";
 import type { DoctorDetail } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { usePageContext } from "@/components/assistant/AssistantContext";
-import { PrescribingBadge, SegmentBadge } from "@/components/shared/badges";
+import { FrequencyBadge, PrescribingBadge, SegmentBadge } from "@/components/shared/badges";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +29,7 @@ import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
 import { VisitHistory } from "@/components/visits/VisitHistory";
 import { useProducts } from "@/hooks/queries";
 import { formatDate, formatLongDay, formatShortDate, formatTime, initials } from "@/lib/format";
-import { PRACTICE_TYPE, SEGMENT, SOURCE, TIME_SLOT } from "@/lib/labels";
+import { FREQUENCY, OUT_OF_TARGET, PRACTICE_TYPE, SEGMENT, SOURCE, TIME_SLOT } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 export function DoctorDetailPage() {
@@ -66,6 +66,7 @@ export function DoctorDetailPage() {
               <h1 className="font-display text-ink text-[1.6rem] leading-tight font-semibold tracking-[-0.02em] lg:text-[2rem]">{name}</h1>
               <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px]">
                 <SegmentBadge segment={d.segment} className="size-5 text-[11px]" />
+                <FrequencyBadge frequency={d.frequency} />
                 <span>
                   {d.specialty}, {PRACTICE_TYPE[d.practice_type].toLowerCase()}, {d.district}
                 </span>
@@ -215,7 +216,8 @@ function InfoCard({ doctor: d }: { doctor: DoctorDetail }) {
         <InfoRow icon={UserRound}>
           <p>Délégué : {d.delegue_name}</p>
           <p className="text-muted-foreground text-xs">
-            {SEGMENT[d.segment].label}. Fiche créée le {formatDate(d.created_at)} ({SOURCE[d.source].toLowerCase()})
+            {SEGMENT[d.segment].label}. {d.frequency ? FREQUENCY[d.frequency].long : OUT_OF_TARGET}. Territoire{" "}
+            {d.territory}. Fiche créée le {formatDate(d.created_at)} ({SOURCE[d.source].toLowerCase()})
           </p>
         </InfoRow>
         {d.notes && <p className="bg-paper border-line text-ink rounded-lg border px-3 py-2 text-[13px] leading-relaxed">{d.notes}</p>}

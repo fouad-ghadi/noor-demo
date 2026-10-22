@@ -1,7 +1,7 @@
 """
 Alertes « règles métier » (sans IA) :
 
-1. medecin_non_visite    : médecin A non visité depuis 30 j (ou B depuis 60 j)
+1. medecin_non_visite    : médecin ciblé F2 non visité depuis 30 j (ou F1 depuis 45 j)
                            et sans visite déjà planifiée → à revoir en priorité
 2. compte_rendu_en_retard: visite passée depuis plus de 48 h sans compte-rendu
 3. objectif_en_retard    : le délégué est sous 85 % de l'objectif attendu à date
@@ -20,13 +20,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Alert, Doctor, User, Visit
-from app.models.enums import AlertSeverity, AlertStatus, AlertType, Segment, VisitStatus
+from app.models.enums import AlertSeverity, AlertStatus, AlertType, Frequency, VisitStatus
 from app.schemas.alert import AlertOut
 from app.services import access
 from app.services.dates import now, period_label, period_of
 
-# Seuils (en jours) au-delà desquels un médecin est considéré « non visité »
-NOT_VISITED_THRESHOLD = {Segment.A: 30, Segment.B: 60}
+# Seuils (en jours) au-delà desquels un médecin ciblé est considéré « non visité » :
+# environ un cycle de visite manqué (F2 = 2 visites par mois, F1 = 1 visite par mois)
+NOT_VISITED_THRESHOLD = {Frequency.F2: 30, Frequency.F1: 45}
 LATE_REPORT_HOURS = 48
 
 RULE_TYPES = (
@@ -52,13 +53,9 @@ def _desired_alerts(db: Session, delegue_id: int) -> list[Alert]:
     current = now()
     alerts: list[Alert] = []
 
-    # 1. Médecins A / B non visités
+    # 1. Médecins ciblés non visités
     doctors = list(
-        db.scalars(
-            select(Doctor).where(
-                Doctor.delegue_id == delegue_id, Doctor.segment.in_([Segment.A, Segment.B])
-            )
-        )
+        db.scalars(select(Doctor).where(Doctor.delegue_id == delegue_id, Doctor.frequency.isnot(None)))
     )
     ids = [d.id for d in doctors]
     last = last_visit_dates(db, ids)
@@ -73,7 +70,7 @@ def _desired_alerts(db: Session, delegue_id: int) -> list[Alert]:
         )
     }
     for d in doctors:
-        threshold = NOT_VISITED_THRESHOLD[Segment(d.segment)]
+        threshold = NOT_VISITED_THRESHOLD[Frequency(d.frequency)]
         last_dt = last.get(d.id)
         days = (current - last_dt).days if last_dt else None
         if d.id in planned or (days is not None and days < threshold):
@@ -82,9 +79,9 @@ def _desired_alerts(db: Session, delegue_id: int) -> list[Alert]:
         alerts.append(
             Alert(
                 type=AlertType.MEDECIN_NON_VISITE,
-                severity=AlertSeverity.HAUTE if d.segment == Segment.A else AlertSeverity.MOYENNE,
+                severity=AlertSeverity.HAUTE if d.frequency == Frequency.F2 else AlertSeverity.MOYENNE,
                 title=f"{d.full_name} non visité {since}",
-                message=f"Médecin segment {d.segment} ({d.specialty}, {d.district}). "
+                message=f"Médecin ciblé {d.frequency}, potentiel {d.segment} ({d.specialty}, {d.district}). "
                         f"Planifiez une visite rapidement.",
                 delegue_id=delegue_id,
                 doctor_id=d.id,

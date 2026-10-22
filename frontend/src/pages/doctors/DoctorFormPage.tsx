@@ -38,6 +38,8 @@ const EMPTY: DoctorInput = {
   latitude: null,
   longitude: null,
   segment: "B",
+  // Nouvelle fiche : hors cible tant que le superviseur ne l'a pas ciblée (ciblage en janvier et juillet)
+  frequency: null,
   preferred_slot: "matin",
   notes: "",
   prescriptions: [],
@@ -114,6 +116,7 @@ export function DoctorFormPage() {
       latitude: d.latitude,
       longitude: d.longitude,
       segment: d.segment,
+      frequency: d.frequency,
       preferred_slot: d.preferred_slot,
       notes: d.notes ?? "",
     });
@@ -212,6 +215,13 @@ export function DoctorFormPage() {
                 value={form.segment}
                 onChange={(v) => set("segment", v as DoctorInput["segment"])}
                 options={{ A: "A — fort potentiel", B: "B — potentiel moyen", C: "C — faible potentiel" }}
+              />
+            </Field>
+            <Field label="Ciblage (fréquence de visite)">
+              <SimpleSelect
+                value={form.frequency ?? "hors_cible"}
+                onChange={(v) => set("frequency", v === "hors_cible" ? null : (v as DoctorInput["frequency"]))}
+                options={{ F2: "F2, deux visites par mois", F1: "F1, une visite par mois", hors_cible: "Hors cible" }}
               />
             </Field>
             {!isEdit && isSupervisor && (

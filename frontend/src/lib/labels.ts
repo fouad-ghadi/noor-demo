@@ -4,9 +4,12 @@
  */
 import type {
   AlertSeverity,
+  EventType,
   Feedback,
+  Frequency,
   PracticeType,
   PrescribingStatus,
+  PrescriptionFeedback,
   ProgressStatus,
   Segment,
   TimeSlot,
@@ -35,6 +38,35 @@ export const SEGMENT: Record<Segment, { label: string; className: string }> = {
   A: { label: "Segment A, fort potentiel", className: "bg-pine text-white border-pine" },
   B: { label: "Segment B, potentiel moyen", className: "bg-mint text-pine border-mint" },
   C: { label: "Segment C, faible potentiel", className: "bg-white text-pine/70 border-pine/25" },
+};
+
+/** Ciblage (fréquence de visite). Un médecin sans fréquence est « hors cible ». */
+export const FREQUENCY: Record<Frequency, { label: string; long: string }> = {
+  F1: { label: "F1", long: "Ciblé F1, 1 visite par mois" },
+  F2: { label: "F2", long: "Ciblé F2, 2 visites par mois" },
+};
+export const OUT_OF_TARGET = "Hors cible";
+
+/** Ce que le médecin dit de sa prescription pendant la visite. */
+export const PRESCRIPTION_FEEDBACK: Record<PrescriptionFeedback, string> = {
+  prescrit_regulierement: "Prescrit régulièrement",
+  prescrit_parmi_autres: "Prescrit parmi d'autres",
+  promesse_prescrire: "Promesse de prescrire davantage",
+  ne_prescrit_pas: "Ne prescrit pas",
+};
+
+/** Événements d'agenda hors visites (ils réduisent les jours travaillés sur le terrain). */
+export const EVENT_TYPE: Record<EventType, string> = {
+  reunion_equipe: "Réunion d'équipe",
+  formation: "Formation",
+  congres: "Congrès",
+  staff: "Staff hospitalier",
+  table_ronde: "Table ronde",
+  administratif: "Administratif",
+  conge_annuel: "Congé annuel",
+  conge_maladie: "Congé maladie",
+  fete: "Jour férié",
+  autre: "Autre",
 };
 
 export const TIME_SLOT: Record<TimeSlot, string> = {

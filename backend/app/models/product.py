@@ -14,6 +14,8 @@ class Product(Base):
     brand_name: Mapped[str] = mapped_column(String(80))           # nom commercial (fictif)
     molecule: Mapped[str] = mapped_column(String(120))            # DCI
     therapeutic_class: Mapped[str] = mapped_column(String(120))
+    business_unit: Mapped[str] = mapped_column(String(20), default="chronique")  # enums.BusinessUnit
+    product_line: Mapped[str] = mapped_column(String(30), default="")            # gamme (ex. « CARDIO »)
     form_dosage: Mapped[str] = mapped_column(String(200))         # forme et dosages
     description: Mapped[str | None] = mapped_column(Text)
     # Listes stockées en JSON (SQLite les garde sous forme de texte)

@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import User, Visit, VisitObjection, VisitProduct, VisitSample
-from app.models.enums import OBJECTION_CATEGORIES, VisitFeedback, VisitStatus
+from app.models.enums import OBJECTION_CATEGORIES, PrescriptionFeedback, VisitFeedback, VisitStatus
 from app.schemas.visit import VisitCancel, VisitCreate, VisitReport, VisitReschedule
 from app.services import access, alert_service
 from app.services.dates import now
@@ -140,18 +140,6 @@ def cancel_visit(db: Session, user: User, visit_id: int, data: VisitCancel) -> V
     return get_visit(db, user, visit.id)
 
 
-def _scan_pharmacovigilance(db: Session, visit: Visit) -> None:
-    """IA : cherche un effet indésirable dans le compte-rendu et crée l'alerte de déclaration."""
-    # Import local : le module IA dépend lui-même des services (évite une importation circulaire)
-    from app.ai import pharmacovigilance
-
-    try:
-        pharmacovigilance.scan_visit(db, visit)
-    except Exception:  # noqa: BLE001 — l'analyse ne doit jamais empêcher d'enregistrer le compte-rendu
-        db.rollback()
-        logging.getLogger("uvicorn.error").exception("Analyse de pharmacovigilance impossible")
-
-
 def submit_report(db: Session, user: User, visit_id: int, data: VisitReport) -> Visit:
     """
     Enregistre le compte-rendu d'une visite et la passe en « réalisée ».
@@ -162,6 +150,8 @@ def submit_report(db: Session, user: User, visit_id: int, data: VisitReport) -> 
         raise HTTPException(400, "Impossible de rédiger le compte-rendu d'une visite annulée ou reportée")
     if data.feedback not in {f.value for f in VisitFeedback}:
         raise HTTPException(400, f"Retour médecin invalide : {data.feedback}")
+    if data.prescription_feedback and data.prescription_feedback not in {p.value for p in PrescriptionFeedback}:
+        raise HTTPException(400, f"Statut de prescription invalide : {data.prescription_feedback}")
     for o in data.objections:
         if o.category not in OBJECTION_CATEGORIES:
             raise HTTPException(400, f"Catégorie d'objection inconnue : {o.category}")
@@ -171,6 +161,7 @@ def submit_report(db: Session, user: User, visit_id: int, data: VisitReport) -> 
     visit.actual_at = data.actual_at or visit.actual_at or min(visit.planned_at, now())
     visit.duration_min = data.duration_min
     visit.feedback = data.feedback
+    visit.prescription_feedback = data.prescription_feedback
     visit.notes = data.notes
     visit.next_step = data.next_step
     visit.next_visit_date = data.next_visit_date
@@ -179,7 +170,10 @@ def submit_report(db: Session, user: User, visit_id: int, data: VisitReport) -> 
 
     # On remplace entièrement produits / échantillons / objections (cas d'une modification)
     visit.products = [VisitProduct(product_id=pid) for pid in dict.fromkeys(data.product_ids)]
-    visit.samples = [VisitSample(product_id=s.product_id, quantity=s.quantity) for s in data.samples]
+    visit.samples = [
+        VisitSample(product_id=s.product_id, quantity=s.quantity, lot_number=(s.lot_number or "").strip() or None)
+        for s in data.samples
+    ]
     visit.objections = [
         VisitObjection(category=o.category, comment=o.comment, product_id=o.product_id)
         for o in data.objections
@@ -213,16 +207,3 @@ def submit_report(db: Session, user: User, visit_id: int, data: VisitReport) -> 
     alert_service.refresh_alerts(db, visit.delegue_id)
     _scan_pharmacovigilance(db, visit)
     return get_visit(db, user, visit.id)
-
-
-def _scan_pharmacovigilance(db: Session, visit: Visit) -> None:
-    """IA : cherche un effet indésirable dans le compte-rendu et crée l'alerte de déclaration."""
-    # Import local : le module IA dépend lui-même des services (évite une importation circulaire)
-    from app.ai import pharmacovigilance
-
-    try:
-        pharmacovigilance.scan_visit(db, visit)
-    except Exception:  # noqa: BLE001 — l'analyse ne doit jamais empêcher d'enregistrer le compte-rendu
-        db.rollback()
-        logging.getLogger("uvicorn.error").exception("Analyse de pharmacovigilance impossible")
-

@@ -22,7 +22,11 @@ class Doctor(Base):
     email: Mapped[str | None] = mapped_column(String(160))
     latitude: Mapped[float | None] = mapped_column(Float)
     longitude: Mapped[float | None] = mapped_column(Float)
-    segment: Mapped[str] = mapped_column(String(1), index=True)  # enums.Segment (A/B/C)
+    # Territoire de vente (secteur IMS) : regroupe des quartiers, sert à l'analyse des ventes
+    territory: Mapped[str] = mapped_column(String(60), index=True, default="")
+    segment: Mapped[str] = mapped_column(String(1), index=True)  # enums.Segment (A/B/C) = potentiel
+    # Ciblage : F1 (1 visite / mois) ou F2 (2 visites / mois) ; None = hors cible
+    frequency: Mapped[str | None] = mapped_column(String(2), index=True)  # enums.Frequency
     preferred_slot: Mapped[str | None] = mapped_column(String(20))  # enums.TimeSlot
     notes: Mapped[str | None] = mapped_column(Text)
     source: Mapped[str] = mapped_column(String(30), default="manuel")  # enums.DoctorSource

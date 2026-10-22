@@ -13,6 +13,24 @@ export type PracticeType = "cabinet" | "clinique" | "hopital_public";
 export type AlertSeverity = "faible" | "moyenne" | "haute";
 export type AlertStatus = "nouvelle" | "vue" | "traitee";
 export type ProgressStatus = "en_avance" | "dans_les_temps" | "en_retard";
+/** Ciblage : F1 = 1 visite par mois, F2 = 2 visites par mois ; null = hors cible. */
+export type Frequency = "F1" | "F2";
+export type PrescriptionFeedback =
+  | "prescrit_regulierement"
+  | "prescrit_parmi_autres"
+  | "promesse_prescrire"
+  | "ne_prescrit_pas";
+export type EventType =
+  | "reunion_equipe"
+  | "formation"
+  | "congres"
+  | "staff"
+  | "table_ronde"
+  | "administratif"
+  | "conge_annuel"
+  | "conge_maladie"
+  | "fete"
+  | "autre";
 
 export interface User {
   id: number;
@@ -29,6 +47,7 @@ export interface Meta {
   cities: string[];
   districts: Record<string, { name: string; latitude: number; longitude: number }[]>;
   objection_categories: Record<string, string>;
+  territories: string[];
 }
 
 // --- Produits -----------------------------------------------------------
@@ -74,6 +93,7 @@ export interface Objection {
 export interface Sample {
   product_id: number;
   quantity: number;
+  lot_number?: string | null;
   brand_name?: string;
 }
 
@@ -84,6 +104,7 @@ export interface Visit {
   doctor_name: string;
   doctor_specialty: string;
   doctor_segment: Segment;
+  doctor_frequency: Frequency | null;
   doctor_city: string;
   doctor_district: string;
   doctor_address: string;
@@ -94,6 +115,7 @@ export interface Visit {
   status: VisitStatus;
   duration_min: number | null;
   feedback: Feedback | null;
+  prescription_feedback: PrescriptionFeedback | null;
   notes: string | null;
   next_step: string | null;
   next_visit_date: string | null;
@@ -111,6 +133,7 @@ export interface VisitReportInput {
   duration_min: number;
   product_ids: number[];
   feedback: Feedback;
+  prescription_feedback?: PrescriptionFeedback | null;
   objections: Objection[];
   samples: Sample[];
   notes?: string | null;
@@ -134,12 +157,14 @@ export interface DoctorFields {
   latitude: number | null;
   longitude: number | null;
   segment: Segment;
+  frequency: Frequency | null;
   preferred_slot: TimeSlot | null;
   notes: string | null;
 }
 
 export interface Doctor extends DoctorFields {
   id: number;
+  territory: string;
   delegue_id: number;
   source: "manuel" | "carte_de_visite" | "import";
   created_at: string;
@@ -233,6 +258,7 @@ export interface Dashboard {
     late_reports: number;
     cancelled_month: number;
   };
+  activity: ActivityRow;
   objective: ObjectiveProgress | null;
   visits_per_week: { week_start: string; done: number; cancelled: number }[];
   doctors_to_revisit: {
@@ -240,6 +266,7 @@ export interface Dashboard {
     doctor_name: string;
     specialty: string;
     segment: Segment;
+    frequency: Frequency | null;
     city: string;
     district: string;
     last_visit_date: string | null;
@@ -292,4 +319,113 @@ export interface Team {
   }[];
   totals: Record<string, number>;
   top_objections: CountItem[];
+}
+
+// --- Activité terrain (statistiques) -----------------------------------
+/** Une ligne du tableau « Couverture / Moyenne de visites par jour ». */
+export interface ActivityRow {
+  delegue_id: number | null; // null = ligne « Équipe »
+  name: string;
+  region: string;
+  period_days: number;
+  event_days: number;
+  worked_days: number;
+  targeted: number;
+  targeted_f1: number;
+  targeted_f2: number;
+  calls: number;
+  contacts: number;
+  targeted_visited: number;
+  f1_ok: number;
+  f2_ok: number;
+  avg_visits_per_day: number;
+  coverage_pct: number;
+  cpa_pct: number;
+  cpa_f1_pct: number;
+  cpa_f2_pct: number;
+}
+
+export interface Activity {
+  period: string;
+  period_label: string;
+  is_current: boolean;
+  through: string;
+  rows: ActivityRow[];
+  total: ActivityRow | null;
+  breakdown: { key: "terrain" | EventType; days: number }[];
+  trend: { period: string; label: string; avg_visits_per_day: number; coverage_pct: number; cpa_pct: number }[];
+  periods: string[];
+}
+
+export interface AgendaEvent {
+  id: number;
+  delegue_id: number;
+  delegue_name: string;
+  day: string;
+  type: EventType;
+  duration_days: number;
+  half: "matin" | "apres_midi" | null;
+  comment: string | null;
+}
+
+export interface AgendaEventInput {
+  day: string;
+  type: EventType;
+  half?: "matin" | "apres_midi" | null;
+  comment?: string | null;
+  delegue_id?: number | null;
+}
+
+// --- Analyse des ventes (marché type IMS) -------------------------------
+export interface SalesMetrics {
+  value: number;
+  value_prev: number;
+  market_value: number;
+  market_value_prev: number;
+  qp: number | null;
+  qm: number | null;
+  pm: number | null;
+  pm_prev: number | null;
+  ie: number | null;
+  ip: number | null;
+  evol: number | null;
+  evol_market: number | null;
+}
+
+export interface TerritorySales extends SalesMetrics {
+  territory: string;
+}
+
+export interface DelegateSales extends SalesMetrics {
+  delegue_id: number;
+  name: string;
+  region: string;
+  territories: TerritorySales[];
+}
+
+export interface Sales {
+  product_id: number | null;
+  product_name: string;
+  market_name: string;
+  period: string;
+  period_label: string;
+  compare_label: string;
+  last_month: string;
+  national: SalesMetrics;
+  scope_label: string;
+  scope: SalesMetrics;
+  delegates: DelegateSales[];
+  competitors: {
+    name: string;
+    laboratory: string;
+    market_name: string;
+    is_ours: boolean;
+    value: number;
+    pm: number | null;
+    evol: number | null;
+    ie: number | null;
+  }[];
+  monthly: { period: string; label: string; value: number; market_value: number; pm: number | null }[];
+  months: string[];
+  products: { id: number; name: string; market_name: string }[];
 }

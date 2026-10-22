@@ -23,3 +23,7 @@ export function delegateColor(delegueId: number, allIds: number[]): string {
   const sorted = [...allIds].sort((a, b) => a - b);
   return DELEGATE_COLORS[sorted.indexOf(delegueId) % DELEGATE_COLORS.length] ?? DELEGATE_COLORS[0];
 }
+
+/** Tendance de l'activité : couverture et CPA (deux couleurs voisines de la palette validée ci-dessus). */
+export const COVERAGE_COLOR = DELEGATE_COLORS[0];
+export const CPA_COLOR = DELEGATE_COLORS[1];

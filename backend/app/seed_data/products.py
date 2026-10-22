@@ -3,6 +3,8 @@ Catalogue de produits FICTIFS.
 
 Les noms commerciaux sont inventés pour la démo (aucune marque réelle).
 Les molécules (DCI), classes et indications sont réelles et simplifiées.
+Chaque produit appartient à une unité commerciale (BU chronique / aiguë) et à une gamme,
+comme dans les rapports d'activité des laboratoires.
 """
 
 PRODUCTS: list[dict] = [
@@ -10,6 +12,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Cardiovex",
         "molecule": "Amlodipine",
         "therapeutic_class": "Antihypertenseur — inhibiteur calcique",
+        "business_unit": "chronique",
+        "product_line": "CARDIO",
         "form_dosage": "Comprimés 5 mg et 10 mg — boîtes de 30",
         "description": "Inhibiteur calcique de longue durée d'action, une prise par jour.",
         "indications": [
@@ -29,6 +33,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Statilia",
         "molecule": "Atorvastatine",
         "therapeutic_class": "Hypolipémiant — statine",
+        "business_unit": "chronique",
+        "product_line": "CARDIO",
         "form_dosage": "Comprimés pelliculés 10 mg, 20 mg et 40 mg",
         "description": "Statine de référence pour la prévention cardiovasculaire.",
         "indications": [
@@ -47,6 +53,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Glucanor",
         "molecule": "Metformine",
         "therapeutic_class": "Antidiabétique oral — biguanide",
+        "business_unit": "chronique",
+        "product_line": "METABO",
         "form_dosage": "Comprimés 500 mg, 850 mg et 1000 mg LP",
         "description": "Traitement de première intention du diabète de type 2.",
         "indications": [
@@ -64,6 +72,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Amoxira",
         "molecule": "Amoxicilline",
         "therapeutic_class": "Antibiotique — pénicilline (aminopénicilline)",
+        "business_unit": "aigue",
+        "product_line": "ANTI-INFECTIEUX",
         "form_dosage": "Gélules 500 mg, comprimés dispersibles 1 g, poudre pour suspension buvable 250 mg/5 ml",
         "description": "Antibiotique à large spectre pour les infections courantes.",
         "indications": [
@@ -83,6 +93,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Gastrozen",
         "molecule": "Oméprazole",
         "therapeutic_class": "Inhibiteur de la pompe à protons (IPP)",
+        "business_unit": "aigue",
+        "product_line": "GASTRO",
         "form_dosage": "Gélules gastro-résistantes 20 mg — boîtes de 14 et 28",
         "description": "IPP pour les troubles acido-dépendants.",
         "indications": [
@@ -102,6 +114,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Respiflow",
         "molecule": "Salbutamol",
         "therapeutic_class": "Bronchodilatateur — bêta-2 agoniste de courte durée d'action",
+        "business_unit": "aigue",
+        "product_line": "PNEUMO",
         "form_dosage": "Suspension pour inhalation en flacon pressurisé 100 µg/dose — 200 doses",
         "description": "Traitement de la crise d'asthme et du bronchospasme.",
         "indications": [
@@ -120,6 +134,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Calmapyr",
         "molecule": "Paracétamol",
         "therapeutic_class": "Antalgique — antipyrétique",
+        "business_unit": "aigue",
+        "product_line": "ANTALGIE",
         "form_dosage": "Comprimés 500 mg et 1 g, sachets 1 g, sirop pédiatrique 2,4 %",
         "description": "Antalgique de palier 1 pour la douleur et la fièvre.",
         "indications": [
@@ -137,6 +153,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Artrinol",
         "molecule": "Diclofénac",
         "therapeutic_class": "Anti-inflammatoire non stéroïdien (AINS)",
+        "business_unit": "aigue",
+        "product_line": "RHUMATO",
         "form_dosage": "Comprimés gastro-résistants 50 mg, comprimés LP 75 mg, gel 1 %",
         "description": "AINS pour les douleurs inflammatoires et rhumatismales.",
         "indications": [
@@ -155,6 +173,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Cutalis",
         "molecule": "Bétaméthasone (dipropionate)",
         "therapeutic_class": "Dermocorticoïde d'activité forte",
+        "business_unit": "aigue",
+        "product_line": "DERMATO",
         "form_dosage": "Crème et pommade 0,05 % — tubes de 30 g",
         "description": "Dermocorticoïde pour les dermatoses inflammatoires.",
         "indications": [
@@ -173,6 +193,8 @@ PRODUCTS: list[dict] = [
         "brand_name": "Gestavia",
         "molecule": "Fumarate ferreux + acide folique",
         "therapeutic_class": "Antianémique — supplémentation de la grossesse",
+        "business_unit": "chronique",
+        "product_line": "GYNECO",
         "form_dosage": "Comprimés 200 mg / 0,4 mg — boîtes de 30",
         "description": "Prévention de la carence en fer et en folates pendant la grossesse.",
         "indications": [

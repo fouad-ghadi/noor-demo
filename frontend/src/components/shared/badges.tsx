@@ -3,10 +3,11 @@
  *
  * Statuts : pastille ronde blanche, point de couleur + libellé (jamais la couleur seule).
  * Segment : petite tuile carrée A / B / C, du pin plein (A) au contour (C).
+ * Ciblage : étiquette F1 / F2 sur fond menthe léger, « Hors cible » en gris.
  */
-import type { AlertSeverity, PrescribingStatus, ProgressStatus, Segment, VisitStatus } from "@/api/types";
+import type { AlertSeverity, Frequency, PrescribingStatus, ProgressStatus, Segment, VisitStatus } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
-import { PRESCRIBING, PROGRESS_STATUS, SEGMENT, SEVERITY, VISIT_STATUS } from "@/lib/labels";
+import { FREQUENCY, OUT_OF_TARGET, PRESCRIBING, PROGRESS_STATUS, SEGMENT, SEVERITY, VISIT_STATUS } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 export function SegmentBadge({ segment, className }: { segment: Segment; className?: string }) {
@@ -21,6 +22,24 @@ export function SegmentBadge({ segment, className }: { segment: Segment; classNa
       )}
     >
       {segment}
+    </span>
+  );
+}
+
+/** Fréquence de ciblage : « F2 » (2 visites par mois), « F1 », ou « Hors cible ». */
+export function FrequencyBadge({ frequency, className }: { frequency: Frequency | null; className?: string }) {
+  const title = frequency ? FREQUENCY[frequency].long : OUT_OF_TARGET;
+  return (
+    <span
+      title={title}
+      aria-label={title}
+      className={cn(
+        "inline-flex h-5 shrink-0 items-center rounded-full px-1.5 text-[11px] font-semibold",
+        frequency ? "bg-mint-wash text-pine" : "text-muted-foreground border-line border bg-white font-medium",
+        className,
+      )}
+    >
+      {frequency ? FREQUENCY[frequency].label : OUT_OF_TARGET}
     </span>
   );
 }

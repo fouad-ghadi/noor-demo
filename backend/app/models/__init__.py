@@ -6,8 +6,10 @@ et pour pouvoir écrire simplement `from app.models import Doctor, Visit`.
 """
 from app.models.alert import Alert
 from app.models.doctor import Doctor, DoctorProductStatus
+from app.models.event import Event
 from app.models.objective import Objective, ObjectiveProduct
 from app.models.product import Document, Product
+from app.models.sales import MarketProduct, SalesRecord
 from app.models.user import User
 from app.models.visit import Visit, VisitObjection, VisitProduct, VisitSample
 
@@ -16,9 +18,12 @@ __all__ = [
     "Doctor",
     "DoctorProductStatus",
     "Document",
+    "Event",
+    "MarketProduct",
     "Objective",
     "ObjectiveProduct",
     "Product",
+    "SalesRecord",
     "User",
     "Visit",
     "VisitObjection",

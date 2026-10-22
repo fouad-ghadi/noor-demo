@@ -16,6 +16,8 @@ def list_doctors(
     city: str | None = None,
     specialty: str | None = None,
     segment: str | None = None,
+    frequency: str | None = None,
+    territory: str | None = None,
     product_id: int | None = None,
     prescribing_status: str | None = None,
     last_visit: str | None = None,
@@ -24,10 +26,11 @@ def list_doctors(
     """
     Liste filtrée des médecins visibles.
     `last_visit` : `lt30` (< 30 j), `gt30` (≥ 30 j ou jamais), `30_60`, `gt60` (> 60 j ou jamais), `never`.
+    `frequency` : `F1`, `F2`, `cible` (F1 ou F2) ou `hors_cible`.
     """
     return doctor_service.list_doctors(
         db, user, search=search, city=city, specialty=specialty, segment=segment,
-        product_id=product_id, prescribing_status=prescribing_status,
+        frequency=frequency, territory=territory, product_id=product_id, prescribing_status=prescribing_status,
         last_visit=last_visit, delegue_id=delegue_id,
     )
 

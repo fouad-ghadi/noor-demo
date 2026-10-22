@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import ai, alerts, doctors, meta, objectives, products, stats, users, visits
+from app.api import activity, ai, alerts, doctors, meta, objectives, products, sales, stats, users, visits
 from app.database import Base, engine
 from app.services import daily_reseed
 
@@ -39,7 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (users, meta, doctors, visits, products, objectives, alerts, stats, ai):
+for module in (users, meta, doctors, visits, products, objectives, alerts, stats, activity, sales, ai):
     app.include_router(module.router, prefix="/api")
 
 

@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 import { api } from "@/api/client";
 import type { VoiceReportResult } from "@/api/ai";
-import type { Feedback, Product, Visit } from "@/api/types";
+import type { Feedback, PrescriptionFeedback, Product, Visit } from "@/api/types";
 import { AiFeatureButton } from "@/components/ai/AiFeatureButton";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { SegmentBadge } from "@/components/shared/badges";
@@ -33,12 +33,13 @@ import { TIME_OPTIONS } from "@/components/visits/PlanVisitDialog";
 import { VoiceDictationDialog } from "@/components/visits/VoiceDictationDialog";
 import { invalidateVisitData, useMeta, useProducts } from "@/hooks/queries";
 import { formatDate, formatLongDay, formatTime, toApiDateTime } from "@/lib/format";
-import { FEEDBACK } from "@/lib/labels";
+import { FEEDBACK, PRESCRIPTION_FEEDBACK } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 const DURATIONS = [5, 10, 15, 20, 30];
 /** Délai conseillé avant la prochaine visite, selon le segment du médecin. */
-const NEXT_VISIT_DAYS = { A: 14, B: 30, C: 60 } as const;
+// Délai par défaut avant la prochaine visite : selon le ciblage (F2 = 2 visites/mois), sinon le potentiel
+const NEXT_VISIT_DAYS = { F2: 14, F1: 28, A: 14, B: 30, C: 60 } as const;
 const NEXT_STEP_SUGGESTIONS = [
   "Apporter des échantillons",
   "Remettre l'étude clinique",
@@ -168,16 +169,24 @@ function ReportForm({ visit, products, objectionCategories }: {
   const [duration, setDuration] = useState<number>(visit.duration_min ?? 15);
   const [productIds, setProductIds] = useState<number[]>(visit.products.map((p) => p.product_id));
   const [feedback, setFeedback] = useState<Feedback | null>(visit.feedback);
+  const [prescriptionFeedback, setPrescriptionFeedback] = useState<PrescriptionFeedback | null>(
+    visit.prescription_feedback,
+  );
   const [objections, setObjections] = useState<Record<string, { comment: string; product_id: number | null }>>(
     Object.fromEntries(visit.objections.map((o) => [o.category, { comment: o.comment ?? "", product_id: o.product_id }])),
   );
   const [samples, setSamples] = useState<Record<number, number>>(
     Object.fromEntries(visit.samples.map((s) => [s.product_id, s.quantity])),
   );
+  // N° de lot des échantillons remis (traçabilité)
+  const [lots, setLots] = useState<Record<number, string>>(
+    Object.fromEntries(visit.samples.map((s) => [s.product_id, s.lot_number ?? ""])),
+  );
   const [notes, setNotes] = useState(visit.notes ?? "");
   const [nextStep, setNextStep] = useState(visit.next_step ?? "");
   const [nextDate, setNextDate] = useState(
-    visit.next_visit_date ?? format(addDays(start, NEXT_VISIT_DAYS[visit.doctor_segment]), "yyyy-MM-dd"),
+    visit.next_visit_date ??
+      format(addDays(start, NEXT_VISIT_DAYS[visit.doctor_frequency ?? visit.doctor_segment]), "yyyy-MM-dd"),
   );
   const [planNext, setPlanNext] = useState(!isEdit);
   // IA (dictée) : source du compte-rendu et champs à vérifier en priorité
@@ -234,6 +243,7 @@ function ReportForm({ visit, products, objectionCategories }: {
         duration_min: duration,
         product_ids: productIds,
         feedback: feedback!,
+        prescription_feedback: prescriptionFeedback,
         objections: Object.entries(objections).map(([category, o]) => ({
           category,
           comment: o.comment.trim() || null,
@@ -241,7 +251,11 @@ function ReportForm({ visit, products, objectionCategories }: {
         })),
         samples: Object.entries(samples)
           .filter(([pid, q]) => q > 0 && productIds.includes(Number(pid)))
-          .map(([pid, quantity]) => ({ product_id: Number(pid), quantity })),
+          .map(([pid, quantity]) => ({
+            product_id: Number(pid),
+            quantity,
+            lot_number: lots[Number(pid)]?.trim() || null,
+          })),
         notes: notes.trim() || null,
         next_step: nextStep.trim() || null,
         next_visit_date: nextDate || null,
@@ -401,6 +415,18 @@ function ReportForm({ visit, products, objectionCategories }: {
               </button>
             ))}
           </div>
+          <p className="mt-4 mb-2 text-sm font-medium">Ce que le médecin dit de sa prescription</p>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(PRESCRIPTION_FEEDBACK) as PrescriptionFeedback[]).map((pf) => (
+              <Chip
+                key={pf}
+                selected={prescriptionFeedback === pf}
+                onClick={() => setPrescriptionFeedback((cur) => (cur === pf ? null : pf))}
+              >
+                {PRESCRIPTION_FEEDBACK[pf]}
+              </Chip>
+            ))}
+          </div>
         </Section>
 
         <Section n={4} title="Objections" description="Sélectionnez les objections soulevées, puis précisez si besoin.">
@@ -455,8 +481,17 @@ function ReportForm({ visit, products, objectionCategories }: {
               {presented.map((p) => {
                 const qty = samples[p.id] ?? 0;
                 return (
-                  <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+                  <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2">
                     <span className="text-sm font-medium">{p.brand_name}</span>
+                    {qty > 0 && (
+                      <Input
+                        value={lots[p.id] ?? ""}
+                        onChange={(e) => setLots((l) => ({ ...l, [p.id]: e.target.value }))}
+                        placeholder="N° de lot"
+                        aria-label={`Numéro de lot ${p.brand_name}`}
+                        className="order-last h-8 w-full sm:order-none sm:ml-auto sm:w-36"
+                      />
+                    )}
                     <div className="flex items-center gap-2">
                       <Button type="button" variant="outline" size="icon" className="size-8" onClick={() => setSample(p.id, qty - 1)} aria-label="Moins">
                         <Minus />

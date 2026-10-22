@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { NAV_ITEMS } from "./navigation";
 
-const ROLE_LABEL = { delegue: "Délégué médical", superviseur: "Superviseur" } as const;
+const ROLE_LABEL = { delegue: "Délégué médical (VM)", superviseur: "Superviseur (DSM)" } as const;
 
 function Sidebar() {
   const user = useCurrentUser();
@@ -118,6 +118,15 @@ function MobileTopBar() {
               </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {/* Pages qui n'ont pas de place dans la barre du bas */}
+            {NAV_ITEMS[user.role]
+              .filter((item) => !item.mobile)
+              .map(({ to, label, icon: Icon }) => (
+                <DropdownMenuItem key={to} onClick={() => navigate(to)}>
+                  <Icon /> {label}
+                </DropdownMenuItem>
+              ))}
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
                 logout();
@@ -139,7 +148,7 @@ function MobileBottomNav() {
   return (
     <nav className="pb-safe border-line fixed inset-x-0 bottom-0 z-30 border-t bg-white lg:hidden">
       <div className="grid grid-cols-5">
-        {NAV_ITEMS[user.role].map(({ to, short, icon: Icon }) => (
+        {NAV_ITEMS[user.role].filter((item) => item.mobile).map(({ to, short, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}

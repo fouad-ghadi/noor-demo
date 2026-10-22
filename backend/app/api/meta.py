@@ -19,9 +19,11 @@ def get_meta(db: DB, user: CurrentUser):
     - `districts` : quartiers connus par ville, avec coordonnées GPS approximatives
       (le formulaire médecin s'en sert pour placer le cabinet sur la carte)
     - `objection_categories` : catégories d'objections {code: libellé}
+    - `territories` : territoires de vente où l'utilisateur a des médecins
     """
     delegue_ids = access.visible_delegue_ids(db, user)
     cities = sorted(set(db.scalars(select(Doctor.city).where(Doctor.delegue_id.in_(delegue_ids)))))
+    territories = sorted(set(db.scalars(select(Doctor.territory).where(Doctor.delegue_id.in_(delegue_ids)))))
     districts: dict[str, list[dict]] = {}
     for places in REGIONS.values():
         for city, district, lat, lon, _ in places:
@@ -31,4 +33,5 @@ def get_meta(db: DB, user: CurrentUser):
         "cities": cities,
         "districts": districts,
         "objection_categories": OBJECTION_CATEGORIES,
+        "territories": territories,
     }

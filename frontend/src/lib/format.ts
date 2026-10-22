@@ -59,3 +59,22 @@ export const initials = (name: string) =>
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() ?? "")
     .join("");
+
+const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+const MONTHS_SHORT = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+
+/** Mois de l'API → "Octobre 2026" ; version courte : "oct." */
+export function formatPeriod(period: string, short = false): string {
+  const m = Number(period.slice(5, 7)) - 1;
+  return short ? MONTHS_SHORT[m] : `${capitalize(MONTHS[m])} ${period.slice(0, 4)}`;
+}
+
+/** "octobre 2026" → "Octobre 2026" */
+export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Montant en dirhams, abrégé : 16 800 000 → "16,8 M DH", 175 420 → "175 k DH" */
+export function formatMoney(n: number): string {
+  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M DH`;
+  if (Math.abs(n) >= 1_000) return `${Math.round(n / 1_000).toLocaleString("fr-FR")} k DH`;
+  return `${Math.round(n).toLocaleString("fr-FR")} DH`;
+}

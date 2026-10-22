@@ -10,19 +10,21 @@ Objectif
 
 Score d'un médecin (plus il est élevé, plus la visite est prioritaire)
     1. Retard de visite : jours depuis la dernière visite, rapportés au rythme
-       attendu du segment (A : 30 j, B : 60 j, C : 90 j), et pondérés par le
-       potentiel du médecin (un retard sur un médecin A compte 3 fois plus que sur un C).
+       attendu par le ciblage (F2 : 15 j, F1 : 30 j, hors cible : 90 j), et pondérés
+       par la fréquence (un retard sur un F2 compte presque 4 fois plus que sur un hors cible).
        Jamais vu = compté comme deux fois le rythme attendu.
     2. Potentiel : segment A > B > C.
     3. Opportunité produit : produits ciblant sa spécialité qu'il prescrit peu
        (« occasionnel » ou « non prescripteur »), surtout s'ils sont en retard
        sur l'objectif du mois.
+    4. Marché : un produit de sa spécialité perd des parts de marché sur son
+       territoire (indice d'évolution < 97, données de ventes type IMS) → visite utile.
     Les médecins ayant déjà une visite planifiée sont exclus.
 
 Quand ?
     Le créneau où le médecin a été le plus réceptif (part de visites favorables),
     sinon son créneau préféré. Les dates proposées sont réparties sur les
-    prochains jours ouvrés (3 visites recommandées par jour au maximum).
+    prochains jours ouvrés (3 visites recommandées par jour au maximum, en plus de la tournée prévue).
 
 Version 2 possible : apprendre ces poids à partir de l'historique
 (probabilité de visite favorable, de passage au statut « prescripteur régulier »...).
@@ -35,17 +37,21 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.ai.schemas import VisitRecommendation
 from app.models import Doctor, Product, User, Visit
-from app.models.enums import PrescribingStatus, Segment, VisitFeedback, VisitStatus
-from app.services import access
+from app.models.enums import Frequency, PrescribingStatus, Segment, VisitFeedback, VisitStatus
+from app.services import access, sales_service
 from app.services.dates import now, period_of
 from app.services.doctor_service import last_visit_dates, next_planned_visits
 from app.services.objective_service import get_progress
 
-# Rythme de visite attendu par segment (en jours)
-EXPECTED_INTERVAL = {Segment.A: 30, Segment.B: 60, Segment.C: 90}
+# Rythme de visite attendu selon le ciblage (en jours) ; None = hors cible
+EXPECTED_INTERVAL = {Frequency.F2: 15, Frequency.F1: 30, None: 90}
+FREQUENCY_TEXT = {Frequency.F2: "ciblé F2 (2 visites par mois)", Frequency.F1: "ciblé F1 (1 visite par mois)",
+                  None: "hors cible"}
 SEGMENT_BONUS = {Segment.A: 25, Segment.B: 12, Segment.C: 0}
-# Poids du retard de visite selon le potentiel du médecin
-LATENESS_WEIGHT = {Segment.A: 30, Segment.B: 20, Segment.C: 10}
+# Poids du retard de visite selon la fréquence de ciblage
+LATENESS_WEIGHT = {Frequency.F2: 30, Frequency.F1: 22, None: 8}
+# En dessous de cet indice d'évolution, le produit perd nettement des parts de marché sur le territoire
+LOSING_SHARE_IE = 97
 SLOT_LABEL = {"matin": "le matin", "midi": "à midi", "apres_midi": "l'après-midi"}
 VISITS_PER_DAY = 3
 POSITIVE = {VisitFeedback.FAVORABLE, VisitFeedback.TRES_FAVORABLE}
@@ -91,6 +97,7 @@ def _recommend_for(db: Session, delegue_id: int) -> list[VisitRecommendation]:
 
     # Produits en retard sur l'objectif du mois (présentations réalisées < rythme attendu)
     progress = get_progress(db, delegue_id, period_of(today))
+    evolution = sales_service.evolution_index_by_territory(db)
     behind = (
         {p.product_id for p in progress.products if p.pct < progress.expected_pct * 0.9} if progress else set()
     )
@@ -116,20 +123,22 @@ def _recommend_for(db: Session, delegue_id: int) -> list[VisitRecommendation]:
         if d.id in planned:
             continue  # déjà une visite prévue : rien à recommander
         segment = Segment(d.segment)
+        frequency = Frequency(d.frequency) if d.frequency else None
         last_dt = last.get(d.id)
         days = (today - last_dt.date()).days if last_dt else None
         reasons: list[str] = []
 
         # 1. Retard de visite
-        interval = EXPECTED_INTERVAL[segment]
+        interval = EXPECTED_INTERVAL[frequency]
         overdue = 2.0 if days is None else days / interval
         if overdue < 0.8:
             continue  # vu récemment : pas prioritaire
-        score = min(overdue, 3.0) * LATENESS_WEIGHT[segment] + SEGMENT_BONUS[segment]
+        score = min(overdue, 3.0) * LATENESS_WEIGHT[frequency] + SEGMENT_BONUS[segment]
+        who = f"Médecin {FREQUENCY_TEXT[frequency]}, potentiel {segment}"
         if days is None:
-            reasons.append(f"Médecin {segment} jamais visité")
+            reasons.append(f"{who}, jamais visité")
         else:
-            reasons.append(f"Médecin {segment} non visité depuis {days} jours (rythme conseillé : {interval} j)")
+            reasons.append(f"{who}, non visité depuis {days} jours (rythme conseillé : {interval} j)")
 
         # 2. Opportunités produit : produits de sa spécialité qu'il prescrit peu
         status = {p.product_id: p.status for p in d.prescriptions}
@@ -145,7 +154,22 @@ def _recommend_for(db: Session, delegue_id: int) -> list[VisitRecommendation]:
         opportunities.sort(key=lambda o: -o[0])
         chosen = opportunities[:2]
         score += sum(o[0] for o in chosen)
-        for _, p, st in chosen:
+
+        # 4. Marché : le produit de sa spécialité qui perd le plus de parts sur son territoire
+        losing = sorted(
+            (evolution[(d.territory, p.id)], p) for p in products
+            if d.specialty in p.target_specialties and evolution.get((d.territory, p.id), 100) < LOSING_SHARE_IE
+        )
+        if losing:
+            ie, product = losing[0]
+            score += 12
+            reasons.append(f"{product.brand_name} perd des parts de marché sur {d.territory} "
+                           f"(indice d'évolution {ie:.0f})")
+            if product.id not in {p.id for _, p, _ in chosen}:
+                chosen = (chosen + [(0, product, status.get(product.id, PrescribingStatus.NON_PRESCRIPTEUR))])[-2:]
+        for value, p, st in chosen:
+            if value == 0:
+                continue  # produit ajouté pour la raison « marché », déjà expliquée
             habit = "prescripteur occasionnel" if st == PrescribingStatus.OCCASIONNEL else "ne prescrit pas encore"
             late = ", produit en retard sur l'objectif du mois" if p.id in behind else ""
             reasons.append(f"{p.brand_name} : {habit}{late}")

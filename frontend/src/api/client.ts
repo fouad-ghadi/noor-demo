@@ -6,6 +6,9 @@
  *   (démo : pas de vraie authentification).
  */
 import type {
+  Activity,
+  AgendaEvent,
+  AgendaEventInput,
   Alert,
   Dashboard,
   DoctorDetail,
@@ -16,6 +19,7 @@ import type {
   ObjectiveProgress,
   Product,
   ProductDetail,
+  Sales,
   Team,
   User,
   Visit,
@@ -83,6 +87,8 @@ export interface DoctorFilters {
   city?: string;
   specialty?: string;
   segment?: string;
+  frequency?: string; // "F1" | "F2" | "cible" | "hors_cible"
+  territory?: string;
   product_id?: number;
   prescribing_status?: string;
   last_visit?: string;
@@ -133,4 +139,14 @@ export const api = {
   updateAlert: (id: number, status: string) => apiRequest<Alert>("PATCH", `/alerts/${id}`, { status }),
   dashboard: (delegue_id?: number) => apiRequest<Dashboard>("GET", `/stats/dashboard${qs({ delegue_id })}`),
   teamStats: () => apiRequest<Team>("GET", "/stats/team"),
+
+  // Activité terrain, événements d'agenda, analyse des ventes
+  activity: (period?: string, delegue_id?: number) =>
+    apiRequest<Activity>("GET", `/activity${qs({ period, delegue_id })}`),
+  events: (start: string, end: string, delegue_id?: number) =>
+    apiRequest<AgendaEvent[]>("GET", `/events${qs({ start, end, delegue_id })}`),
+  createEvent: (data: AgendaEventInput) => apiRequest<AgendaEvent>("POST", "/events", data),
+  deleteEvent: (id: number) => apiRequest<void>("DELETE", `/events/${id}`),
+  sales: (params: { product_id?: number; period?: string; delegue_id?: number } = {}) =>
+    apiRequest<Sales>("GET", `/sales${qs(params)}`),
 };

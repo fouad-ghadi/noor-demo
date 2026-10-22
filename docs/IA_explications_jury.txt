@@ -111,24 +111,26 @@ To say to the jury
 4. VISIT RECOMMENDATIONS
 ------------------------
 The problem
-    A rep has 50 to 60 doctors. Which ones to see first this week? At what time?
-    With which product? Today it is decided from memory or by intuition.
+    A rep follows about 200 targeted doctors and makes about 11 visits a day. Each doctor
+    has a visit frequency: F1 = once a month, F2 = twice a month. Which ones to see first
+    this week? At what time? With which product? Today it is decided from memory or by intuition.
 
 What NOOR does
     A "Recommended visits" list on the dashboard, for example:
-        "See Dr Bennani on Tuesday afternoon: segment A doctor, not visited for
-         45 days; most receptive in the afternoon (70% favourable visits); only
-         an occasional prescriber of Cardiovex, which is behind on your monthly
-         objective."
+        "See Dr Bennani on Tuesday afternoon: targeted F2 (twice a month), potential A,
+         not visited for 19 days; Amoxira is losing market share in Marrakech Medina
+         (evolution index 87); most receptive in the afternoon (75% favourable visits)."
     With a "Planifier" button to plan the visit in one click.
 
 How it works
     NOOR combines data it already has:
-        - doctors not visited for 30 days or more;
+        - how late the visit is compared with the doctor's frequency (F2: 15 days, F1: 30 days);
         - receptivity by time slot (morning / midday / afternoon);
         - prescribing status per product (regular / occasional / non-prescriber);
         - past objections (e.g. "price too high" three times -> prepare arguments);
-        - products behind on the monthly objectives.
+        - products behind on the monthly objectives;
+        - market data (IMS-style sales, fictional): a product of the doctor's specialty
+          that is losing market share in his territory (evolution index below 97).
     Version 1: a score with clear rules. Version 2: a model that learns from history.
 
 Key point
@@ -156,7 +158,9 @@ Works without any API key (rules and text search). With an Anthropic API key
    Measured result on the demo data: 7 of 7 found, 0 false alarm
    (backend/scripts/evaluer_pharmacovigilance.py).
 4. Recommendations: log in as Hamza (behind schedule) -> card "Visites recommandees":
-   overdue segment A doctors first, with products and reasons -> "Planifier".
+   overdue F2 doctors first, with products, market reasons and timing -> "Planifier".
+   Then open "Analyse des ventes": the territories losing market share are the ones
+   the recommendations mention.
 
 
 QUESTIONS THE JURY WILL PROBABLY ASK
@@ -166,7 +170,7 @@ QUESTIONS THE JURY WILL PROBABLY ASK
     sources (assistant) or its reasons (recommendations, pharmacovigilance).
 
 "How do you know it works?"
-    The demo data contains known cases (7 adverse effects among ~1,300 reports):
+    The demo data contains known cases (7 adverse effects among ~4,000 reports):
     we measure precision and recall.
 
 "What about medical data privacy?"

@@ -33,7 +33,7 @@ Règles :
 | 🎤 Compte-rendu dicté | ✅ implémenté | transcription par le navigateur + mots-clés (darija / français) | extraction structurée par Claude |
 | 💬 Assistant produit | ✅ implémenté | recherche BM25 dans les RCP simplifiés + réponse extraite, citée | réponse rédigée par Claude à partir des seuls passages trouvés |
 | ⚠️ Pharmacovigilance | ✅ implémenté | règles (symptôme + cas réel + exposition, sans « crainte ») : 7/7, 0 fausse alerte | détection par Claude (comptes-rendus enregistrés) |
-| ✨ Recommandations | ✅ implémenté | score expliqué (retard, potentiel, opportunités produit, créneau) | — |
+| ✨ Recommandations | ✅ implémenté | score expliqué (retard selon F1/F2, potentiel, opportunités produit, part de marché, créneau) | — |
 | 📷 Carte de visite | à faire | — | — |
 
 Code commun : `app/ai/llm.py` (appel à Claude, sorties JSON garanties, retour aux règles en cas d'erreur).
@@ -79,7 +79,7 @@ Code commun : `app/ai/llm.py` (appel à Claude, sorties JSON garanties, retour a
 - **Étapes** : détecter les mentions d'effets indésirables → créer
   `Alert(type="pharmacovigilance", severity="haute", visit_id, doctor_id)`.
   L'alerte apparaît automatiquement dans le tableau de bord (le type est déjà géré).
-- **Évaluation** : 7 vrais positifs connus (`seed_duplicates.md`) parmi ~1 300 comptes-rendus :
+- **Évaluation** : 7 vrais positifs connus (`seed_duplicates.md`) parmi ~4 000 comptes-rendus :
   mesurer précision et rappel.
 - **Automatisation** : appeler `scan(...)` à la fin de `visit_service.submit_report`.
 
@@ -98,7 +98,9 @@ Code commun : `app/ai/llm.py` (appel à Claude, sorties JSON garanties, retour a
 
 - **Entrée** : délégué (ou équipe pour le superviseur), nombre de recommandations.
 - **Sortie** : liste de `VisitRecommendation` (médecin, date et créneau conseillés, produits à présenter, raisons, score).
-- **Signaux disponibles** : `stats_service.doctors_to_revisit`, `slot_stats` (réceptivité par créneau),
-  statuts de prescription, objections passées, objectifs du mois en retard.
+- **Signaux utilisés** : retard de visite rapporté à la fréquence de ciblage (F2 : 15 j, F1 : 30 j, hors cible : 90 j),
+  potentiel A/B/C, réceptivité par créneau, statuts de prescription, objections passées, objectifs du mois en retard,
+  et données de marché : `sales_service.evolution_index_by_territory` (produit qui perd des parts de marché
+  sur le territoire du médecin, indice d'évolution < 97).
 - **Frontend** : ajouter une carte « Visites recommandées » sur le tableau de bord
   (`pages/dashboard/DashboardPage.tsx`), avec un bouton « Planifier » (réutiliser `PlanVisitDialog`).

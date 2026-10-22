@@ -3,7 +3,8 @@
 Réplique de démonstration d'un CRM pharma de type « NOOR » : les délégués médicaux y
 planifient leurs visites chez les médecins, rédigent leurs comptes-rendus et suivent
 leurs objectifs ; le superviseur compare son équipe. Les données sont **fictives mais
-réalistes** (200 médecins marocains, 6 mois d'historique), et l'application est conçue
+réalistes** (~860 médecins marocains, ~11 visites par jour et par délégué, 6 mois d'historique,
+ventes du marché par territoire), et l'application est conçue
 pour accueillir ensuite des **fonctionnalités d'IA** (voir [Points d'extension IA](#points-dextension-ia)).
 
 > Projet d'innovation — École Centrale Casablanca. Les noms de produits sont inventés ;
@@ -14,6 +15,8 @@ pour accueillir ensuite des **fonctionnalités d'IA** (voir [Points d'extension 
 | ![Connexion](docs/screenshots/01-connexion.png) | ![Tableau de bord](docs/screenshots/02-tableau-de-bord.png) | ![Vue équipe](docs/screenshots/03-vue-equipe.png) |
 | **Planning** | **Compte-rendu de visite** | **Sur téléphone** |
 | ![Planning](docs/screenshots/04-planning.png) | ![Compte-rendu](docs/screenshots/05-compte-rendu.png) | ![Mobile](docs/screenshots/06-mobile.png) |
+| **Statistiques d'activité** | **Analyse des ventes** | |
+| ![Statistiques](docs/screenshots/07-statistiques.png) | ![Analyse des ventes](docs/screenshots/08-analyse-ventes.png) | |
 
 ---
 
@@ -148,10 +151,12 @@ Durée : 5 à 7 minutes. Lancer `python seed.py` juste avant.
 
 | Écran | Contenu |
 |---|---|
-| **Tableau de bord** | Agenda du jour ; KPIs : visites du mois vs objectif (avec repère « attendu à date »), couverture des médecins A, comptes-rendus en attente, annulations ; comptes-rendus à rédiger ; alertes ; médecins A/B non vus depuis 30 jours ; objections fréquentes ; visites par semaine (3 mois) |
-| **Médecins** | Recherche, filtres (ville, spécialité, segment, produit + statut de prescription, dernière visite) ; fiche détaillée ; création / modification |
-| **Planning** | Vue semaine (glisser-déposer pour déplacer), vue jour + carte de la tournée (OpenStreetMap) ; planifier, déplacer, annuler, reporter |
-| **Compte-rendu** | Produits présentés (avec rappel des messages clés), durée, accueil du médecin, objections, échantillons, notes, suite à donner, prochaine visite planifiée automatiquement |
+| **Tableau de bord** | Agenda du jour ; visites du mois vs objectif (avec repère « attendu à date ») ; moyenne de visites par jour, couverture de la cible, CPA (fréquence respectée), comptes-rendus en attente ; comptes-rendus à rédiger ; visites recommandées ; alertes ; médecins ciblés non vus depuis plus d'un cycle ; objections fréquentes ; visites par semaine (3 mois) |
+| **Médecins** | Recherche, filtres (ville, territoire, spécialité, segment, ciblage F1/F2, produit + statut de prescription, dernière visite) ; fiche détaillée ; création / modification |
+| **Planning** | Vue semaine (glisser-déposer pour déplacer), vue jour + carte de la tournée (OpenStreetMap) ; planifier, déplacer, annuler, reporter ; événements (réunion, formation, congé...) |
+| **Compte-rendu** | Produits présentés (avec rappel des messages clés), durée, accueil du médecin, ce qu'il dit de sa prescription, objections, échantillons avec n° de lot, notes, suite à donner, prochaine visite planifiée automatiquement |
+| **Statistiques** | Moyenne de visites par jour, couverture, CPA F1 / F2, jours travaillés et événements, évolution sur 6 mois (formules des rapports d'activité des laboratoires) |
+| **Mes performances (ventes)** | Ventes, part de marché, quotas, indices d'évolution et de pénétration par territoire, concurrents (marché type IMS, données fictives) |
 | **Produits** | Catalogue, fiche produit (messages clés, indications, documents, statistiques de prescription) |
 | **Objectifs** | Mois en cours (visites, couverture A, produits) et historique |
 
@@ -160,6 +165,8 @@ Durée : 5 à 7 minutes. Lancer `python seed.py` juste avant.
 | Écran | Contenu |
 |---|---|
 | **Vue équipe** | Totaux de l'équipe ; tableau comparatif des délégués ; atteinte de l'objectif du mois ; évolution mensuelle ; couverture par région et segment ; objections de l'équipe |
+| **Statistiques** | Tableau « couverture / moyenne de visites par jour » par délégué (VM) avec la ligne Équipe |
+| **Analyse des ventes** | Synthèse de l'équipe par délégué et territoire, comparée au national ; concurrents ; lien avec les visites recommandées |
 | **Tableau de bord d'un délégué** | Le même écran que le délégué, en lecture seule |
 | Médecins, planning, objectifs | Toute l'équipe, avec un sélecteur de délégué |
 
@@ -226,17 +233,20 @@ Principes :
 
 ```
 User (délégué / superviseur) ──< Doctor ──< DoctorProductStatus >── Product ──< Document
-   │                               │
-   ├──< Objective ──< ObjectiveProduct
-   ├──< Alert
+   │                               │                                  │
+   ├──< Objective ──< ObjectiveProduct                               MarketProduct ──< SalesRecord
+   ├──< Alert                                                      (nos produits + concurrents)
+   ├──< Event (réunion, formation, congé...)
    └──< Visit ──< VisitProduct, VisitSample, VisitObjection
 ```
 
 | Table | Champs clés |
 |---|---|
-| `doctors` | nom, spécialité, type d'exercice, adresse, ville, quartier, GPS, **segment A/B/C**, créneau préféré, source (manuel / carte de visite / import), délégué |
+| `doctors` | nom, spécialité, type d'exercice, adresse, ville, quartier, **territoire**, GPS, **segment A/B/C** (potentiel), **fréquence F1/F2** (ciblage ; vide = hors cible), créneau préféré, source (manuel / carte de visite / import), délégué |
 | `doctor_product_status` | statut de prescription par produit : non prescripteur / occasionnel / régulier |
-| `visits` | date prévue / réelle, statut (planifiée / réalisée / annulée / reportée), durée, accueil, notes, suite, prochaine visite, **report_source** (manuel / dictée) |
+| `visits` | date prévue / réelle, statut (planifiée / réalisée / annulée / reportée), durée, accueil, statut de prescription annoncé, notes, suite, prochaine visite, **report_source** (manuel / dictée) ; échantillons avec **n° de lot** |
+| `events` | jour, type (réunion d'équipe, formation, congrès, staff, congé, jour férié...), journée ou demi-journée |
+| `market_products` · `sales_records` | produits d'un marché (les nôtres et leurs concurrents fictifs) · ventes mensuelles par territoire |
 | `objectives` | par délégué et par mois : visites, % de couverture A, présentations par produit |
 | `alerts` | type (médecin non visité, objectif en retard, compte-rendu en retard, **pharmacovigilance**), gravité, statut |
 | `documents` | RCP / notice / support promotionnel par produit, `file_path` (pour le RAG) |
@@ -253,6 +263,9 @@ User (délégué / superviseur) ──< Doctor ──< DoctorProductStatus >─�
 | POST | `/api/visits/{id}/cancel` | annuler ou reporter |
 | PUT | `/api/visits/{id}/report` | compte-rendu → visite « réalisée » |
 | GET | `/api/stats/dashboard` · `/api/stats/team` | tableau de bord délégué · vue équipe |
+| GET | `/api/activity` | moyenne de visites par jour, couverture, CPA, jours travaillés (par mois) |
+| GET / POST / DELETE | `/api/events` | événements d'agenda |
+| GET | `/api/sales` | analyse des ventes (PM, QP, QM, IE, IP, évolution), concurrents |
 | GET | `/api/objectives` · `/api/alerts` · `/api/products` | objectifs · alertes · produits |
 | * | `/api/ai/...` | fonctionnalités IA (le scan de carte de visite répond 501 : non implémenté) |
 
@@ -290,12 +303,18 @@ Les points d'extension sont repérables dans le code par le commentaire `POINT D
 même jour (hasard « figé »), quelle que soit l'heure.
 
 - **5 utilisateurs** : 1 superviseur, 4 délégués (Casablanca, Rabat-Salé, Marrakech, Fès-Meknès).
-- **200 médecins** aux noms marocains, dans de vrais quartiers (Maârif, Agdal, Guéliz, Ville Nouvelle...),
+- **~860 médecins** (≈ 215 par délégué, dont ≈ 190 ciblés en F1 ou F2) aux noms marocains, dans de vrais
+  quartiers regroupés en territoires (Casa Anfa, Rabat Centre, Marrakech Médina, Fès VN...),
   dont **10 quasi-doublons volontaires** (Mohammed El Amrani / Mohamed Elamrani, Ouazzani / Wazzani...).
 - **10 produits fictifs** (Cardiovex — amlodipine, Glucanor — metformine, Amoxira — amoxicilline...)
   avec RCP, notice et support promotionnel.
-- **~1 600 visites** sur 6 mois : médecins A visités plus souvent, créneaux préférés plus réceptifs,
-  annulations, congés d'août, jours fériés, tournées du samedi matin, objections réalistes.
+- **~4 900 visites** sur 6 mois : 8 à 12 visites par jour travaillé selon le délégué, médecins F2 vus
+  deux fois par mois, créneaux préférés plus réceptifs, annulations, tournées du samedi matin,
+  objections réalistes, échantillons avec n° de lot.
+- **Événements d'agenda** : jours fériés, congés d'été, réunion d'équipe mensuelle, formations, congrès,
+  staff, arrêt maladie (ils réduisent les jours travaillés).
+- **Ventes du marché** (type IMS, tout est fictif) : 3 ans de ventes mensuelles par territoire pour nos
+  10 produits et 26 concurrents ; certains territoires gagnent des parts de marché, d'autres en perdent.
 - **Objectifs mensuels** (délégués en avance / en retard) et **alertes** calculées par les règles métier.
 - **7 comptes-rendus mentionnant un effet indésirable** (pour tester la pharmacovigilance).
 

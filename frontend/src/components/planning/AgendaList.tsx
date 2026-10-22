@@ -1,31 +1,35 @@
 /**
- * Liste chronologique des visites, groupées par jour.
- * Utilisée pour la vue « jour », et pour la vue « semaine » sur mobile.
+ * Liste chronologique des visites, groupées par jour, avec les événements de la journée
+ * (réunion, formation, congé...). Utilisée pour la vue « jour », et pour la vue « semaine » sur mobile.
  */
 import { isSameDay, isToday, parseISO } from "date-fns";
-import { ChevronRight, FileText } from "lucide-react";
+import { CalendarOff, ChevronRight, FileText, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import type { Visit } from "@/api/types";
+import type { AgendaEvent, Visit } from "@/api/types";
 import { SegmentBadge, VisitStatusBadge } from "@/components/shared/badges";
 import { Button } from "@/components/ui/button";
 import { formatRelativeDay, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { eventLabel } from "./WeekCalendar";
 
 interface Props {
   days: Date[];
   visits: Visit[];
+  events?: AgendaEvent[];
+  onDeleteEvent?: (e: AgendaEvent) => void;
   readOnly?: boolean;
   onVisitClick: (v: Visit) => void;
   numbered?: boolean; // numérotation (correspond aux marqueurs de la carte)
 }
 
-export function AgendaList({ days, visits, readOnly, onVisitClick, numbered }: Props) {
+export function AgendaList({ days, visits, events = [], onDeleteEvent, readOnly, onVisitClick, numbered }: Props) {
   return (
     <div className="space-y-5">
       {days.map((day) => {
         const dayVisits = visits.filter((v) => isSameDay(parseISO(v.planned_at), day));
-        if (days.length > 1 && dayVisits.length === 0) return null;
+        const dayEvents = events.filter((e) => isSameDay(parseISO(e.day), day));
+        if (days.length > 1 && dayVisits.length === 0 && dayEvents.length === 0) return null;
         let n = 0;
         return (
           <section key={day.toISOString()}>
@@ -35,7 +39,21 @@ export function AgendaList({ days, visits, readOnly, onVisitClick, numbered }: P
                 {formatRelativeDay(day)}
               </h3>
             )}
-            {dayVisits.length === 0 && (
+            {dayEvents.map((e) => (
+              <div key={e.id} className="mb-2 flex items-center gap-3 rounded-xl bg-slate-100 px-3 py-2.5 text-sm">
+                <CalendarOff className="size-4 shrink-0 text-slate-500" />
+                <p className="min-w-0 flex-1">
+                  <span className="font-medium text-slate-700">{eventLabel(e)}</span>
+                  {e.comment && <span className="text-muted-foreground block truncate text-xs">{e.comment}</span>}
+                </p>
+                {onDeleteEvent && !readOnly && (
+                  <Button variant="ghost" size="icon" className="size-8" onClick={() => onDeleteEvent(e)} aria-label="Supprimer l'événement">
+                    <Trash2 />
+                  </Button>
+                )}
+              </div>
+            ))}
+            {dayVisits.length === 0 && dayEvents.length === 0 && (
               <p className="text-muted-foreground border-line rounded-xl border border-dashed p-6 text-center text-sm">
                 Aucune visite ce jour-là.
               </p>

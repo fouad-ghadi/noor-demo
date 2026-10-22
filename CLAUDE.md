@@ -63,10 +63,32 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
 
 - Rejouable : supprime et recrée la base. **Déterministe pour un même jour** (quelle que soit l'heure) ;
   l'historique est relatif à la date du jour (6 mois + 2 semaines de planning, tournée du samedi matin).
-- 5 utilisateurs, 200 médecins (dont 10 quasi-doublons volontaires), 10 produits fictifs (molécules réelles),
-  ~1 600 visites, objectifs mensuels (profils de performance par délégué), alertes,
-  7 comptes-rendus mentionnant un effet indésirable.
+- Volumes calqués sur un vrai rapport d'activité : 5 utilisateurs, ~860 médecins (≈ 215 par délégué, ≈ 190 ciblés
+  F1/F2, + 10 quasi-doublons), 10 produits fictifs (molécules réelles, BU chronique/aiguë, gamme), ~4 900 visites
+  (8 à 12 par jour travaillé selon le profil), ~140 jours d'événements, objectifs mensuels, alertes,
+  7 comptes-rendus mentionnant un effet indésirable, ~31 000 lignes de ventes (marché type IMS, `create_sales`,
+  hasard séparé `random.Random(4242)` pour ne pas décaler le reste des données).
+- Seed ≈ 11 s. Évaluation pharmacovigilance : 7/7, 0 fausse alerte sur ~4 100 comptes-rendus.
 - `seed_duplicates.md` (racine) est **généré** par le seed et **non versionné** (il bloquait `git pull`).
+
+## Réalité terrain du laboratoire partenaire (son vrai CRM s'appelle aussi « NOOR »)
+
+Fouad a fourni (le 21 oct. 2026) des photos du vrai CRM, un rapport d'activité anonymisé, la procédure de
+remontée des effets indésirables et les formations. **Ne jamais mettre leurs noms, chiffres ou documents dans le dépôt
+ni sur le site public** : on reproduit seulement la structure et les formules, avec des données fictives.
+- Vocabulaire : délégué = **VM**, superviseur = **DSM** ; calls (visites), contacts (médecins vus), ciblage, BU, gamme.
+- Ciblage `Doctor.frequency` : **F1** = 1 visite/mois, **F2** = 2 visites/mois, `None` = hors cible ; potentiel = `segment` A/B/C.
+  Territoires (secteurs IMS) : `seed_data/territories.py` (`Doctor.territory`, recalculé à la création / modification).
+- Indicateurs (`services/activity_service.py`, page **Statistiques** `/statistiques`) : jours travaillés = jours ouvrés
+  (samedi = ½) − événements (`models/event.py`) ; moyenne = visites / jours travaillés ; couverture = ciblés vus / ciblage ;
+  CPA = F1 vus ≥ 1 fois + F2 vus ≥ 2 fois, / ciblage. Alertes et « médecins à revoir » se basent sur F1/F2.
+- Ventes (`services/sales_service.py`, page **Analyse des ventes** `/ventes`, « Mes performances » pour un délégué) :
+  PM, QP, QM, IE = PM n / PM n-1 × 100, IP = PM locale / PM nationale × 100, évolution ; données M-1 (comme IMS).
+  Le copilote (`recommendations.py`) ajoute une raison quand un produit perd des parts sur le territoire (IE < 97).
+- Compte-rendu : statut de prescription annoncé (`Visit.prescription_feedback`) et **n° de lot** des échantillons.
+- Demandes IA explicites du partenaire : chatbot (produits, infos médicales, **fonctionnement du CRM**), copilote,
+  **création de médecin depuis une carte de visite + doublons**. Procédure PV réelle : 4 infos minimales (produit,
+  effet ou situation particulière, patient identifiable, notificateur identifiable), déclaration **sous 24 h**.
 
 ## Modules IA (4 implémentés sur 5)
 
@@ -98,12 +120,16 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
 Fait : étapes 1 à 5 du cahier des charges (backend, médecins, planning + carte, compte-rendu, tableaux de bord
 délégué/superviseur, produits, objectifs, points d'extension IA, README, refonte de la page de connexion,
 Dockerfile/Render, refonte complète du gabarit : toutes les pages, 4 modules IA).
+22 oct. 2026 : alignement sur le vrai CRM du partenaire (ciblage F1/F2, territoires, événements d'agenda,
+page Statistiques, analyse des ventes type IMS, n° de lot, statut de prescription, volumes réalistes).
 
-Pistes pour la suite (à valider avec Fouad) :
-1. Mise en ligne : vérifier une fois dans les journaux Render la ligne « Données de démo régénérées pour le … » (4 h du matin).
-2. IA : tester avec une clé `ANTHROPIC_API_KEY` ; scan de carte de visite si Fouad le souhaite plus tard.
-3. Ajouter des tests automatisés (pytest pour les services, Playwright pour les parcours clés).
-4. Polir l'interface (mode sombre éventuel, tests visuels Playwright).
+Pistes pour la suite (à valider avec Fouad ; MVP le 8 déc. 2026) :
+1. Pharmacovigilance alignée sur la procédure réelle : 4 infos minimales, situations particulières
+   (surdosage, mésusage, grossesse, manque d'efficacité...), compte à rebours 24 h, déclaration pré-remplie.
+2. Chatbot étendu : informations médicales (formations), mode d'emploi du CRM, « quel est mon CPA ? ».
+3. Scan de carte de visite + détection des doublons (demandé explicitement par le partenaire).
+4. IA : tester avec une clé `ANTHROPIC_API_KEY` ; tests automatisés (pytest, Playwright).
+5. Mise en ligne : vérifier une fois dans les journaux Render la ligne « Données de démo régénérées pour le … » (4 h du matin).
 
 ## Pièges connus
 

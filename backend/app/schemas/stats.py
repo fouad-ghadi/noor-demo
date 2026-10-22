@@ -3,6 +3,7 @@ from datetime import date
 
 from pydantic import BaseModel
 
+from app.schemas.activity import ActivityRow
 from app.schemas.alert import AlertOut
 from app.schemas.objective import ObjectiveProgress
 from app.schemas.visit import VisitOut
@@ -31,6 +32,7 @@ class DoctorToRevisit(BaseModel):
     doctor_name: str
     specialty: str
     segment: str
+    frequency: str | None
     city: str
     district: str
     last_visit_date: date | None
@@ -51,6 +53,7 @@ class DashboardOut(BaseModel):
     today: date
     today_visits: list[VisitOut]
     kpis: DashboardKpis
+    activity: ActivityRow               # moyenne de visites, couverture, CPA du mois (à date)
     objective: ObjectiveProgress | None
     visits_per_week: list[WeekPoint]
     doctors_to_revisit: list[DoctorToRevisit]

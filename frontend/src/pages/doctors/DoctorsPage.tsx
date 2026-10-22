@@ -1,5 +1,5 @@
 /**
- * Liste des médecins : recherche + filtres (ville, spécialité, segment,
+ * Liste des médecins : recherche + filtres (ville, territoire, spécialité, segment, ciblage,
  * statut de prescription, dernière visite).
  *
  * Les filtres sont stockés dans l'URL (?segment=A&city=Rabat...) : on peut
@@ -14,7 +14,7 @@ import { api, type DoctorFilters } from "@/api/client";
 import type { DoctorListItem } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { usePageContext } from "@/components/assistant/AssistantContext";
-import { SegmentBadge } from "@/components/shared/badges";
+import { FrequencyBadge, SegmentBadge } from "@/components/shared/badges";
 import { NextVisit } from "@/components/shared/NextVisit";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/states";
@@ -32,7 +32,17 @@ import { LAST_VISIT_FILTERS, PRESCRIBING } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 const ALL = "all"; // valeur « Tous » des listes déroulantes (Radix n'accepte pas "")
-const FILTER_KEYS = ["city", "specialty", "segment", "last_visit", "product_id", "prescribing_status", "delegue_id"] as const;
+const FILTER_KEYS = [
+  "city",
+  "territory",
+  "specialty",
+  "segment",
+  "frequency",
+  "last_visit",
+  "product_id",
+  "prescribing_status",
+  "delegue_id",
+] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 
 /** Texte + couleur de la « dernière visite » (rouge si > 60 j, orange si > 30 j). */
@@ -111,6 +121,8 @@ export function DoctorsPage() {
     city: get("city") || undefined,
     specialty: get("specialty") || undefined,
     segment: get("segment") || undefined,
+    frequency: get("frequency") || undefined,
+    territory: get("territory") || undefined,
     last_visit: get("last_visit") || undefined,
     product_id: get("product_id") ? Number(get("product_id")) : undefined,
     prescribing_status: get("prescribing_status") || undefined,
@@ -145,6 +157,12 @@ export function DoctorsPage() {
         options={(meta.data?.cities ?? []).map((c) => ({ value: c, label: c }))}
       />
       <FilterSelect
+        label="Territoire"
+        value={get("territory")}
+        onChange={(v) => setFilter("territory", v)}
+        options={(meta.data?.territories ?? []).map((t) => ({ value: t, label: t }))}
+      />
+      <FilterSelect
         label="Spécialité"
         value={get("specialty")}
         onChange={(v) => setFilter("specialty", v)}
@@ -158,6 +176,17 @@ export function DoctorsPage() {
           { value: "A", label: "A — fort potentiel" },
           { value: "B", label: "B — potentiel moyen" },
           { value: "C", label: "C — faible potentiel" },
+        ]}
+      />
+      <FilterSelect
+        label="Ciblage"
+        value={get("frequency")}
+        onChange={(v) => setFilter("frequency", v)}
+        options={[
+          { value: "cible", label: "Ciblés (F1 et F2)" },
+          { value: "F2", label: "F2, deux visites par mois" },
+          { value: "F1", label: "F1, une visite par mois" },
+          { value: "hors_cible", label: "Hors cible" },
         ]}
       />
       <FilterSelect
@@ -289,15 +318,16 @@ export function DoctorsPage() {
                       <div className="flex items-center gap-3">
                         <SegmentBadge segment={d.segment} />
                         <div>
-                          <p className="text-ink font-medium">
+                          <p className="text-ink flex items-center gap-2 font-medium">
                             Dr {d.first_name} {d.last_name}
+                            <FrequencyBadge frequency={d.frequency} />
                           </p>
                           <p className="text-muted-foreground text-xs">{d.specialty}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <p className="text-sm">{d.city}</p>
+                      <p className="text-sm">{d.territory}</p>
                       <p className="text-muted-foreground text-xs">{d.district}</p>
                     </TableCell>
                     <TableCell className="max-w-56 text-sm whitespace-normal">
@@ -344,8 +374,11 @@ function DoctorCard({ doctor: d }: { doctor: DoctorListItem }) {
       <div className="flex items-start gap-3">
         <SegmentBadge segment={d.segment} className="mt-0.5" />
         <div className="min-w-0 flex-1">
-          <p className="text-ink truncate font-medium">
-            Dr {d.first_name} {d.last_name}
+          <p className="text-ink flex min-w-0 items-center gap-2 font-medium">
+            <span className="truncate">
+              Dr {d.first_name} {d.last_name}
+            </span>
+            <FrequencyBadge frequency={d.frequency} />
           </p>
           <p className="text-muted-foreground truncate text-[13px]">
             {d.specialty}, {d.district}

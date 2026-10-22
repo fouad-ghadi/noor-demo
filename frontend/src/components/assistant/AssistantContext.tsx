@@ -21,6 +21,8 @@ export type PageName =
   | "products"
   | "product_detail"
   | "objectives"
+  | "stats"
+  | "sales"
   | "other";
 
 export interface PageContext {

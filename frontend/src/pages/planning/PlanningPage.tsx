@@ -2,21 +2,23 @@
  * Planning des visites.
  * - Vue « Semaine » : calendrier (ordinateur, glisser-déposer pour déplacer) ou liste (mobile).
  * - Vue « Jour »    : tournée du jour + carte des visites.
+ * Les événements (réunion, formation, congé...) apparaissent dans les deux vues ; le délégué peut en ajouter.
  * La vue et la date sont dans l'URL (?vue=jour&date=2026-10-16) : le retour arrière les conserve.
  */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, addWeeks, format, isSameDay, parseISO, startOfDay, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarOff, CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { api } from "@/api/client";
-import type { Visit } from "@/api/types";
+import type { AgendaEvent, Visit } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { AgendaList } from "@/components/planning/AgendaList";
+import { EventDialog } from "@/components/planning/EventDialog";
 import { VisitsMap } from "@/components/planning/VisitsMap";
 import { LEGEND } from "@/components/planning/visitStyle";
 import { WeekCalendar } from "@/components/planning/WeekCalendar";
@@ -39,6 +41,7 @@ export function PlanningPage() {
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
   const [planOpen, setPlanOpen] = useState(false);
+  const [eventOpen, setEventOpen] = useState(false);
 
   // --- État lu dans l'URL -------------------------------------------------
   const view: View = (params.get("vue") as View) ?? (isDesktop ? "semaine" : "jour");
@@ -64,6 +67,21 @@ export function PlanningPage() {
     queryFn: () => api.visits(filters),
     enabled: !isSupervisor || !!delegueId,
   });
+
+  const events = useQuery({
+    queryKey: ["events", toApiDate(rangeStart), delegueId ?? "me"],
+    queryFn: () => api.events(toApiDate(rangeStart), toApiDate(addDays(rangeEnd, -1)), delegueId),
+    enabled: !isSupervisor || !!delegueId,
+  });
+  const removeEvent = useMutation({
+    mutationFn: (e: AgendaEvent) => api.deleteEvent(e.id),
+    onSuccess: () => {
+      for (const key of ["events", "activity", "dashboard"]) queryClient.invalidateQueries({ queryKey: [key] });
+      toast.success("Événement supprimé");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const dayEvents = (events.data ?? []).filter((e) => isSameDay(parseISO(e.day), anchor));
 
   usePageContext({ page: "planning", title: `Planning — ${view === "jour" ? formatLongDay(anchor) : "semaine"}`, delegueId });
 
@@ -110,9 +128,14 @@ export function PlanningPage() {
         }
         actions={
           !isSupervisor && (
-            <Button onClick={() => setPlanOpen(true)}>
-              <CalendarPlus /> Planifier une visite
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setEventOpen(true)}>
+                <CalendarOff /> Ajouter un événement
+              </Button>
+              <Button onClick={() => setPlanOpen(true)}>
+                <CalendarPlus /> Planifier une visite
+              </Button>
+            </>
           )
         }
       />
@@ -176,6 +199,7 @@ export function PlanningPage() {
               <WeekCalendar
                 weekStart={weekStart}
                 visits={visits.data}
+                events={events.data}
                 readOnly={isSupervisor}
                 onVisitClick={openVisit}
                 onMove={(visit, date) => move.mutate({ visit, date })}
@@ -188,9 +212,16 @@ export function PlanningPage() {
               )}
             </>
           ) : (
-            <AgendaList days={days} visits={visits.data} readOnly={isSupervisor} onVisitClick={openVisit} />
+            <AgendaList
+              days={days}
+              visits={visits.data}
+              events={events.data}
+              onDeleteEvent={(e) => removeEvent.mutate(e)}
+              readOnly={isSupervisor}
+              onVisitClick={openVisit}
+            />
           )}
-          {!isDesktop && visits.data.length === 0 && (
+          {!isDesktop && visits.data.length === 0 && !events.data?.length && (
             <p className="text-muted-foreground border-line rounded-xl border border-dashed p-6 text-center text-sm">
               Aucune visite cette semaine.
             </p>
@@ -200,13 +231,26 @@ export function PlanningPage() {
 
       {visits.data && view === "jour" && (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-          <AgendaList days={[anchor]} visits={dayVisits} readOnly={isSupervisor} onVisitClick={openVisit} numbered />
+          <AgendaList
+            days={[anchor]}
+            visits={dayVisits}
+            events={dayEvents}
+            onDeleteEvent={(e) => removeEvent.mutate(e)}
+            readOnly={isSupervisor}
+            onVisitClick={openVisit}
+            numbered
+          />
           <div className="h-80 lg:sticky lg:top-8 lg:h-[calc(100dvh-240px)]">
             <VisitsMap visits={dayVisits} onVisitClick={openVisit} />
           </div>
         </div>
       )}
 
+      <EventDialog
+        open={eventOpen}
+        onOpenChange={setEventOpen}
+        defaultDate={view === "jour" && anchor >= startOfDay(new Date()) ? anchor : undefined}
+      />
       <PlanVisitDialog open={planOpen} onOpenChange={setPlanOpen} defaultDate={view === "jour" && anchor >= startOfDay(new Date()) ? anchor : undefined} />
       {dialogs}
     </>

@@ -8,14 +8,15 @@
  *
  * Mise en page :
  *  1. bandeau vert pin : bonjour, rythme du mois (visites / objectif) et tournée du jour ;
- *  2. un panneau avec les autres indicateurs (couverture A, comptes-rendus, annulations) ;
+ *  2. un panneau avec les indicateurs d'activité du mois (moyenne de visites par jour,
+ *     couverture de la cible, CPA) et les comptes-rendus en attente ;
  *  3. ce qui demande une action (comptes-rendus à rédiger, visites recommandées par l'IA,
  *     médecins à revoir, alertes) ;
  *  4. l'historique (visites par semaine).
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CalendarX2, Eye, FileClock, Target, Users } from "lucide-react";
+import { ArrowLeft, Eye, FileClock, Gauge, Repeat, Target, Users } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 import { api } from "@/api/client";
@@ -76,11 +77,10 @@ export function DashboardPage() {
           : "Dans les temps"
         : `${k.visits_expected_to_date - k.visits_done} visite(s) de retard`,
   };
-  const coverageGap = k.coverage_a - k.coverage_a_target;
-  const coverageStatus: { level: KpiStatus; text: string } =
-    coverageGap >= 0
-      ? { level: "good", text: "Objectif atteint" }
-      : { level: coverageGap > -15 ? "warning" : "critical", text: `${Math.round(-coverageGap)} pts sous l'objectif` };
+  // Activité du mois (à date) : couverture et CPA comparés au rythme attendu (part du mois écoulée)
+  const act = d.activity;
+  const coverageTone = paceTone(act.coverage_pct, expectedPct);
+  const cpaTone = paceTone(act.cpa_pct, expectedPct * 0.85); // F2 : la 2e visite vient en fin de mois
 
   const caption = o ? `Objectif de visites, ${o.label}` : "Visites du mois";
 
@@ -129,15 +129,36 @@ export function DashboardPage() {
         />
 
         {/* Les autres indicateurs du mois, dans un seul panneau */}
-        <KpiStrip className="grid-cols-1 sm:grid-cols-3">
+        <KpiStrip className="grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
-            label="Couverture des médecins A"
+            label="Moyenne de visites par jour"
+            icon={Gauge}
+            value={act.avg_visits_per_day.toLocaleString("fr-FR", { maximumFractionDigits: 1 })}
+            detail={`${act.calls} visites en ${act.worked_days.toLocaleString("fr-FR")} jours travaillés, ${k.cancelled_month} annulée(s) ou reportée(s)`}
+          />
+          <KpiCard
+            label="Couverture de la cible"
             icon={Target}
-            value={`${Math.round(k.coverage_a)} %`}
-            suffix={k.coverage_a_target ? `objectif ${k.coverage_a_target} %` : undefined}
-            progress={{ value: k.coverage_a }}
-            status={k.coverage_a_target ? coverageStatus : undefined}
-            detail={o ? `${o.a_doctors_visited} médecins A vus sur ${o.a_doctors_total} ce mois` : undefined}
+            value={`${Math.round(act.coverage_pct)} %`}
+            progress={{ value: act.coverage_pct, expected: expectedPct || undefined }}
+            status={
+              expectedPct
+                ? { level: coverageTone, text: coverageTone === "good" ? "Au rythme du mois" : "En dessous du rythme du mois" }
+                : undefined
+            }
+            detail={`${act.targeted_visited} médecins ciblés vus sur ${act.targeted}`}
+          />
+          <KpiCard
+            label="CPA, fréquence respectée"
+            icon={Repeat}
+            value={`${Math.round(act.cpa_pct)} %`}
+            progress={{ value: act.cpa_pct }}
+            status={
+              expectedPct
+                ? { level: cpaTone, text: cpaTone === "good" ? "Au rythme du mois" : "Fréquences en retard" }
+                : undefined
+            }
+            detail={`F1 vus 1 fois : ${Math.round(act.cpa_f1_pct)} %. F2 vus 2 fois : ${Math.round(act.cpa_f2_pct)} %`}
           />
           <KpiCard
             label="Comptes-rendus en attente"
@@ -151,16 +172,6 @@ export function DashboardPage() {
                   : { level: "warning", text: "À rédiger rapidement" }
             }
             onClick={k.pending_reports ? () => document.getElementById("comptes-rendus")?.scrollIntoView({ behavior: "smooth" }) : undefined}
-          />
-          <KpiCard
-            label="Visites annulées ou reportées"
-            icon={CalendarX2}
-            value={k.cancelled_month}
-            detail={
-              k.visits_done + k.cancelled_month
-                ? `${Math.round((100 * k.cancelled_month) / (k.visits_done + k.cancelled_month))} % des visites du mois`
-                : "Ce mois-ci"
-            }
           />
         </KpiStrip>
 

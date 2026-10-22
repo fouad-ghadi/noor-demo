@@ -10,7 +10,7 @@ import { VisitStatusBadge } from "@/components/shared/badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatTime } from "@/lib/format";
-import { FEEDBACK } from "@/lib/labels";
+import { FEEDBACK, PRESCRIPTION_FEEDBACK } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 const DOT_COLOR: Record<Visit["status"], string> = {
@@ -61,6 +61,10 @@ export function VisitHistoryItem({ visit, readOnly = false }: { visit: Visit; re
             )}
           </div>
 
+          {visit.prescription_feedback && (
+            <p className="text-ink text-xs font-medium">{PRESCRIPTION_FEEDBACK[visit.prescription_feedback]}</p>
+          )}
+
           {visit.objections.length > 0 && (
             <div className="space-y-1">
               {visit.objections.map((o, i) => (
@@ -86,7 +90,10 @@ export function VisitHistoryItem({ visit, readOnly = false }: { visit: Visit; re
             <div className="text-muted-foreground border-line flex flex-wrap gap-x-4 gap-y-1 border-t pt-2 text-xs">
               {visit.samples.length > 0 && (
                 <span>
-                  Échantillons : {visit.samples.map((s) => `${s.brand_name} ×${s.quantity}`).join(", ")}
+                  Échantillons :{" "}
+                  {visit.samples
+                    .map((s) => `${s.brand_name} ×${s.quantity}${s.lot_number ? ` (lot ${s.lot_number})` : ""}`)
+                    .join(", ")}
                 </span>
               )}
               {visit.next_step && <span>Suite : {visit.next_step}</span>}

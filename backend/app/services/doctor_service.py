@@ -6,14 +6,14 @@ Ces fonctions sont appelées par les routes API (app/api/doctors.py) et pourront
 médecin via `create_doctor`, la détection de doublons utilisera `list_doctors`).
 """
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import datetime
 
 from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Doctor, DoctorProductStatus, Product, User, Visit
-from app.models.enums import PrescribingStatus, Role, VisitFeedback, VisitStatus
+from app.models.enums import Frequency, PrescribingStatus, Role, VisitFeedback, VisitStatus
 from app.schemas.doctor import (
     DoctorCreate,
     DoctorDetail,
@@ -25,6 +25,7 @@ from app.schemas.doctor import (
     SlotStat,
 )
 from app.schemas.visit import VisitOut
+from app.seed_data.territories import territory_of
 from app.services import access
 from app.services.dates import now
 
@@ -73,6 +74,8 @@ def list_doctors(
     city: str | None = None,
     specialty: str | None = None,
     segment: str | None = None,
+    frequency: str | None = None,    # "F1" | "F2" | "cible" (F1 ou F2) | "hors_cible"
+    territory: str | None = None,
     product_id: int | None = None,
     prescribing_status: str | None = None,
     last_visit: str | None = None,   # "lt30" | "gt30" | "30_60" | "gt60" | "never"
@@ -104,6 +107,14 @@ def list_doctors(
         q = q.where(Doctor.specialty == specialty)
     if segment:
         q = q.where(Doctor.segment == segment)
+    if frequency == "cible":
+        q = q.where(Doctor.frequency.isnot(None))
+    elif frequency == "hors_cible":
+        q = q.where(Doctor.frequency.is_(None))
+    elif frequency:
+        q = q.where(Doctor.frequency == frequency)
+    if territory:
+        q = q.where(Doctor.territory == territory)
     if product_id and prescribing_status:
         # Médecins ayant ce statut pour ce produit. "non_prescripteur" inclut aussi
         # les médecins sans aucune ligne pour ce produit.
@@ -262,6 +273,11 @@ def _apply_prescriptions(db: Session, doctor: Doctor, prescriptions: list[Prescr
             )
 
 
+def _check_frequency(frequency: str | None) -> None:
+    if frequency is not None and frequency not in {f.value for f in Frequency}:
+        raise HTTPException(400, f"Fréquence invalide : {frequency}")
+
+
 def create_doctor(db: Session, user: User, data: DoctorCreate) -> Doctor:
     """Crée une fiche médecin. Un délégué crée toujours dans son propre portefeuille."""
     if user.role == Role.DELEGUE:
@@ -272,8 +288,10 @@ def create_doctor(db: Session, user: User, data: DoctorCreate) -> Doctor:
         access.check_delegue_access(db, user, data.delegue_id)
         delegue_id = data.delegue_id
 
+    _check_frequency(data.frequency)
     fields = data.model_dump(exclude={"delegue_id", "prescriptions"})
-    doctor = Doctor(**fields, delegue_id=delegue_id, created_at=now())
+    doctor = Doctor(**fields, territory=territory_of(data.city, data.district), delegue_id=delegue_id,
+                    created_at=now())
     _apply_prescriptions(db, doctor, data.prescriptions)
     db.add(doctor)
     db.commit()
@@ -283,8 +301,10 @@ def create_doctor(db: Session, user: User, data: DoctorCreate) -> Doctor:
 
 def update_doctor(db: Session, user: User, doctor_id: int, data: DoctorUpdate) -> Doctor:
     doctor = access.get_doctor_or_403(db, user, doctor_id)
+    _check_frequency(data.frequency)
     for field, value in data.model_dump(exclude={"prescriptions"}).items():
         setattr(doctor, field, value)
+    doctor.territory = territory_of(doctor.city, doctor.district)
     if data.prescriptions is not None:
         _apply_prescriptions(db, doctor, data.prescriptions)
     db.commit()

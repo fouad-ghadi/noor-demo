@@ -26,6 +26,19 @@ class Segment(StrEnum):
     C = "C"
 
 
+class Frequency(StrEnum):
+    """
+    Fréquence de visite d'un médecin ciblé (« ciblage » fait deux fois par an, janvier et juillet) :
+    F1 = une visite par mois, F2 = deux visites par mois. Un médecin sans fréquence est hors cible.
+    """
+    F1 = "F1"
+    F2 = "F2"
+
+
+# Nombre de visites attendues par mois selon la fréquence (sert au CPA, Call Plan Adherence)
+VISITS_PER_MONTH = {Frequency.F1: 1, Frequency.F2: 2}
+
+
 class PrescribingStatus(StrEnum):
     NON_PRESCRIPTEUR = "non_prescripteur"
     OCCASIONNEL = "occasionnel"
@@ -62,6 +75,31 @@ class VisitFeedback(StrEnum):
     DEFAVORABLE = "defavorable"
 
 
+class PrescriptionFeedback(StrEnum):
+    """Ce que le médecin dit de sa prescription pendant la visite (historique de la fiche)."""
+    PRESCRIT_REGULIEREMENT = "prescrit_regulierement"
+    PRESCRIT_PARMI_AUTRES = "prescrit_parmi_autres"
+    PROMESSE_PRESCRIRE = "promesse_prescrire"
+    NE_PRESCRIT_PAS = "ne_prescrit_pas"
+
+
+class EventType(StrEnum):
+    """
+    Activités hors visites (agenda) : elles réduisent les jours travaillés sur le terrain.
+    Les « jours travaillés » d'un délégué = jours ouvrés de la période − jours d'événements.
+    """
+    REUNION_EQUIPE = "reunion_equipe"
+    FORMATION = "formation"
+    CONGRES = "congres"
+    STAFF = "staff"
+    TABLE_RONDE = "table_ronde"
+    ADMINISTRATIF = "administratif"
+    CONGE_ANNUEL = "conge_annuel"
+    CONGE_MALADIE = "conge_maladie"
+    FETE = "fete"            # jour férié
+    AUTRE = "autre"
+
+
 class ReportSource(StrEnum):
     """Comment le compte-rendu a été saisi (« dictee » = futur assistant vocal)."""
     MANUEL = "manuel"
@@ -85,6 +123,12 @@ class AlertStatus(StrEnum):
     NOUVELLE = "nouvelle"
     VUE = "vue"
     TRAITEE = "traitee"
+
+
+class BusinessUnit(StrEnum):
+    """Unité commerciale d'un produit (comme dans les rapports d'activité des laboratoires)."""
+    CHRONIQUE = "chronique"
+    AIGUE = "aigue"
 
 
 class DocumentType(StrEnum):

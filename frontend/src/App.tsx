@@ -15,6 +15,8 @@ import { ObjectivesPage } from "@/pages/objectives/ObjectivesPage";
 import { PlanningPage } from "@/pages/planning/PlanningPage";
 import { ProductDetailPage } from "@/pages/products/ProductDetailPage";
 import { ProductsPage } from "@/pages/products/ProductsPage";
+import { SalesPage } from "@/pages/sales/SalesPage";
+import { ActivityPage } from "@/pages/stats/ActivityPage";
 import { TeamPage } from "@/pages/team/TeamPage";
 import { VisitReportPage } from "@/pages/visits/VisitReportPage";
 
@@ -52,6 +54,8 @@ export default function App() {
         <Route path="produits" element={<ProductsPage />} />
         <Route path="produits/:id" element={<ProductDetailPage />} />
         <Route path="objectifs" element={<ObjectivesPage />} />
+        <Route path="statistiques" element={<ActivityPage />} />
+        <Route path="ventes" element={<SalesPage />} />
         <Route path="equipe" element={<TeamPage />} />
         <Route path="equipe/:delegueId" element={<DashboardPage />} />
         <Route path="*" element={<HomeRedirect />} />

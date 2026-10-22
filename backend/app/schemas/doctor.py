@@ -33,6 +33,7 @@ class DoctorBase(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     segment: str = "B"
+    frequency: str | None = None      # F1 / F2 ; None = hors cible
     preferred_slot: str | None = None
     notes: str | None = None
 
@@ -50,6 +51,7 @@ class DoctorUpdate(DoctorBase):
 
 class DoctorOut(ORMModel, DoctorBase):
     id: int
+    territory: str                    # déduit du quartier (voir seed_data/territories.py)
     delegue_id: int
     source: str
     created_at: datetime

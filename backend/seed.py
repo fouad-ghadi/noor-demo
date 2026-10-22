@@ -9,14 +9,20 @@ le même jour. L'historique est calculé par rapport à la date du jour :
 6 mois de visites (le mois courant + les 5 précédents) et 2 semaines de visites planifiées.
 → Relancez le seed le matin d'une démo pour avoir un agenda du jour à jour.
 
-Contenu :
-- 1 superviseur + 4 délégués (Casablanca, Rabat-Salé, Marrakech, Fès-Meknès)
-- 200 médecins dont 10 quasi-doublons volontaires (voir seed_duplicates.md)
+Contenu (volumes proches d'un vrai rapport d'activité de laboratoire) :
+- 1 superviseur (DSM) + 4 délégués médicaux (VM) : Casablanca, Rabat-Salé, Marrakech, Fès-Meknès
+- ~220 médecins par délégué, dont ~200 ciblés (fréquence F1 = 1 visite/mois, F2 = 2 visites/mois),
+  + 10 quasi-doublons volontaires (voir seed_duplicates.md)
 - 10 produits fictifs + leurs documents (RCP, notice, support promotionnel)
-- ~6 mois d'historique de visites avec comptes-rendus, objections, échantillons
+- ~6 mois d'historique : ~10 visites par jour travaillé, comptes-rendus, objections,
+  échantillons avec n° de lot, statut de prescription annoncé par le médecin
+- événements d'agenda (réunions, formations, congrès, congés, jours fériés) qui réduisent
+  les jours travaillés
 - objectifs mensuels (certains délégués en avance, d'autres en retard)
 - alertes calculées par les règles métier
+- ventes du marché (type IMS) sur 3 ans, par territoire, avec concurrents (tout est fictif)
 """
+import math
 import random
 import unicodedata
 from collections import Counter, defaultdict
@@ -24,15 +30,20 @@ from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
 from app.ai import pharmacovigilance
+from sqlalchemy import insert
+
 from app.database import Base, SessionLocal, engine
 from app.models import (
     Alert,
     Doctor,
     DoctorProductStatus,
     Document,
+    Event,
+    MarketProduct,
     Objective,
     ObjectiveProduct,
     Product,
+    SalesRecord,
     User,
     Visit,
     VisitObjection,
@@ -42,15 +53,20 @@ from app.models import (
 from app.models.enums import (
     AlertStatus,
     DocumentType,
+    EventType,
+    Frequency,
     PrescribingStatus,
+    PrescriptionFeedback,
     ReportSource,
     Role,
     VisitFeedback,
     VisitStatus,
 )
 from app.seed_data.geography import FACILITIES, REGIONS, STREETS
+from app.seed_data.market import LABS, MARKETS, TERRITORY_TREND
 from app.seed_data.names import FEMALE_FIRST_NAMES, LAST_NAMES, MALE_FIRST_NAMES
 from app.seed_data.products import PRODUCTS
+from app.seed_data.territories import TERRITORIES, territory_of
 from app.seed_data.texts import (
     CANCEL_REASONS,
     NEXT_STEPS,
@@ -91,20 +107,27 @@ SUPERVISOR = {
 # interval_factor : < 1 = visite plus souvent ; neglect_a / neglect_b : part des médecins A / B
 # négligés (visités trop rarement → « médecins à revoir ») ;
 # cancel_rate : taux d'annulation ; achievement : fourchette d'atteinte de l'objectif ;
-# pending : nb de comptes-rendus non saisis ; doctors : taille du portefeuille.
+# pending : nb de comptes-rendus non saisis ; doctors : taille du portefeuille (univers) ;
+# capacity : visites par journée de terrain ; vacation : début des 2 semaines de congé annuel ;
+# extra_events : demi-journées hors terrain par mois (staff, administratif...) ;
+# sick_days : jours de congé maladie (il y a ~5 semaines).
 DELEGATES = [
     {"name": "Youssef El Idrissi", "email": "youssef.elidrissi@noor-demo.ma", "region": "Casablanca",
-     "phone": "06 62 45 12 87", "interval_factor": 0.8, "neglect_a": 0.0, "neglect_b": 0.12, "cancel_rate": 0.05,
-     "achievement": (1.06, 1.16), "pending": 1, "doctors": 52, "vacation": (8, 3)},
+     "phone": "06 62 45 12 87", "interval_factor": 0.95, "neglect_a": 0.0, "neglect_b": 0.05, "cancel_rate": 0.04,
+     "achievement": (1.06, 1.16), "pending": 1, "doctors": 220, "capacity": (11, 13), "vacation": (8, 3),
+     "extra_events": 1, "sick_days": 0},
     {"name": "Salma Berrada", "email": "salma.berrada@noor-demo.ma", "region": "Rabat-Salé",
-     "phone": "06 70 33 21 54", "interval_factor": 1.0, "neglect_a": 0.08, "neglect_b": 0.2, "cancel_rate": 0.07,
-     "achievement": (0.90, 0.96), "pending": 2, "doctors": 48, "vacation": (7, 20)},
+     "phone": "06 70 33 21 54", "interval_factor": 1.0, "neglect_a": 0.04, "neglect_b": 0.1, "cancel_rate": 0.06,
+     "achievement": (0.90, 0.96), "pending": 2, "doctors": 215, "capacity": (10, 12), "vacation": (7, 20),
+     "extra_events": 1, "sick_days": 0},
     {"name": "Hamza Ait Lahcen", "email": "hamza.aitlahcen@noor-demo.ma", "region": "Marrakech",
-     "phone": "06 61 98 76 05", "interval_factor": 1.25, "neglect_a": 0.3, "neglect_b": 0.35, "cancel_rate": 0.09,
-     "achievement": (0.64, 0.76), "pending": 5, "doctors": 46, "vacation": (8, 10)},
+     "phone": "06 61 98 76 05", "interval_factor": 1.1, "neglect_a": 0.18, "neglect_b": 0.25, "cancel_rate": 0.08,
+     "achievement": (0.64, 0.76), "pending": 5, "doctors": 210, "capacity": (8, 10), "vacation": (8, 10),
+     "extra_events": 2, "sick_days": 0},
     {"name": "Imane Fassi Fihri", "email": "imane.fassifihri@noor-demo.ma", "region": "Fès-Meknès",
-     "phone": "06 64 07 58 19", "interval_factor": 1.1, "neglect_a": 0.15, "neglect_b": 0.3, "cancel_rate": 0.15,
-     "achievement": (0.68, 0.80), "pending": 3, "doctors": 44, "vacation": (8, 17)},
+     "phone": "06 64 07 58 19", "interval_factor": 1.05, "neglect_a": 0.1, "neglect_b": 0.2, "cancel_rate": 0.14,
+     "achievement": (0.68, 0.80), "pending": 3, "doctors": 205, "capacity": (9, 11), "vacation": (8, 17),
+     "extra_events": 2, "sick_days": 3},
 ]
 
 # Jours fériés marocains (les dates des fêtes religieuses sont approximatives)
@@ -113,9 +136,12 @@ HOLIDAYS = {
     (11, 6), (11, 18), (1, 1), (1, 11), (1, 14),
 }
 
-# Fréquence de visite de base (en jours) par segment
-BASE_INTERVAL = {"A": 14, "B": 30, "C": 65}
+# Rythme de visite de base (en jours) selon la fréquence de ciblage (None = hors cible)
+BASE_INTERVAL = {"F2": 14, "F1": 28, None: 75}
 SLOT_HOURS = {"matin": (9, 0, 11, 30), "midi": (12, 0, 13, 30), "apres_midi": (15, 0, 18, 30)}
+# Blocs horaires d'une journée de terrain : (créneau, début, dernière heure possible)
+DAY_BLOCKS = [("matin", time(9, 0), time(12, 0)), ("midi", time(12, 15), time(13, 45)),
+              ("apres_midi", time(14, 45), time(18, 45))]
 SLOT_LABELS = {"matin": "le matin", "midi": "à l'heure du déjeuner", "apres_midi": "l'après-midi"}
 
 # ---------------------------------------------------------------------------
@@ -222,13 +248,10 @@ def mobile_phone() -> str:
     return " ".join(digits[i:i + 2] for i in range(0, 10, 2))
 
 
-def is_off_day(d: date, vacation: tuple[int, int]) -> bool:
-    """Dimanche, jour férié ou congés du délégué (2 semaines l'été).
-    Le samedi matin est travaillé (beaucoup de cabinets sont ouverts le samedi matin au Maroc)."""
-    if d.weekday() == 6 or (d.month, d.day) in HOLIDAYS:
-        return True
-    vac_start = date(d.year, vacation[0], vacation[1])
-    return vac_start <= d < vac_start + timedelta(days=14)
+def lot_number(product: Product, d: date) -> str:
+    """N° de lot d'un échantillon : un nouveau lot par trimestre (ex. « CAR2607-151 »)."""
+    quarter_month = (d.month - 1) // 3 * 3 + 1
+    return f"{product.brand_name[:3].upper()}{d.year % 100:02d}{quarter_month:02d}-{(product.id * 37 + d.year) % 900 + 100}"
 
 
 def slot_of(t: time) -> str:
@@ -312,6 +335,17 @@ def _build_doctor(delegue: User, used_names: set, products: list[Product], **ove
     seg_weights = [30, 40, 30] if specialty != "Généraliste" else [14, 33, 53]
     segment = override.pop("segment", None) or RNG.choices(["A", "B", "C"], weights=seg_weights)[0]
 
+    # Ciblage : les médecins à fort potentiel sont plus souvent en F2 (2 visites par mois) ;
+    # une partie des médecins C reste hors cible (fiche connue, visitée rarement).
+    if "frequency" in override:
+        frequency = override.pop("frequency")
+    else:
+        frequency = RNG.choices(*{
+            "A": ([Frequency.F2, Frequency.F1], [40, 60]),
+            "B": ([Frequency.F2, Frequency.F1], [8, 92]),
+            "C": ([Frequency.F1, None], [72, 28]),
+        }[segment])[0]
+
     slot = "matin" if practice == "hopital_public" and RNG.random() < 0.7 else RNG.choices(
         ["matin", "midi", "apres_midi"], weights=[45, 15, 40])[0]
 
@@ -323,12 +357,14 @@ def _build_doctor(delegue: User, used_names: set, products: list[Product], **ove
         address=address,
         city=city,
         district=district,
+        territory=territory_of(city, district),
         phone=override.pop("phone", None) or (fixed_phone(prefix) if RNG.random() < 0.7 else mobile_phone()),
         email=override.pop("email", None) or (
             f"dr.{ascii_lower(last)}.{ascii_lower(first)}@gmail.com" if RNG.random() < 0.4 else None),
         latitude=round(lat + RNG.uniform(-0.006, 0.006), 6),
         longitude=round(lon + RNG.uniform(-0.006, 0.006), 6),
         segment=segment,
+        frequency=frequency,
         preferred_slot=slot,
         notes=RNG.choice(DOCTOR_NOTES) if RNG.random() < 0.25 else None,
         source=override.pop("source", None) or RNG.choices(["import", "manuel"], weights=[70, 30])[0],
@@ -374,6 +410,7 @@ def create_doctors(db, delegates, products):
                 "address": original["address"], "phone": original["phone"],
                 "practice_type": doc.practice_type, "email": original.get("email"),
                 "segment": "C",  # potentiel encore inconnu pour une fiche nouvellement créée
+                "frequency": None,  # pas encore ciblée
                 "created_at": datetime.combine(TODAY, time(18, 0)) - timedelta(days=RNG.randint(5, 50), hours=RNG.randint(1, 8)),
             }
             fields.update(variant)
@@ -395,7 +432,7 @@ def _fill_report(visit: Visit, doctor: Doctor, products_for: list[Product], pres
     """Remplit un compte-rendu réaliste pour une visite réalisée."""
     planned = visit.planned_at
     visit.actual_at = planned + timedelta(minutes=RNG.randint(-10, 25))
-    visit.duration_min = {"A": RNG.randint(12, 25), "B": RNG.randint(8, 18)}.get(doctor.segment, RNG.randint(5, 12))
+    visit.duration_min = {"A": RNG.randint(10, 20), "B": RNG.randint(8, 15)}.get(doctor.segment, RNG.randint(5, 10))
 
     presented = RNG.sample(products_for, k=min(len(products_for), RNG.choices([1, 2, 3], [35, 45, 20])[0]))
     visit.products = [VisitProduct(product_id=p.id) for p in presented]
@@ -436,9 +473,24 @@ def _fill_report(visit: Visit, doctor: Doctor, products_for: list[Product], pres
             else NOTES_NEUTRAL if feedback == "neutre" else NOTES_RESERVED)
     visit.notes = RNG.choice(pool).format(p=main, slot=SLOT_LABELS[doctor.preferred_slot or "matin"])
 
+    # Ce que le médecin dit de sa prescription (dépend de ses habitudes pour les produits présentés)
+    statuses = {prescribing.get(p.id) for p in presented}
+    if RNG.random() < 0.85:
+        if PrescribingStatus.REGULIER in statuses:
+            visit.prescription_feedback = (PrescriptionFeedback.PRESCRIT_REGULIEREMENT if RNG.random() < 0.75
+                                           else PrescriptionFeedback.PRESCRIT_PARMI_AUTRES)
+        elif PrescribingStatus.OCCASIONNEL in statuses:
+            visit.prescription_feedback = (PrescriptionFeedback.PRESCRIT_PARMI_AUTRES if RNG.random() < 0.6
+                                           else PrescriptionFeedback.PROMESSE_PRESCRIRE)
+        elif feedback in ("tres_favorable", "favorable"):
+            visit.prescription_feedback = PrescriptionFeedback.PROMESSE_PRESCRIRE
+        else:
+            visit.prescription_feedback = PrescriptionFeedback.NE_PRESCRIT_PAS
+
     if RNG.random() < (0.65 if doctor.segment == "A" else 0.45):
         for p in RNG.sample(presented, k=min(len(presented), RNG.randint(1, 2))):
-            visit.samples.append(VisitSample(product_id=p.id, quantity=RNG.choice([2, 3, 4, 5, 6])))
+            visit.samples.append(VisitSample(product_id=p.id, quantity=RNG.choice([2, 3, 4, 5, 6]),
+                                             lot_number=lot_number(p, visit.actual_at.date())))
     if RNG.random() < 0.7:
         visit.next_step = RNG.choice(NEXT_STEPS).format(p=main)
 
@@ -450,28 +502,119 @@ def _fill_report(visit: Visit, doctor: Doctor, products_for: list[Product], pres
 def _clear_report(visit: Visit) -> None:
     """Remet une visite à l'état « planifiée sans compte-rendu »."""
     visit.status = VisitStatus.PLANIFIEE
-    visit.actual_at = visit.duration_min = visit.feedback = visit.notes = None
+    visit.actual_at = visit.duration_min = visit.feedback = visit.prescription_feedback = visit.notes = None
     visit.next_step = visit.next_visit_date = visit.report_source = visit.reported_at = None
     visit.products, visit.samples, visit.objections = [], [], []
 
 
-def _schedule_day(chosen: list[Doctor], day: date) -> list[tuple[Doctor, datetime]]:
-    """Attribue une heure à chaque médecin de la tournée, sans chevauchement."""
-    planned = []
+def _schedule_day(chosen: list[Doctor], day: date, slots: list[str]) -> list[tuple[Doctor, datetime]]:
+    """
+    Heures de passage d'une tournée : chaque médecin va de préférence dans son créneau,
+    les visites s'enchaînent toutes les 30 à 40 minutes. Un bloc plein déborde sur le suivant ;
+    les médecins qui ne rentrent pas dans la journée ne sont pas planifiés.
+    """
+    blocks = [b for b in DAY_BLOCKS if b[0] in slots]
+    queues: dict[str, list[Doctor]] = {b[0]: [] for b in blocks}
     for doctor in chosen:
-        slot = doctor.preferred_slot if RNG.random() < 0.7 else RNG.choice(list(SLOT_HOURS))
-        if day.weekday() == 5:
-            slot = "matin"  # samedi : matinée uniquement
-        planned.append((doctor, datetime.combine(day, random_time_in(slot))))
-    planned.sort(key=lambda x: x[1])
-    for i in range(1, len(planned)):  # au moins 30 min entre deux visites
-        if planned[i][1] < planned[i - 1][1] + timedelta(minutes=30):
-            planned[i] = (planned[i][0], planned[i - 1][1] + timedelta(minutes=30))
+        slot = doctor.preferred_slot if RNG.random() < 0.75 else RNG.choice(slots)
+        queues[slot if slot in queues else RNG.choice(slots)].append(doctor)
+
+    planned, carry = [], []
+    for slot, first, last in blocks:
+        t = datetime.combine(day, first) + timedelta(minutes=RNG.choice([0, 5, 10, 15]))
+        if planned:  # au moins 30 minutes après la visite précédente, même en changeant de bloc
+            t = max(t, planned[-1][1] + timedelta(minutes=30))
+        waiting, carry = carry + queues[slot], []
+        for doctor in waiting:
+            if t.time() > last:
+                carry.append(doctor)
+                continue
+            planned.append((doctor, t - timedelta(minutes=t.minute % 5)))
+            t += timedelta(minutes=RNG.randint(30, 40))
     return planned
 
 
-def create_visits(db, delegates, by_delegate, products, pairs):
+def _first_monday(period: str) -> date:
+    """Premier lundi du mois qui n'est pas férié (jour de la réunion d'équipe mensuelle)."""
+    d = month_bounds(period)[0].date()
+    while d.weekday() != 0 or (d.month, d.day) in HOLIDAYS:
+        d += timedelta(days=1)
+    return d
+
+
+def create_events(db, delegates) -> dict[int, dict[date, Event]]:
+    """
+    Événements de l'agenda (hors visites), du début de l'historique à la fin du planning :
+    jours fériés, congé annuel, réunion d'équipe mensuelle, formations, congrès,
+    staff / administratif, congé maladie. Renvoie {delegue_id: {jour: événement}}.
+    Aujourd'hui reste une journée de terrain (sauf jour férié) : la démo montre une tournée.
+    """
+    first, last = HISTORY_START, TODAY + timedelta(days=PLANNING_DAYS)
+    months = previous_periods(period_of(last), len(PERIODS) + 1)
+    result: dict[int, dict[date, Event]] = {}
+
+    for user, profile in delegates:
+        days: dict[date, Event] = {}
+
+        def add(day: date, type_: str, comment: str, half: str | None = None) -> None:
+            if not first <= day <= last or day.weekday() == 6 or day in days:
+                return
+            if day == TODAY and type_ != EventType.FETE:
+                return
+            # Le samedi n'est travaillé que le matin : un événement le prend en entier
+            duration = 0.5 if half or day.weekday() == 5 else 1.0
+            days[day] = Event(delegue_id=user.id, day=day, type=type_, duration_days=duration,
+                              half=half if day.weekday() != 5 else None, comment=comment)
+
+        d = first
+        while d <= last:
+            if (d.month, d.day) in HOLIDAYS:
+                add(d, EventType.FETE, "Jour férié")
+            d += timedelta(days=1)
+
+        for year in sorted({first.year, last.year}):
+            vac = date(year, *profile["vacation"])
+            for i in range(14):
+                add(vac + timedelta(days=i), EventType.CONGE_ANNUEL, "Congé annuel")
+
+        for i, period in enumerate(months):
+            monday = _first_monday(period)
+            add(monday, EventType.REUNION_EQUIPE, "Réunion de cycle avec la superviseure")
+            if i % 2 == 1:  # formation produit un mois sur deux, le 2e jeudi après-midi
+                thursday = monday + timedelta(days=10)
+                add(thursday, EventType.FORMATION, "Formation produit", half="apres_midi")
+            for _ in range(profile["extra_events"]):
+                day = month_bounds(period)[0].date() + timedelta(days=RNG.randint(3, 26))
+                if day.weekday() < 5:
+                    kind = RNG.choice([EventType.STAFF, EventType.ADMINISTRATIF])
+                    add(day, kind, "Staff hospitalier" if kind == EventType.STAFF else "Tâches administratives",
+                        half="matin")
+
+        # Congrès national (Casablanca et Rabat-Salé y envoient leur délégué)
+        if user.region in ("Casablanca", "Rabat-Salé"):
+            thursday = _first_monday(PERIODS[2]) + timedelta(days=17)
+            add(thursday, EventType.CONGRES, "Congrès national de cardiologie")
+            add(thursday + timedelta(days=1), EventType.CONGRES, "Congrès national de cardiologie")
+
+        if profile["sick_days"]:
+            d = TODAY - timedelta(days=36)
+            added = 0
+            while added < profile["sick_days"]:
+                if d.weekday() < 5:
+                    add(d, EventType.CONGE_MALADIE, "Arrêt maladie")
+                    added += 1
+                d += timedelta(days=1)
+
+        db.add_all(days.values())
+        result[user.id] = days
+    db.flush()
+    return result
+
+
+def create_visits(db, delegates, by_delegate, products, pairs, events):
     """Génère l'historique (≈6 mois), l'agenda du jour et les 2 semaines à venir."""
+    # Priorité de la tournée : F2 d'abord, puis F1, puis hors cible ; à fréquence égale, potentiel A > B > C
+    freq_order = {Frequency.F2: 0, Frequency.F1: 1, None: 2}
     seg_order = {"A": 0, "B": 1, "C": 2}
     duplicates_by_delegate = defaultdict(list)
     for _, dup, _ in pairs:
@@ -481,13 +624,13 @@ def create_visits(db, delegates, by_delegate, products, pairs):
         doctors = by_delegate[user.id]
         neglect_rate = {"A": profile["neglect_a"], "B": profile["neglect_b"], "C": 0}
         neglected = {d.id for d in doctors if RNG.random() < neglect_rate[d.segment]}
+        agenda = events[user.id]
 
         def interval(d: Doctor) -> float:
+            base = BASE_INTERVAL[d.frequency] * profile["interval_factor"]
             if d.id in neglected:
-                base = 45 if d.segment == "A" else 70
-            else:
-                base = BASE_INTERVAL[d.segment] * profile["interval_factor"]
-            return base * RNG.uniform(0.8, 1.2)
+                base *= 2
+            return base * RNG.uniform(0.85, 1.15)
 
         products_for = {
             d.id: [p for p in products if d.specialty in p.target_specialties] or [products[-4]]
@@ -500,22 +643,32 @@ def create_visits(db, delegates, by_delegate, products, pairs):
         day = HISTORY_START
         last_day = TODAY + timedelta(days=PLANNING_DAYS)
         while day <= last_day:
-            if is_off_day(day, profile["vacation"]) or (day < TODAY and RNG.random() < 0.05):
-                day += timedelta(days=1)  # week-end, férié, congés ou réunion/formation
+            event = agenda.get(day)
+            if day.weekday() == 6 or (event and event.duration_days >= 1) or (event and day.weekday() == 5):
+                day += timedelta(days=1)  # dimanche, ou journée entière hors terrain
                 continue
+            # Créneaux disponibles : le samedi, le matin seulement ; demi-journée d'événement = l'autre moitié
+            if day.weekday() == 5:
+                slots = ["matin"]
+            elif event and event.half == "matin":
+                slots = ["midi", "apres_midi"]
+            elif event and event.half == "apres_midi":
+                slots = ["matin", "midi"]
+            else:
+                slots = ["matin", "midi", "apres_midi"]
+
             future = day > TODAY
             due = [d for d in doctors if next_due[d.id] <= day and not (future and d.id in neglected)]
-            due.sort(key=lambda d: (seg_order[d.segment], next_due[d.id]))
-            if day.weekday() == 5:  # samedi matin : tournée courte
-                capacity = 3 if day == TODAY else RNG.randint(1, 3)
-            elif day == TODAY:
-                capacity = RNG.randint(5, 6)
-            else:
-                capacity = RNG.randint(3, 6) if future else RNG.randint(4, 7)
+            due.sort(key=lambda d: (freq_order[d.frequency], seg_order[d.segment], next_due[d.id]))
+            capacity = RNG.randint(*profile["capacity"])
+            if day == TODAY:
+                capacity = profile["capacity"][1] - 1
+            if len(slots) < 3:
+                capacity = capacity // 2 if day.weekday() != 5 else RNG.randint(4, 6)
             chosen = due[:capacity]
             # Journée trop creuse : le délégué avance des visites prévues prochainement
             # (aujourd'hui, on veut une tournée complète pour la démo)
-            minimum, window = (capacity, 30) if day == TODAY else (3, 7)
+            minimum, window = (capacity, 30) if day == TODAY else (max(3, capacity - 3), 10)
             if len(chosen) < minimum:
                 soon = sorted(
                     (d for d in doctors if d not in chosen and d.id not in neglected
@@ -524,7 +677,7 @@ def create_visits(db, delegates, by_delegate, products, pairs):
                 )
                 chosen += soon[: minimum - len(chosen)]
 
-            for doctor, planned_at in _schedule_day(chosen, day):
+            for doctor, planned_at in _schedule_day(chosen, day, slots):
                 visit = Visit(delegue_id=user.id, doctor_id=doctor.id, planned_at=planned_at,
                               status=VisitStatus.PLANIFIEE,
                               created_at=planned_at - timedelta(days=RNG.randint(2, 12)))
@@ -631,6 +784,55 @@ def create_objectives(db, delegates):
     db.flush()
 
 
+def create_sales(db, products) -> int:
+    """
+    Ventes mensuelles du marché par territoire (type IMS), du 1er janvier d'il y a 2 ans
+    au dernier mois complet (les données IMS arrivent avec un mois de décalage).
+    Notre part de marché évolue selon le produit et le territoire (voir seed_data/market.py) :
+    certains territoires gagnent des parts, d'autres en perdent.
+    """
+    rng = random.Random(4242)  # hasard séparé : les ventes ne modifient pas le reste des données
+    last_month = previous_periods(CURRENT_PERIOD, 2)[0]
+    months = previous_periods(last_month, 24 + int(last_month[5:]))
+    total_weight = sum(t[3] for t in TERRITORIES)
+    by_brand = {p.brand_name: p for p in products}
+    share_factor = {t[0]: rng.uniform(0.75, 1.25) for t in TERRITORIES}
+    share_trend = {t[0]: TERRITORY_TREND.get(t[0], rng.uniform(-0.04, 0.04)) for t in TERRITORIES}
+    market_growth = {t[0]: rng.uniform(0.01, 0.07) for t in TERRITORIES}
+
+    rows = []
+    for brand, m in MARKETS.items():
+        market = dict(market_code=m["market_code"], market_name=m["market_name"])
+        entries = [MarketProduct(name=brand, laboratory="Notre laboratoire", product_id=by_brand[brand].id, **market)]
+        entries += [MarketProduct(name=name, laboratory=lab, **market) for name, lab in m["competitors"]]
+        assert all(lab in LABS for _, lab in m["competitors"])
+        db.add_all(entries)
+        db.flush()
+        weights = [rng.uniform(0.6, 1.4) for _ in m["competitors"]]
+        trends = [rng.uniform(-0.03, 0.03) for _ in m["competitors"]]
+        prices = [m["price"]] + [m["price"] * rng.uniform(0.85, 1.15) for _ in m["competitors"]]
+
+        for territory, _, _, weight in TERRITORIES:
+            base = m["monthly_value"] * weight / total_weight
+            share0 = m["share"] * share_factor[territory]
+            for k, month in enumerate(months):
+                years = k / 12
+                # Marchés saisonniers (infections, fièvre, asthme) : pic en janvier, creux en juillet
+                season = 1 + (0.25 if m["seasonal"] else 0.04) * math.cos(2 * math.pi * (int(month[5:]) - 1) / 12)
+                market_value = base * season * (1 + market_growth[territory]) ** years * rng.uniform(0.95, 1.05)
+                share = share0 * (1 + (m["trend"] + share_trend[territory]) * years) * rng.uniform(0.96, 1.04)
+                share = min(max(share, 0.05), 0.85)
+                comp = [w * (1 + t * years) for w, t in zip(weights, trends)]
+                shares = [share] + [(1 - share) * c / sum(comp) for c in comp]
+                for entry, part, price in zip(entries, shares, prices):
+                    value = market_value * part
+                    rows.append(dict(period=month, territory=territory, market_product_id=entry.id,
+                                     units=round(value / price), value=round(value)))
+    db.execute(insert(SalesRecord), rows)
+    db.flush()
+    return len(rows)
+
+
 def create_alerts(db, delegates):
     """Alertes calculées par les règles métier ; on en marque certaines « vues »."""
     db.commit()
@@ -689,21 +891,25 @@ def main() -> None:
         supervisor, delegates = create_users(db)
         products = create_products(db)
         by_delegate, pairs = create_doctors(db, delegates, products)
-        create_visits(db, delegates, by_delegate, products, pairs)
+        events = create_events(db, delegates)
+        create_visits(db, delegates, by_delegate, products, pairs, events)
         pv_notes = add_pharmacovigilance_notes(db)
         create_objectives(db, delegates)
+        n_sales = create_sales(db, products)
         create_alerts(db, delegates)
         n_pv = pharmacovigilance.scan_all(db)  # IA : alertes « effet indésirable à déclarer »
         write_duplicates_doc(pairs, pv_notes)
 
         # Résumé
         n_doctors = db.query(Doctor).count()
+        n_targeted = db.query(Doctor).filter(Doctor.frequency.isnot(None)).count()
         n_visits = db.query(Visit).count()
         status_counts = Counter(s for (s,) in db.query(Visit.status).all())
         print(f"✓ {1 + len(delegates)} utilisateurs, {len(products)} produits, {n_doctors} médecins "
-              f"({len(pairs)} doublons volontaires)")
+              f"({n_targeted} ciblés, {len(pairs)} doublons volontaires)")
         print(f"✓ {n_visits} visites du {HISTORY_START:%d/%m/%Y} au "
               f"{TODAY + timedelta(days=PLANNING_DAYS):%d/%m/%Y} : {dict(status_counts)}")
+        print(f"✓ {db.query(Event).count()} jours d'événements d'agenda, {n_sales} lignes de ventes (marché)")
         print(f"✓ {db.query(Objective).count()} objectifs mensuels, {db.query(Alert).count()} alertes")
         print(f"✓ {len(pv_notes)} notes de pharmacovigilance ({n_pv} alertes créées par le module IA), "
               "seed_duplicates.md généré")

@@ -1,13 +1,15 @@
 /**
  * Calendrier « semaine » (ordinateur) : une colonne par jour, une ligne par heure.
  * Les visites planifiées peuvent être déplacées par glisser-déposer.
+ * Les événements (réunion, formation, congé...) grisent la journée ou la demi-journée concernée.
  */
 import { useEffect, useState, type DragEvent } from "react";
 import { addDays, format, isSameDay, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
-import type { Visit } from "@/api/types";
+import type { AgendaEvent, Visit } from "@/api/types";
 import { toApiDateTime } from "@/lib/format";
+import { EVENT_TYPE } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { visitBlockClass } from "./visitStyle";
 
@@ -19,6 +21,7 @@ const BLOCK_MINUTES = 30; // hauteur affichée d'une visite
 interface Props {
   weekStart: Date; // lundi
   visits: Visit[];
+  events?: AgendaEvent[];
   readOnly?: boolean;
   onVisitClick: (v: Visit) => void;
   onMove: (v: Visit, newDate: string) => void;
@@ -31,7 +34,12 @@ function topFor(date: Date): number {
   return (minutes / 60) * HOUR_HEIGHT;
 }
 
-export function WeekCalendar({ weekStart, visits, readOnly, onVisitClick, onMove, onDayClick }: Props) {
+/** Libellé court d'un événement : « Formation, après-midi ». */
+export function eventLabel(e: AgendaEvent): string {
+  return `${EVENT_TYPE[e.type]}${e.half ? `, ${e.half === "matin" ? "matin" : "après-midi"}` : ""}`;
+}
+
+export function WeekCalendar({ weekStart, visits, events = [], readOnly, onVisitClick, onMove, onDayClick }: Props) {
   // Lundi → samedi (le dimanche n'est affiché que s'il contient des visites)
   const hasSunday = visits.some((v) => parseISO(v.planned_at).getDay() === 0);
   const days = Array.from({ length: hasSunday ? 7 : 6 }, (_, i) => addDays(weekStart, i));
@@ -88,6 +96,13 @@ export function WeekCalendar({ weekStart, visits, readOnly, onVisitClick, onMove
                 {format(d, "d")}
               </span>
               <span className="text-muted-foreground text-[11px]">{count ? `${count} visite${count > 1 ? "s" : ""}` : "—"}</span>
+              {events
+                .filter((e) => isSameDay(parseISO(e.day), d))
+                .map((e) => (
+                  <span key={e.id} className="max-w-full truncate px-1 text-[11px] font-medium text-slate-600">
+                    {eventLabel(e)}
+                  </span>
+                ))}
             </button>
           );
         })}
@@ -125,6 +140,23 @@ export function WeekCalendar({ weekStart, visits, readOnly, onVisitClick, onMove
                 {hours.map((h) => (
                   <div key={h} className="border-line/70 border-b border-dashed" style={{ height: HOUR_HEIGHT }} />
                 ))}
+
+                {/* Événement : journée ou demi-journée grisée (sous les visites, sans bloquer le glisser-déposer) */}
+                {events
+                  .filter((e) => isSameDay(parseISO(e.day), day))
+                  .map((e) => {
+                    const from = e.half === "apres_midi" ? 14 : START_HOUR;
+                    const to = e.half === "matin" ? 12.5 : END_HOUR;
+                    return (
+                      <div
+                        key={e.id}
+                        className="pointer-events-none absolute inset-x-0 z-[1] bg-slate-100/90 px-1.5 py-1 text-[11px] font-medium text-slate-600"
+                        style={{ top: (from - START_HOUR) * HOUR_HEIGHT, height: (to - from) * HOUR_HEIGHT }}
+                      >
+                        {eventLabel(e)}
+                      </div>
+                    );
+                  })}
 
                 {isToday && now.getHours() >= START_HOUR && now.getHours() < END_HOUR && (
                   <div className="bg-saffron absolute inset-x-0 z-10 h-0.5" style={{ top: topFor(now) }} aria-label="Heure actuelle">

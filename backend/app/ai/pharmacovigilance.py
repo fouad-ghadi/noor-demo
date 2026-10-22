@@ -21,7 +21,7 @@ Deux méthodes de détection
        et renvoie les signaux structurés. En cas d'échec, on revient aux règles.
 
 Évaluation
-    Le seed cache 7 comptes-rendus avec effet indésirable parmi ~1 300.
+    Le seed cache 7 comptes-rendus avec effet indésirable parmi ~4 000.
     Mesure : python scripts/evaluer_pharmacovigilance.py  (précision et rappel).
 
 Automatisation

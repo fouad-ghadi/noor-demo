@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Doctor, User, Visit, VisitObjection, VisitProduct, VisitSample
-from app.models.enums import OBJECTION_CATEGORIES, Role, Segment, VisitStatus
+from app.models.enums import OBJECTION_CATEGORIES, Frequency, Role, Segment, VisitStatus
 from app.schemas.stats import (
     CountItem,
     DashboardKpis,
@@ -29,11 +29,12 @@ from app.schemas.stats import (
     WeekPoint,
 )
 from app.schemas.visit import VisitOut
-from app.services import access, alert_service, objective_service
+from app.services import access, activity_service, alert_service, objective_service
 from app.services.dates import month_bounds, now, period_label, period_of, previous_periods, week_start
 from app.services.doctor_service import last_visit_dates, next_planned_visits
 
-REVISIT_THRESHOLD_DAYS = 30
+# Médecin ciblé « à revoir » : plus d'un cycle de visite sans le voir
+REVISIT_THRESHOLD_DAYS = {Frequency.F2: 21, Frequency.F1: 35}
 WEEKS_IN_CHART = 13  # ~3 mois
 
 
@@ -93,19 +94,13 @@ def visits_per_week(db: Session, delegue_id: int, weeks: int = WEEKS_IN_CHART) -
     ]
 
 
-def doctors_to_revisit(
-    db: Session, delegue_id: int, threshold_days: int = REVISIT_THRESHOLD_DAYS
-) -> list[DoctorToRevisit]:
+def doctors_to_revisit(db: Session, delegue_id: int) -> list[DoctorToRevisit]:
     """
-    Médecins A et B non visités depuis plus de `threshold_days` jours (ou jamais),
-    triés : segment A d'abord, puis du plus ancien au plus récent.
+    Médecins ciblés non visités depuis plus d'un cycle (F2 : 21 jours, F1 : 35 jours) ou jamais,
+    triés : F2 d'abord, puis potentiel A > B > C, puis du plus ancien au plus récent.
     """
     doctors = list(
-        db.scalars(
-            select(Doctor).where(
-                Doctor.delegue_id == delegue_id, Doctor.segment.in_([Segment.A, Segment.B])
-            )
-        )
+        db.scalars(select(Doctor).where(Doctor.delegue_id == delegue_id, Doctor.frequency.isnot(None)))
     )
     ids = [d.id for d in doctors]
     last = last_visit_dates(db, ids)
@@ -116,7 +111,7 @@ def doctors_to_revisit(
     for d in doctors:
         last_dt = last.get(d.id)
         days = (today - last_dt.date()).days if last_dt else None
-        if days is not None and days < threshold_days:
+        if days is not None and days < REVISIT_THRESHOLD_DAYS[Frequency(d.frequency)]:
             continue
         result.append(
             DoctorToRevisit(
@@ -124,6 +119,7 @@ def doctors_to_revisit(
                 doctor_name=d.full_name,
                 specialty=d.specialty,
                 segment=d.segment,
+                frequency=d.frequency,
                 city=d.city,
                 district=d.district,
                 last_visit_date=last_dt.date() if last_dt else None,
@@ -132,7 +128,8 @@ def doctors_to_revisit(
             )
         )
     # Jamais visité = le plus urgent (on le traite comme 9999 jours)
-    result.sort(key=lambda r: (r.segment, -(r.days_since_last_visit if r.days_since_last_visit is not None else 9999)))
+    result.sort(key=lambda r: (r.frequency != Frequency.F2, r.segment,
+                               -(r.days_since_last_visit if r.days_since_last_visit is not None else 9999)))
     return result
 
 
@@ -235,6 +232,7 @@ def delegue_dashboard(db: Session, user: User, delegue_id: int | None = None) ->
         today=today,
         today_visits=[VisitOut.from_model(v) for v in today_visits],
         kpis=kpis,
+        activity=activity_service.delegue_activity(db, delegue, period),
         objective=progress,
         visits_per_week=visits_per_week(db, target_id),
         doctors_to_revisit=revisit[:8],

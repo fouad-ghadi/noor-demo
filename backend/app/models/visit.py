@@ -31,6 +31,8 @@ class Visit(Base):
     # --- Compte-rendu (rempli quand la visite est réalisée) ---
     duration_min: Mapped[int | None] = mapped_column(Integer)
     feedback: Mapped[str | None] = mapped_column(String(30))      # enums.VisitFeedback
+    # Ce que le médecin dit de sa prescription (enums.PrescriptionFeedback)
+    prescription_feedback: Mapped[str | None] = mapped_column(String(30))
     notes: Mapped[str | None] = mapped_column(Text)               # texte libre
     next_step: Mapped[str | None] = mapped_column(String(300))
     next_visit_date: Mapped[date | None] = mapped_column(Date)
@@ -58,13 +60,14 @@ class VisitProduct(Base):
 
 
 class VisitSample(Base):
-    """Échantillons remis au médecin (produit + quantité)."""
+    """Échantillons remis au médecin (produit + quantité + n° de lot, pour la traçabilité)."""
     __tablename__ = "visit_samples"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     visit_id: Mapped[int] = mapped_column(ForeignKey("visits.id"), index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
     quantity: Mapped[int] = mapped_column(Integer)
+    lot_number: Mapped[str | None] = mapped_column(String(30))
 
     product: Mapped["Product"] = relationship()  # noqa: F821
 
