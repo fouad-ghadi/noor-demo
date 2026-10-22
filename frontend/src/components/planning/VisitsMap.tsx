@@ -22,15 +22,19 @@ function numberedIcon(n: number, v: Visit) {
   });
 }
 
-/** Ajuste le zoom pour voir tous les marqueurs. */
+/**
+ * Ajuste le zoom pour voir tous les marqueurs.
+ * Sans animation : si l'on quittait la page pendant une animation de zoom, Leaflet plantait
+ * (« Cannot read properties of undefined (reading '_leaflet_pos') »).
+ */
 function FitBounds({ points }: { points: [number, number][] }) {
   const map = useMap();
   // On ne recadre que si la liste des points change vraiment (pas à chaque rendu)
   const key = JSON.stringify(points);
   useEffect(() => {
     const pts = JSON.parse(key) as [number, number][];
-    if (pts.length === 1) map.setView(pts[0], 14);
-    else if (pts.length > 1) map.fitBounds(pts, { padding: [40, 40] });
+    if (pts.length === 1) map.setView(pts[0], 14, { animate: false });
+    else if (pts.length > 1) map.fitBounds(pts, { padding: [40, 40], animate: false });
   }, [map, key]);
   return null;
 }

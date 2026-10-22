@@ -193,8 +193,10 @@ export function AppLayout() {
           </Button>
         )}
         <main className="mx-auto max-w-7xl px-4 pt-4 pb-24 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
-          {/* Une page qui plante n'emporte pas le menu : message clair à la place de la page */}
-          <ErrorBoundary key={location.pathname}>
+          {/* Une page qui plante n'emporte pas le menu : message clair à la place de la page.
+              Le filet reste en place d'une page à l'autre (pas de « key ») : une erreur levée pendant
+              qu'on QUITTE une page est rattrapée ici, et non par le filet global qui masque le menu. */}
+          <ErrorBoundary resetKey={location.pathname}>
             <Outlet />
           </ErrorBoundary>
         </main>

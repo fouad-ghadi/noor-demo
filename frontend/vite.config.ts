@@ -10,8 +10,13 @@ export default defineConfig({
     // Permet d'écrire `import { Button } from "@/components/ui/button"`
     alias: { "@": path.resolve(__dirname, "./src") },
   },
-  // Application de démo : un seul fichier JS (~1 Mo) est acceptable, on masque l'avertissement
-  build: { chunkSizeWarningLimit: 1500 },
+  build: {
+    // Application de démo : un seul fichier JS (~1 Mo) est acceptable, on masque l'avertissement
+    chunkSizeWarningLimit: 1500,
+    // Garde les vrais noms des composants après compression : un message d'erreur affiché
+    // à l'écran reste compréhensible (« SalesPage » au lieu de « l »)
+    rolldownOptions: { output: { keepNames: true } },
+  },
   server: {
     port: 5173,
     host: true, // accessible depuis un téléphone sur le même Wi-Fi (http://<ip-du-pc>:5173)
