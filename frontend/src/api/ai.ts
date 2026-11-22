@@ -3,15 +3,58 @@
  * ║  POINT D'EXTENSION IA — appels aux routes /api/ai/...            ║
  * ╚══════════════════════════════════════════════════════════════════╝
  * Modules implémentés : dictée, assistant produit, pharmacovigilance (côté serveur),
- * recommandations. Le scan de carte de visite n'est pas implémenté : sa route répond
- * 501 (« Bientôt disponible »).
+ * recommandations, scan de carte de visite + doublons.
  * Formats : voir backend/app/ai/schemas.py.
  */
 import { apiRequest } from "./client";
-import type { TimeSlot, VisitReportInput } from "./types";
+import type { DoctorFields, TimeSlot, VisitReportInput } from "./types";
 
 export interface AiStatus {
-  [feature: string]: { implemented: boolean; module: string };
+  // `vision` (carte de visite seulement) : le serveur lit lui-même les photos avec Claude
+  [feature: string]: { implemented: boolean; module: string; vision?: boolean };
+}
+
+/** 📷 Champs lus sur une carte de visite (tous facultatifs). */
+export interface CardFields {
+  first_name: string;
+  last_name: string;
+  specialty: string | null;
+  practice_type: string | null;
+  address: string;
+  city: string | null;
+  district: string | null;
+  phone: string | null;
+  email: string | null;
+}
+
+/** 🔁 Médecin existant qui ressemble à la fiche en cours. */
+export interface DuplicateMatch {
+  doctor_id: number;
+  doctor_name: string;
+  specialty: string;
+  city: string;
+  district: string;
+  phone: string | null;
+  delegue_name: string;
+  in_scope: boolean; // false : fiche d'un collègue (pas d'accès)
+  score: number;
+  level: "tres_probable" | "probable" | "possible";
+  reasons: string[];
+}
+
+export interface CardScanResult {
+  raw_text: string;
+  doctor: CardFields;
+  duplicates: DuplicateMatch[];
+  method: "claude" | "regles" | "aucune";
+  needs_ocr: boolean;
+  uncertain_fields: string[];
+}
+
+export interface MergeProposal {
+  doctor_id: number;
+  fields: DoctorFields;
+  changes: { field: string; label: string; old: string | null; new: string | null; action: "ajout" | "remplacement" | "conserve" }[];
 }
 
 export interface AskResponse {
@@ -55,5 +98,11 @@ export const aiApi = {
       `/ai/recommendations?limit=${limit}${delegue_id !== undefined ? `&delegue_id=${delegue_id}` : ""}`,
     ),
   /** 📷 Carte de visite → fiche médecin + doublons. */
-  scanCard: (image_base64: string) => post<unknown>("/ai/card-scanner", { image_base64 }),
+  scanCard: (data: { image_base64?: string; media_type?: string; raw_text?: string }) =>
+    post<CardScanResult>("/ai/card-scanner", data),
+  /** 🔁 Doublons possibles d'une fiche en cours de saisie. */
+  duplicates: (fields: Partial<CardFields> & { exclude_id?: number }) =>
+    post<DuplicateMatch[]>("/ai/card-scanner/duplicates", fields),
+  /** 🔁 Fiche existante complétée par la carte (rien n'est enregistré). */
+  mergeCard: (doctor_id: number, card: CardFields) => post<MergeProposal>("/ai/card-scanner/merge", { doctor_id, card }),
 };

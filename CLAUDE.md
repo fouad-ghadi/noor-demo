@@ -92,10 +92,10 @@ ni sur le site public** : on reproduit seulement la structure et les formules, a
   **création de médecin depuis une carte de visite + doublons**. Procédure PV réelle : 4 infos minimales (produit,
   effet ou situation particulière, patient identifiable, notificateur identifiable), déclaration **sous 24 h**.
 
-## Modules IA (4 implémentés sur 5)
+## Modules IA (5 implémentés sur 5)
 
-- `backend/app/ai/` : **implémentés** `voice_report.py`, `rag_assistant.py`, `pharmacovigilance.py`, `recommendations.py` ;
-  **non implémenté (choix de Fouad)** `card_scanner.py` (route 501, bouton 📷 désactivé). Formats : `schemas.py`.
+- `backend/app/ai/` : **implémentés** `voice_report.py`, `rag_assistant.py`, `pharmacovigilance.py`, `recommendations.py`,
+  `card_scanner.py`. Formats : `schemas.py`.
 - Principe : **tout marche sans clé** (règles, BM25) ; si `ANTHROPIC_API_KEY` est définie, Claude (`claude-opus-5-5`,
   sorties JSON structurées, `fallbacks: "default"`) via `app/ai/llm.py`, avec retour aux règles en cas d'erreur.
 - Dictée : transcription par le navigateur (Web Speech API, fr-FR / ar-MA) dans `components/visits/VoiceDictationDialog.tsx`,
@@ -109,7 +109,13 @@ ni sur le site public** : on reproduit seulement la structure et les formules, a
   `services/pharmacovigilance_service.py` = 4 infos minimales, délai 24 h depuis la visite (urgent < 6 h),
   déclaration pré-remplie (e-mail fictif `pharmacovigilance@noor-demo.ma`), « Marquer comme déclarée » (délégué seul).
   Une alerte PV ne se ferme qu'en déclarant. Pages `/pharmacovigilance` et `/pharmacovigilance/:id`.
-- **Tests** : `cd backend ; pip install -r requirements-dev.txt ; python -m pytest` (base en mémoire, < 2 s).
+- Carte de visite : photo / import / 4 cartes d'exemple (`frontend/public/demo-cards/`, `scripts/generer_cartes_demo.py`).
+  Avec clé : Claude vision ; sans clé : OCR Tesseract.js dans le navigateur (`src/lib/cardImage.ts`, CDN jsdelivr au 1er usage)
+  + règles `extract_fields`. Doublons : `services/duplicate_service.py` (cherchés dans toute la base, fiche d'un collègue
+  signalée sans accès), vérifiés aussi pendant la saisie manuelle ; « Compléter cette fiche » → page de modification
+  pré-remplie par `/ai/card-scanner/merge` (graphie de la base gardée, ancien téléphone noté). Éval. `scripts/evaluer_doublons.py` : 10/10, 0 fausse alerte.
+- **Tests** : `cd backend ; pip install -r requirements-dev.txt ; python -m pytest` (base de démo temporaire via `NOOR_DB_PATH`,
+  la vraie base n'est pas touchée ; `tests/pharmacovigilance/` utilise sa propre petite base en mémoire).
 - Recommandations : carte « Visites recommandées » (`components/dashboard/RecommendedVisits.tsx`) avec « Planifier ».
 - Explications pour le jury : `docs/IA_explications_jury.txt` ; guide technique : `docs/EXTENSIONS_IA.md`.
 
@@ -131,12 +137,14 @@ Dockerfile/Render, refonte complète du gabarit : toutes les pages, 4 modules IA
 22 oct. 2026 : alignement sur le vrai CRM du partenaire (ciblage F1/F2, territoires, événements d'agenda,
 page Statistiques, analyse des ventes type IMS, n° de lot, statut de prescription, volumes réalistes).
 
+22 nov. 2026 : scan de carte de visite + doublons (5e module IA) ; premiers tests automatisés
+(`backend/tests/`, `python -m pytest` : base temporaire via `NOOR_DB_PATH`, la vraie base n'est pas touchée).
+
 Pistes pour la suite (à valider avec Fouad ; MVP le 8 déc. 2026) :
 1. ~~Pharmacovigilance conforme~~ : fait le 22 nov. 2026 (PR « pharmacovigilance conforme »).
 2. Chatbot étendu : informations médicales (formations), mode d'emploi du CRM, « quel est mon CPA ? ».
-3. Scan de carte de visite + détection des doublons (demandé explicitement par le partenaire).
-4. IA : tester avec une clé `ANTHROPIC_API_KEY` ; tests automatisés (pytest, Playwright).
-5. Mise en ligne : vérifier une fois dans les journaux Render la ligne « Données de démo régénérées pour le … » (4 h du matin).
+3. IA : tester avec une clé `ANTHROPIC_API_KEY` ; étendre les tests (pytest : autres services ; Playwright).
+4. Mise en ligne : vérifier une fois dans les journaux Render la ligne « Données de démo régénérées pour le … » (4 h du matin).
 
 ## Pièges connus
 

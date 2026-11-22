@@ -2,7 +2,7 @@ NOOR DEMO - THE AI MODULES, EXPLAINED FOR THE JURY
 =================================================
 
 NOOR is a CRM for medical reps (delegues medicaux) of a Moroccan pharmaceutical lab.
-Four AI modules each answer a real problem in a rep's day.
+Five AI modules each answer a real problem in a rep's day.
 
 
 THE COMMON IDEA (say this first)
@@ -150,6 +150,44 @@ To say to the jury
       toujours pourquoi. »
 
 
+5. BUSINESS CARD SCAN + DUPLICATE DETECTION
+-------------------------------------------
+The problem
+    Reps meet new doctors and get a business card. Typing the card into the CRM is slow,
+    and the same doctor often ends up twice in the database, written differently:
+    "Ouazzani" / "Wazzani", "El Amrani" / "Elamrani", "+212 522-251478" / "05 22 25 14 78".
+    Duplicates distort targeting, coverage and sales statistics.
+    This was explicitly requested by our partner lab.
+
+What NOOR does
+    The rep takes a photo of the card. NOOR fills in the "new doctor" form (name, specialty,
+    address, city, district, phone, email) and, BEFORE saving, shows the doctors that look
+    like the same person, with a level ("very likely the same doctor") and the reasons
+    ("same phone", "name written differently: Wazzani / Ouazzani", "same address").
+    The rep chooses: complete the existing record, or confirm it is a different doctor.
+    If the doctor is already followed by a colleague, NOOR says so (without opening the record).
+
+How it works
+    Reading the card:
+        - with an API key, Claude reads the photo directly (vision);
+        - without a key, the browser reads the text (free OCR, Tesseract.js) and rules
+          extract the fields ("Dr" title, specialty keywords, Moroccan phone formats,
+          known cities and districts).
+    Duplicates (no generative AI, fully explainable):
+        - normalise what can be written several ways: phone = last 9 digits; name without
+          accents, spaces or the article "El"/"Et"; Arabic-to-French transliterations
+          ("ou" = "w", "q" = "k", double letters simplified);
+        - add up clues (same phone, same email, close name, same address) into a score.
+
+Key point
+    Measured on the demo data: the 10 duplicate pairs hidden in ~860 doctors are all found,
+    with 0 false alarm (backend/scripts/evaluer_doublons.py).
+
+To say to the jury
+    « Une photo de la carte, et la fiche est remplie ; NOOR vérifie que le médecin
+      n'existe pas déjà, même écrit autrement. »
+
+
 HOW TO DEMO EACH MODULE (live site or local)
 --------------------------------------------
 Works without any API key (rules and text search). With an Anthropic API key
@@ -173,6 +211,11 @@ Works without any API key (rules and text search). With an Anthropic API key
    overdue F2 doctors first, with products, market reasons and timing -> "Planifier".
    Then open "Analyse des ventes": the territories losing market share are the ones
    the recommendations mention.
+5. Business card: log in as Youssef -> Medecins -> "Nouveau medecin" -> "Scanner une carte
+   de visite" -> pick the example card "Dr Mohamed Elamrani" (or take a real photo on a phone).
+   The form is filled; NOOR shows "Dr Mohammed El Amrani: very likely the same doctor"
+   (same phone, name written differently) -> "Completer cette fiche" -> review, save.
+   Then the "Dr Leila Bennis" card: no duplicate, "Creer le medecin".
 
 
 QUESTIONS THE JURY WILL PROBABLY ASK
@@ -191,4 +234,4 @@ QUESTIONS THE JURY WILL PROBABLY ASK
 
 "Why these modules?"
     Each covers a different AI family: speech, document search, text
-    classification, recommendation.
+    classification, recommendation, vision (OCR) and record matching.

@@ -4,8 +4,8 @@
 ╚══════════════════════════════════════════════════════════════════════╝
 
 Chaque fichier de ce dossier correspond à UNE fonctionnalité IA future.
-Aujourd'hui, toutes les fonctions lèvent `NotImplementedError` : les routes
-/api/ai/... répondent alors « 501 — pas encore disponible ».
+Une fonction qui lève `NotImplementedError` fait répondre sa route
+« 501 — pas encore disponible » (les 5 modules sont désormais implémentés).
 
 Dès qu'une fonction est implémentée, la route correspondante fonctionne
 automatiquement (voir app/api/ai.py) : rien d'autre à brancher.

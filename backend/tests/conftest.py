@@ -1,86 +1,64 @@
 """
-Préparation commune des tests : une petite base SQLite EN MÉMOIRE (la vraie base
-noor.db n'est jamais touchée), avec 1 superviseur, 2 délégués, 1 médecin, 2 produits.
+Préparation des tests automatiques (pytest).
 
-Lancer les tests (depuis le dossier backend/) :
+Les tests utilisent une base TEMPORAIRE, remplie par le seed une seule fois pour toute
+la session : votre base de travail backend/noor.db n'est jamais modifiée.
+
+Lancer les tests (PowerShell, dans le dossier backend, venv activé) :
+    pip install -r requirements-dev.txt
     python -m pytest
 """
-from datetime import datetime, timedelta
+import os
+import sys
+import tempfile
+from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
-from app.database import Base, get_db
-from app.main import app
-from app.models import Doctor, Product, User, Visit
-from app.services.dates import now
+# À faire AVANT d'importer l'application : la base pointe vers un fichier temporaire
+_TMP = Path(tempfile.mkdtemp(prefix="noor-tests-"))
+os.environ["NOOR_DB_PATH"] = str(_TMP / "noor-test.db")
+os.environ.pop("ANTHROPIC_API_KEY", None)  # tests sans IA générative : résultats reproductibles
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+
+@pytest.fixture(scope="session")
+def seeded():
+    """Base de démo complète (≈ 10 s, une seule fois)."""
+    import seed
+
+    seed.main()
+    return True
 
 
 @pytest.fixture
-def db():
-    engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-    )
-    Base.metadata.create_all(engine)
-    session = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)()
+def db(seeded):
+    from app.database import SessionLocal
+
+    session = SessionLocal()
     yield session
+    session.rollback()
     session.close()
 
 
-@pytest.fixture
-def data(db):
-    """Jeu de données minimal. Renvoie un dictionnaire d'objets utiles aux tests."""
-    chef = User(name="Nadia Test", email="chef@test.ma", role="superviseur", region="Casablanca")
-    db.add(chef)
-    db.flush()
-    youssef = User(name="Youssef Test", email="youssef@test.ma", role="delegue", region="Casablanca",
-                   phone="06 00 00 00 01", supervisor_id=chef.id)
-    salma = User(name="Salma Test", email="salma@test.ma", role="delegue", region="Rabat",
-                 supervisor_id=chef.id)
-    db.add_all([youssef, salma])
-    db.flush()
-    calmapyr = Product(brand_name="Calmapyr", molecule="Paracétamol", therapeutic_class="Antalgique",
-                       form_dosage="Comprimés 1 g")
-    amoxira = Product(brand_name="Amoxira", molecule="Amoxicilline", therapeutic_class="Antibiotique",
-                      form_dosage="Gélules 500 mg")
-    db.add_all([calmapyr, amoxira])
-    db.flush()
-    doctor = Doctor(first_name="Karim", last_name="Bennani", specialty="Généraliste", practice_type="cabinet",
-                    address="12 rue Test", city="Casablanca", district="Maarif", segment="A",
-                    phone="05 22 00 00 00", delegue_id=youssef.id)
-    db.add(doctor)
-    db.flush()
-    visit = Visit(delegue_id=youssef.id, doctor_id=doctor.id, status="planifiee",
-                  planned_at=now() - timedelta(hours=2))
-    db.add(visit)
-    db.commit()
-    return {"chef": chef, "youssef": youssef, "salma": salma, "doctor": doctor,
-            "calmapyr": calmapyr, "amoxira": amoxira, "visit": visit}
+@pytest.fixture(scope="session")
+def client(seeded):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    return TestClient(app)
 
 
 @pytest.fixture
-def client(db):
-    """Client HTTP de test branché sur la base en mémoire."""
-    app.dependency_overrides[get_db] = lambda: db
-    yield TestClient(app)
-    app.dependency_overrides.clear()
+def users(db):
+    """Comptes de démo par identifiant d'e-mail : users["salma.berrada"]..."""
+    from sqlalchemy import select
+
+    from app.models import User
+
+    return {u.email.split("@")[0]: u for u in db.scalars(select(User))}
 
 
-def as_user(user: User) -> dict:
-    """En-tête d'identification de la démo."""
+def headers(user) -> dict:
     return {"X-User-Id": str(user.id)}
-
-
-def report(notes: str, product_ids: list[int], actual_at: datetime | None = None) -> dict:
-    """Corps d'un compte-rendu de visite minimal."""
-    return {
-        "duration_min": 15,
-        "product_ids": product_ids,
-        "feedback": "favorable",
-        "notes": notes,
-        "plan_next_visit": False,
-        **({"actual_at": actual_at.isoformat()} if actual_at else {}),
-    }

@@ -11,12 +11,16 @@ from typing import TypeVar
 
 from fastapi import APIRouter, HTTPException
 
-from app.ai import FEATURES, card_scanner, pharmacovigilance, rag_assistant, recommendations, voice_report
+from app.ai import FEATURES, card_scanner, llm, pharmacovigilance, rag_assistant, recommendations, voice_report
 from app.ai.schemas import (
     AskRequest,
     AskResponse,
     CardScanRequest,
     CardScanResult,
+    DuplicateCheckRequest,
+    DuplicateMatch,
+    MergeProposal,
+    MergeRequest,
     PharmacovigilanceRequest,
     PharmacovigilanceResult,
     VisitRecommendation,
@@ -24,7 +28,7 @@ from app.ai.schemas import (
     VoiceReportResult,
 )
 from app.api.deps import DB, CurrentUser
-from app.services import access
+from app.services import access, duplicate_service
 
 router = APIRouter(prefix="/ai", tags=["IA (à venir)"])
 
@@ -56,7 +60,7 @@ def _is_implemented(feature: str) -> bool:
         "voice_report": lambda: voice_report.transcribe(""),
         "rag_assistant": lambda: rag_assistant.answer(None, None, None),  # type: ignore[arg-type]
         "pharmacovigilance": lambda: pharmacovigilance.detect(""),
-        "card_scanner": lambda: card_scanner.read_card(""),
+        "card_scanner": lambda: card_scanner.extract_fields(""),
         "recommendations": lambda: recommendations.recommend(None, None),  # type: ignore[arg-type]
     }
     try:
@@ -71,7 +75,11 @@ def _is_implemented(feature: str) -> bool:
 @router.get("/status")
 def ai_status():
     """Quelles fonctionnalités IA sont disponibles ? (le frontend s'en servira pour activer les boutons)"""
-    return {name: {"implemented": _is_implemented(name), "module": path} for name, path in FEATURES.items()}
+    status = {name: {"implemented": _is_implemented(name), "module": path} for name, path in FEATURES.items()}
+    # Carte de visite : le serveur lit-il lui-même les photos (Claude vision) ?
+    # Sinon le navigateur fait l'OCR et n'envoie que le texte.
+    status["card_scanner"]["vision"] = llm.is_available()
+    return status
 
 
 @router.post("/voice-report", response_model=VoiceReportResult, responses=NOT_READY)
@@ -99,6 +107,18 @@ def ai_pharmacovigilance(data: PharmacovigilanceRequest, db: DB, user: CurrentUs
 def ai_card_scanner(data: CardScanRequest, db: DB, user: CurrentUser):
     """📷 Photo de carte de visite → fiche médecin pré-remplie + doublons possibles."""
     return _run("card_scanner", lambda: card_scanner.scan_card(db, user, data))
+
+
+@router.post("/card-scanner/duplicates", response_model=list[DuplicateMatch])
+def ai_card_duplicates(data: DuplicateCheckRequest, db: DB, user: CurrentUser):
+    """🔁 Doublons possibles d'une fiche en cours de saisie (carte scannée ou saisie à la main)."""
+    return card_scanner.find_duplicates(db, user, data, exclude_id=data.exclude_id)
+
+
+@router.post("/card-scanner/merge", response_model=MergeProposal)
+def ai_card_merge(data: MergeRequest, db: DB, user: CurrentUser):
+    """🔁 « Compléter la fiche existante » : fiche fusionnée proposée (rien n'est enregistré)."""
+    return duplicate_service.merge_proposal(db, user, data.doctor_id, data.card.model_dump())
 
 
 @router.get("/recommendations", response_model=list[VisitRecommendation], responses=NOT_READY)

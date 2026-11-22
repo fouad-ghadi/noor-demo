@@ -4,13 +4,15 @@ Connexion à la base de données SQLite.
 Toute la base tient dans un seul fichier : backend/noor.db
 Pour la remettre à zéro : `python seed.py`.
 """
+import os
 from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 # Le fichier noor.db est placé dans le dossier backend/
-DB_PATH = Path(__file__).resolve().parent.parent / "noor.db"
+# (les tests automatiques utilisent une base temporaire via la variable NOOR_DB_PATH)
+DB_PATH = Path(os.environ.get("NOOR_DB_PATH") or Path(__file__).resolve().parent.parent / "noor.db")
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 # check_same_thread=False : nécessaire car FastAPI peut utiliser la session

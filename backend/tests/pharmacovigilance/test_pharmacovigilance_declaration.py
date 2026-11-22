@@ -7,7 +7,7 @@ from datetime import timedelta
 from app.models import Alert, PharmacovigilanceCase
 from app.services import pharmacovigilance_service as pv
 from app.services.dates import now
-from tests.conftest import as_user, report
+from tests.pharmacovigilance.conftest import as_user, report
 
 SURDOSAGE = "Le docteur signale qu'un patient a pris 12 comprimés de Calmapyr 1 g en une journée, vu aux urgences."
 

@@ -89,20 +89,73 @@ class PharmacovigilanceResult(BaseModel):
 
 # --- Scan de carte de visite ---------------------------------------------------
 class CardScanRequest(BaseModel):
-    image_base64: str
+    # Photo de la carte (base64, sans le préfixe « data:... »), lue par Claude (vision) si une clé est configurée
+    image_base64: str | None = None
+    media_type: str = "image/jpeg"  # "image/jpeg" | "image/png" | "image/webp"
+    # Texte de la carte déjà lu par l'OCR du navigateur (Tesseract.js) : utilisé sans clé d'API
+    raw_text: str | None = None
+
+
+class CardFields(BaseModel):
+    """Champs lus sur une carte : tous facultatifs (une carte ne dit pas tout)."""
+    first_name: str = ""
+    last_name: str = ""
+    specialty: str | None = None      # une des spécialités du référentiel (SPECIALTIES)
+    practice_type: str | None = None  # cabinet / clinique / hopital_public
+    address: str = ""
+    city: str | None = None
+    district: str | None = None
+    phone: str | None = None
+    email: str | None = None
 
 
 class DuplicateMatch(BaseModel):
     doctor_id: int
     doctor_name: str
+    specialty: str
+    city: str
+    district: str
+    phone: str | None
+    delegue_name: str        # délégué qui suit déjà ce médecin
+    in_scope: bool           # False : fiche d'un collègue (pas d'accès à la fiche détaillée)
     score: float             # 0 → 1 (1 = certainement le même médecin)
+    level: str               # "tres_probable" | "probable" | "possible"
     reasons: list[str]       # ex. ["même téléphone", "nom proche : Ouazzani / Wazzani"]
 
 
 class CardScanResult(BaseModel):
     raw_text: str
-    doctor: DoctorBase       # champs extraits, pour pré-remplir le formulaire
+    doctor: CardFields       # champs extraits, pour pré-remplir le formulaire
     duplicates: list[DuplicateMatch]
+    method: str              # "claude" (vision) | "regles" (OCR du navigateur + règles) | "aucune"
+    # True : le serveur n'a pas pu lire l'image (pas de clé) → le navigateur doit faire l'OCR
+    # puis renvoyer le texte dans `raw_text`
+    needs_ocr: bool = False
+    uncertain_fields: list[str] = []  # champs devinés (ex. ville déduite de l'indicatif téléphonique)
+
+
+class DuplicateCheckRequest(CardFields):
+    exclude_id: int | None = None  # en modification : ne pas se comparer à soi-même
+
+
+class MergeRequest(BaseModel):
+    """« Compléter la fiche existante » avec les informations de la carte."""
+    doctor_id: int
+    card: CardFields
+
+
+class FieldChange(BaseModel):
+    field: str
+    label: str               # libellé français (« Téléphone »)
+    old: str | None
+    new: str | None
+    action: str              # "ajout" (champ vide complété) | "remplacement" | "conserve" (graphie différente gardée)
+
+
+class MergeProposal(BaseModel):
+    doctor_id: int
+    fields: DoctorBase       # fiche existante complétée : le délégué relit puis enregistre
+    changes: list[FieldChange]
 
 
 # --- Recommandations -------------------------------------------------------------
