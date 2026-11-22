@@ -33,10 +33,13 @@ def is_available() -> bool:
     return True
 
 
-def ask_json(system: str, prompt: str, schema: dict, max_tokens: int = 4000) -> dict | None:
+def ask_json(system: str, prompt: str | list[dict], schema: dict, max_tokens: int = 4000) -> dict | None:
     """
     Pose une question à Claude et récupère une réponse JSON qui respecte `schema`
     (sorties structurées : le format est garanti par l'API).
+
+    `prompt` : un texte, ou une liste de blocs de contenu (ex. une image puis un texte,
+    pour la lecture d'une carte de visite : voir `image_block`).
 
     Renvoie None si Claude n'est pas disponible ou en cas de problème :
     l'appelant utilise alors sa méthode sans IA générative.
@@ -73,6 +76,11 @@ def ask_json(system: str, prompt: str, schema: dict, max_tokens: int = 4000) -> 
     except json.JSONDecodeError:
         log.warning("Réponse de Claude illisible : on utilise les règles sans IA générative.")
         return None
+
+
+def image_block(image_base64: str, media_type: str = "image/jpeg") -> dict:
+    """Bloc « image » à placer dans `prompt` (photo encodée en base64, sans préfixe « data: »)."""
+    return {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_base64}}
 
 
 def strict_object(properties: dict, required: list[str] | None = None) -> dict:

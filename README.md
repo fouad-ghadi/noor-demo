@@ -186,7 +186,7 @@ noor-demo/
 │       ├── schemas/         formats d'entrée / sortie de l'API (Pydantic)
 │       ├── services/        ⭐ TOUTE la logique métier (KPIs, alertes, droits d'accès...)
 │       ├── api/             routes REST /api/... (fines : elles appellent les services)
-│       ├── ai/              ⭐ modules IA (4 implémentés, scan de carte à venir)
+│       ├── ai/              ⭐ modules IA (5 implémentés)
 │       └── seed_data/       listes utilisées par le seed (noms, quartiers, produits, textes)
 ├── frontend/                Application web (React + Vite + TypeScript + Tailwind + shadcn/ui)
 │   └── src/
@@ -267,13 +267,13 @@ User (délégué / superviseur) ──< Doctor ──< DoctorProductStatus >─�
 | GET / POST / DELETE | `/api/events` | événements d'agenda |
 | GET | `/api/sales` | analyse des ventes (PM, QP, QM, IE, IP, évolution), concurrents |
 | GET | `/api/objectives` · `/api/alerts` · `/api/products` | objectifs · alertes · produits |
-| * | `/api/ai/...` | fonctionnalités IA (le scan de carte de visite répond 501 : non implémenté) |
+| * | `/api/ai/...` | fonctionnalités IA (dictée, assistant, pharmacovigilance, carte de visite + doublons, recommandations) |
 
 ---
 
 ## Points d'extension IA
 
-Quatre modules d'IA sont **implémentés** ; le cinquième (scan de carte de visite) reste un point d'extension.
+Les cinq modules d'IA sont **implémentés**.
 Guide détaillé : **[docs/EXTENSIONS_IA.md](docs/EXTENSIONS_IA.md)**. Explications simples pour le jury :
 **[docs/IA_explications_jury.txt](docs/IA_explications_jury.txt)**.
 
@@ -283,7 +283,7 @@ Guide détaillé : **[docs/EXTENSIONS_IA.md](docs/EXTENSIONS_IA.md)**. Explicati
 | 💬 Assistant produit (RAG + citations) | `app/ai/rag_assistant.py` ✅ | `POST /api/ai/assistant/ask` | panneau « Assistant NOOR » — `components/assistant/AssistantPanel.tsx` |
 | ⚠️ Pharmacovigilance | `app/ai/pharmacovigilance.py` ✅ | `POST /api/ai/pharmacovigilance/scan` | alertes du tableau de bord (analyse automatique de chaque compte-rendu) |
 | ✨ Recommandations de visites | `app/ai/recommendations.py` ✅ | `GET /api/ai/recommendations` | carte « Visites recommandées » — `components/dashboard/RecommendedVisits.tsx` |
-| 📷 Scan de carte de visite + doublons | `app/ai/card_scanner.py` (non implémenté) | `POST /api/ai/card-scanner` (501) | bouton désactivé « Bientôt disponible » — `pages/doctors/DoctorFormPage.tsx` |
+| 📷 Scan de carte de visite + doublons | `app/ai/card_scanner.py` ✅ + `services/duplicate_service.py` | `POST /api/ai/card-scanner` (+ `/duplicates`, `/merge`) | « Scanner une carte de visite » dans « Nouveau médecin » — `components/doctors/CardScanDialog.tsx`, `DuplicatePanel.tsx` |
 
 **Sans clé d'API, tout fonctionne** (règles, recherche de texte BM25). Avec la variable d'environnement
 `ANTHROPIC_API_KEY`, les modules demandent en plus à Claude un résultat de meilleure qualité, et reviennent

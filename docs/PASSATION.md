@@ -40,7 +40,9 @@ Mis à jour le 22 novembre 2026. Complète `CLAUDE.md` (conventions, architectur
    - **assistant produit** (RAG BM25 sur des RCP simplifiés, citations, refus hors documents) ;
    - **pharmacovigilance** (détection d'effets indésirables dans les comptes-rendus → alerte ; 7/7, 0 fausse alerte) ;
    - **visites recommandées** (score expliqué : fréquence de ciblage, potentiel, produits, part de marché, créneau).
-   Le 5e module, **scan de carte de visite + doublons**, n'est pas fait (route 501, bouton désactivé).
+   - **scan de carte de visite + doublons** (22 nov.) : photo → fiche pré-remplie (Claude vision, ou OCR du
+     navigateur + règles sans clé), doublons signalés avant l'enregistrement avec score et raisons,
+     « Compléter cette fiche » ou créer ; 10/10 paires du seed, 0 fausse alerte ; 36 tests pytest.
 5. **Fiabilité** : filets de sécurité d'affichage (ErrorBoundary avec réparation automatique), protection contre
    la traduction automatique du navigateur, carte sans animation de zoom (plantage Leaflet corrigé),
    noms de composants conservés en production pour diagnostiquer.
@@ -79,7 +81,10 @@ du partenaire. On reproduit la structure et les formules avec des données ficti
   médecin notificateur, délégué, date) à relire, puis « Marquer comme déclarée » (statut + date).
 - Mettre à jour `scripts/evaluer_pharmacovigilance.py` et les explications jury.
 
-### P2. Scan de carte de visite + doublons (demande n° 3 du partenaire)
+### P2. Scan de carte de visite + doublons (demande n° 3 du partenaire) — ✅ FAIT le 22 nov. 2026
+Reste possible : liste des doublons de toute la base pour le superviseur (`duplicate_service.find_all_pairs` existe),
+tester la lecture par Claude avec une vraie clé et de vraies photos (reflets, cartes bilingues).
+Plan d'origine :
 - Frontend : prise de photo (mobile) ou import d'image dans `DoctorFormPage` (bouton 📷 aujourd'hui désactivé).
 - Extraction : avec clé, **Claude (vision)** renvoie un JSON (nom, prénom, spécialité, adresse, ville, téléphone,
   e-mail) ; sans clé, OCR dans le navigateur (ex. Tesseract.js) + règles. Le délégué relit toujours.

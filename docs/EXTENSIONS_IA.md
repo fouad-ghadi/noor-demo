@@ -34,7 +34,7 @@ Règles :
 | 💬 Assistant produit | ✅ implémenté | recherche BM25 dans les RCP simplifiés + réponse extraite, citée | réponse rédigée par Claude à partir des seuls passages trouvés |
 | ⚠️ Pharmacovigilance | ✅ implémenté | règles (symptôme + cas réel + exposition, sans « crainte ») : 7/7, 0 fausse alerte | détection par Claude (comptes-rendus enregistrés) |
 | ✨ Recommandations | ✅ implémenté | score expliqué (retard selon F1/F2, potentiel, opportunités produit, part de marché, créneau) | — |
-| 📷 Carte de visite | à faire | — | — |
+| 📷 Carte de visite + doublons | ✅ implémenté | OCR dans le navigateur (Tesseract.js) + règles ; doublons : normalisation + score expliqué (10/10, 0 fausse alerte) | Claude lit directement la photo (vision) |
 
 Code commun : `app/ai/llm.py` (appel à Claude, sorties JSON garanties, retour aux règles en cas d'erreur).
 
@@ -85,14 +85,20 @@ Code commun : `app/ai/llm.py` (appel à Claude, sorties JSON garanties, retour a
 
 ## 📷 Carte de visite + doublons — `card_scanner.py`
 
-- **Entrée** : `CardScanRequest` (image en base64).
-- **Sortie** : `CardScanResult` (texte brut, champs `DoctorBase`, doublons possibles avec score et raisons).
-- **Étapes** : OCR → extraction des champs → comparaison avec les médecins existants :
-  téléphone normalisé (9 derniers chiffres), nom normalisé (sans accents, espaces, « el », « ben »),
-  similarité (distance d'édition, phonétique).
-- **Évaluation** : retrouver les 10 paires de `seed_duplicates.md` sans faux doublons.
-- **Frontend** : `pages/doctors/DoctorFormPage.tsx`, bouton « 📷 Scanner une carte de visite » ;
-  pré-remplir le formulaire (`source: "carte_de_visite"`) et afficher les doublons avant de créer.
+✅ **Implémenté.**
+- **Entrée** : `CardScanRequest` (photo en base64 **ou** texte déjà lu par l'OCR du navigateur).
+- **Sortie** : `CardScanResult` (texte lu, champs `CardFields`, doublons avec score, niveau et raisons,
+  `needs_ocr` quand le serveur n'a pas de clé et qu'il faut lire la photo dans le navigateur).
+- **Lecture** : avec clé, Claude (vision) ; sans clé, Tesseract.js dans le navigateur (`src/lib/cardImage.ts`)
+  puis `extract_fields` (titre « Dr », mots-clés de spécialité, numéros marocains, villes et quartiers connus).
+- **Doublons** : `app/services/duplicate_service.py` (téléphone = 9 derniers chiffres, nom sans accents ni
+  article « El / Et », translittérations ou→w, q→k, lettres doublées, adresse) ; cherchés dans toute la base,
+  une fiche d'un collègue est signalée sans accès. Routes : `POST /api/ai/card-scanner/duplicates`
+  (vérification pendant la saisie) et `/merge` (fiche existante complétée, rien n'est enregistré).
+- **Évaluation** : `python scripts/evaluer_doublons.py` → 10/10 paires, 0 fausse alerte sur ~860 fiches.
+- **Frontend** : `components/doctors/CardScanDialog.tsx` (photo, import ou 4 cartes d'exemple dans
+  `public/demo-cards/`), `DuplicatePanel.tsx` (« Compléter cette fiche » / « Ce n'est pas le même médecin »).
+- **Tests** : `backend/tests/test_card_scanner.py` (`python -m pytest`).
 
 ## ✨ Recommandations — `recommendations.py`
 
