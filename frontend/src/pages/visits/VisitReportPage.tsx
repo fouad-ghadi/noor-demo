@@ -221,7 +221,10 @@ function ReportForm({ visit, products, objectionCategories }: {
   const alreadyPlanned = upcoming.data?.find((u) => u.id !== visit.id);
 
   // Ouverture du formulaire : on remonte en haut de la page
-  useEffect(() => window.scrollTo(0, 0), [visit.id]);
+  // Accolades obligatoires : scrollTo peut renvoyer une promesse, que React prendrait pour un nettoyage
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [visit.id]);
 
   const toggleProduct = (pid: number) =>
     setProductIds((ids) => (ids.includes(pid) ? ids.filter((x) => x !== pid) : [...ids, pid]));

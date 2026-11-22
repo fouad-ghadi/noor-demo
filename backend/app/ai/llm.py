@@ -75,6 +75,54 @@ def ask_json(system: str, prompt: str, schema: dict, max_tokens: int = 4000) -> 
         return None
 
 
+def run_tools(system: str, prompt: str, tools: list[dict], execute, max_rounds: int = 4) -> tuple[str, list[str]] | None:
+    """
+    Boucle « outils » (tool use) : Claude choisit quels outils appeler, NOOR les exécute
+    (`execute(nom, paramètres) -> texte JSON`) et lui renvoie les résultats, jusqu'à la réponse finale.
+
+    Renvoie (réponse, noms des outils appelés), ou None si Claude n'est pas disponible
+    ou en cas de problème : l'appelant répond alors avec ses règles.
+    """
+    if not is_available():
+        return None
+    import anthropic
+
+    client = anthropic.Anthropic()
+    messages: list[dict] = [{"role": "user", "content": prompt}]
+    called: list[str] = []
+    try:
+        for _ in range(max_rounds):
+            response = client.beta.messages.create(
+                model=MODEL,
+                max_tokens=4000,
+                system=system,
+                tools=tools,
+                messages=messages,
+                output_config={"effort": "low"},
+                betas=["server-side-fallback-2026-07-01"],
+                fallbacks="default",
+            )
+            if response.stop_reason == "refusal":
+                log.warning("Claude a refusé la demande : on utilise les règles sans IA générative.")
+                return None
+            uses = [b for b in response.content if b.type == "tool_use"]
+            if response.stop_reason != "tool_use" or not uses:
+                text = "".join(b.text for b in response.content if b.type == "text").strip()
+                return (text, called) if text else None
+            # On renvoie la réponse complète de Claude, puis TOUS les résultats dans un seul message
+            messages.append({"role": "assistant", "content": response.content})
+            results = []
+            for use in uses:
+                called.append(use.name)
+                results.append({"type": "tool_result", "tool_use_id": use.id, "content": execute(use.name, use.input)})
+            messages.append({"role": "user", "content": results})
+    except anthropic.APIError as exc:
+        log.warning("Claude indisponible (%s) : on utilise les règles sans IA générative.", exc)
+        return None
+    log.warning("Claude n'a pas conclu après %s tours d'outils : on utilise les règles.", max_rounds)
+    return None
+
+
 def strict_object(properties: dict, required: list[str] | None = None) -> dict:
     """Petit utilitaire : schéma JSON d'un objet (tous les champs requis, aucun champ en plus)."""
     return {

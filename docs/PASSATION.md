@@ -89,9 +89,9 @@ du partenaire. On reproduit la structure et les formules avec des données ficti
 - `source="carte_de_visite"` sur la fiche créée.
 
 ### P3. Chatbot étendu
-- **Mode d'emploi du CRM** : petit guide en markdown (`docs/guide/…`) indexé comme les RCP.
-- **« Quel est mon CPA ? », « Quels médecins F2 n'ai-je pas vus ? »** : reconnaître ces questions et répondre
-  avec les données (`activity_service`, `stats_service`), toujours en citant la source.
+- ✅ (22 nov.) **Mode d'emploi du CRM** : guide `docs/guide/guide_noor.md` (18 sections) indexé comme les RCP.
+- ✅ (22 nov.) **« Quel est mon CPA ? », « Quels médecins F2 n'ai-je pas vus ? »**, tournée, objectifs, comptes-rendus
+  en attente : outils dans `app/ai/crm_data.py`, avec lien vers la page où vérifier. Tests : `backend/tests/`.
 - **Informations médicales** : rédiger nos propres fiches simplifiées (antibiothérapie, bactériologie...) ;
   ne pas copier les formations du partenaire sans autorisation.
 
@@ -109,8 +109,9 @@ du partenaire. On reproduit la structure et les formules avec des données ficti
 
 ## 6. Points d'attention connus
 
-- Erreur « l is not a function » signalée par Fouad (filet global) : **non reproduite** ; depuis, le message
-  affiche le nom du composant en cause : demander une capture si elle revient.
+- Erreur « l is not a function » signalée par Fouad : **trouvée et corrigée le 22 nov.** Un `useEffect` renvoyait la
+  valeur de `scrollIntoView` (une promesse dans Chrome récent), que React prenait pour une fonction de nettoyage :
+  le panneau de l'assistant plantait dès la première question. Même correction dans le compte-rendu (`scrollTo`).
 - Render gratuit : premier chargement plus lent après un déploiement ; seed ≈ 11 s.
 - Les sessions cloud de Claude Code n'accèdent pas à `noor-demo.onrender.com` : Fouad vérifie lui-même après déploiement.
 - Les plugins Claude Code ne sont pas disponibles dans les sessions cloud (d'où la compétence copiée dans le dépôt).

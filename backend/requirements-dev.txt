@@ -1,0 +1,6 @@
+# Outils pour les tests automatiques (en plus de requirements.txt)
+#   pip install -r requirements-dev.txt
+#   python -m pytest
+-r requirements.txt
+pytest>=8.0
+httpx>=0.27

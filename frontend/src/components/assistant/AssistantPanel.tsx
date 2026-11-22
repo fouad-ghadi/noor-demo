@@ -1,6 +1,10 @@
 /**
- * 💬 IA — « Assistant NOOR » : questions produits avec citations (RAG).
- * Backend : app/ai/rag_assistant.py (route POST /api/ai/assistant/ask).
+ * 💬 IA — « Assistant NOOR » : trois sortes de questions, toujours avec la source citée.
+ *   - produits (posologie, contre-indications...) : RCP validés (app/ai/rag_assistant.py) ;
+ *   - mode d'emploi du CRM : guide docs/guide/guide_noor.md (app/ai/crm_guide.py) ;
+ *   - vos chiffres (CPA, médecins à voir, tournée...) : outils qui lisent vos données (app/ai/crm_data.py),
+ *     avec un lien vers la page où vérifier.
+ * Route : POST /api/ai/assistant/ask (le serveur choisit la bonne source).
  *
  * Panneau latéral présent sur toutes les pages. Il reçoit en props le contexte de la
  * page courante (médecin, visite, produit affichés : voir AssistantContext.tsx) et
@@ -12,9 +16,10 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { FileText, Info, Loader2, SendHorizontal, X } from "lucide-react";
+import { BarChart3, BookOpen, FileText, Info, Loader2, SendHorizontal, X, type LucideIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 
-import { aiApi, type AskResponse } from "@/api/ai";
+import { aiApi, type AskKind, type AskResponse } from "@/api/ai";
 import { NoorMark } from "@/components/brand/NoorMark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +31,9 @@ interface AssistantPanelProps {
   context: PageContext;
   onClose: () => void;
 }
+
+/** Icône de la source : document produit, guide du CRM, ou vos données. */
+const SOURCE_ICON: Record<AskKind, LucideIcon> = { produit: FileText, guide: BookOpen, donnees: BarChart3 };
 
 interface Exchange {
   question: string;
@@ -40,10 +48,13 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
   const products = useProducts();
   const product = products.data?.find((p) => p.id === context.productId);
 
-  // Questions d'exemple : adaptées au produit affiché, sinon génériques
-  const suggestions = product
-    ? [`Posologie de ${product.brand_name} chez l'enfant ?`, `Contre-indications de ${product.brand_name} ?`, `${product.brand_name} pendant la grossesse ?`]
-    : ["Peut-on donner Amoxira à un enfant de moins de 6 ans ?", "Artrinol avec un anticoagulant ?", "Effets indésirables de Glucanor ?"];
+  // Questions d'exemple : une par sorte de question (produit adapté à la page affichée)
+  const suggestions = [
+    product ? `Contre-indications de ${product.brand_name} ?` : "Peut-on donner Amoxira à un enfant de moins de 6 ans ?",
+    "Quel est mon CPA ?",
+    "Quels médecins F2 n'ai-je pas encore vus deux fois ?",
+    "Comment ajouter un jour de congé ?",
+  ];
 
   const ask = useMutation({
     mutationFn: (q: string) =>
@@ -67,8 +78,13 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
     ask.mutate(text);
   };
 
-  // Faire défiler jusqu'à la dernière réponse
-  useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [exchanges]);
+  // Faire défiler jusqu'à la dernière réponse.
+  // ⚠️ Accolades obligatoires : les navigateurs récents font renvoyer une promesse à scrollIntoView ;
+  // sans accolades, React prendrait cette promesse pour une fonction de nettoyage et planterait
+  // (« destroy is not a function », affiché « l is not a function » / « d is not a function »).
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [exchanges]);
 
   return (
     <div className="flex h-full flex-col bg-white">
@@ -77,7 +93,7 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
           <NoorMark className="size-8" color="#9FE3D6" core="#0F3D3E" />
           <div>
             <p className="font-display text-[17px] font-semibold">Assistant NOOR</p>
-            <p className="text-xs text-[#CFEDE7]">Questions produits, réponses sourcées</p>
+            <p className="text-xs text-[#CFEDE7]">Produits, mode d'emploi et vos chiffres</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" className="text-mint hover:bg-white/10 hover:text-white" onClick={onClose} aria-label="Fermer l'assistant">
@@ -89,11 +105,12 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
         {exchanges.length === 0 && (
           <div className="space-y-4">
             <p className="text-ink text-sm leading-relaxed">
-              Posez une question sur un produit : posologie, contre-indications, interactions, grossesse… NOOR répond
-              uniquement à partir des documents validés du laboratoire et cite toujours sa source.
+              Posez une question sur un produit (posologie, contre-indications, grossesse…), sur le fonctionnement de
+              NOOR, ou sur vos chiffres (CPA, médecins à voir, tournée, objectifs). NOOR répond à partir des documents
+              validés et de vos données, et cite toujours sa source.
             </p>
             <div className="space-y-2">
-              <p className="text-muted-foreground text-xs">Exemples{product ? ` pour ${product.brand_name}` : ""} :</p>
+              <p className="text-muted-foreground text-xs">Exemples :</p>
               {suggestions.map((s) => (
                 <button
                   key={s}
@@ -116,23 +133,26 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
             {/* Réponse */}
             {!e.response && !e.error && (
               <p className="text-muted-foreground flex items-center gap-2 text-sm">
-                <Loader2 className="size-4 animate-spin" /> Recherche dans les documents validés…
+                <Loader2 className="size-4 animate-spin" /> Recherche en cours…
               </p>
             )}
             {e.error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">{e.error}</p>}
             {e.response && (
               <div className={cn("mr-4 space-y-2.5 rounded-2xl rounded-bl-md border px-3.5 py-3", e.response.refused ? "border-line bg-paper" : "border-mint bg-mint-wash/50")}>
-                <p className={cn("text-sm leading-relaxed", e.response.refused ? "text-muted-foreground flex gap-2" : "text-ink")}>
+                {/* whitespace-pre-line : les listes (médecins, visites) s'affichent une ligne par élément */}
+                <p className={cn("text-sm leading-relaxed whitespace-pre-line", e.response.refused ? "text-muted-foreground flex gap-2" : "text-ink")}>
                   {e.response.refused && <Info className="mt-0.5 size-4 shrink-0" />}
                   {e.response.answer}
                 </p>
                 {e.response.citations.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-muted-foreground text-xs">Sources</p>
-                    {e.response.citations.map((c, j) => (
+                    {e.response.citations.map((c, j) => {
+                      const Icon = SOURCE_ICON[e.response!.kind] ?? FileText;
+                      return (
                       <figure key={j} className="border-line rounded-lg border bg-white p-2.5">
                         <figcaption className="text-ink flex items-center gap-1.5 text-xs font-medium">
-                          <FileText className="text-pine size-3.5 shrink-0" />
+                          <Icon className="text-pine size-3.5 shrink-0" />
                           {c.document_title}
                           {c.page !== null && <span className="text-muted-foreground font-normal">{`, section ${c.page}`}</span>}
                         </figcaption>
@@ -143,8 +163,14 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
                             {c.excerpt}
                           </blockquote>
                         )}
+                        {c.link && (
+                          <Link to={c.link} onClick={onClose} className="text-pine mt-1.5 inline-block text-xs font-medium underline underline-offset-2">
+                            Vérifier dans la page
+                          </Link>
+                        )}
                       </figure>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -164,7 +190,7 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
         <Input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Posez une question sur un produit…"
+          placeholder="Un produit, une page, vos chiffres…"
           aria-label="Question pour l'assistant"
           disabled={ask.isPending}
         />
