@@ -2,6 +2,7 @@
 
 Ce fichier est lu automatiquement au début de chaque session Claude Code.
 Il résume le projet, les conventions et l'état d'avancement.
+Historique détaillé et plan jusqu'à la soutenance finale (8 déc. 2026) : **`docs/PASSATION.md`**.
 
 ## Le projet
 
