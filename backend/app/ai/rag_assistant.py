@@ -105,12 +105,13 @@ def index_documents(db: Session) -> int:
     return len(_load_passages())
 
 
-def _bm25(query: list[str], pool: list[Passage]) -> list[tuple[float, Passage]]:
+def _bm25(query: list[str], pool: list[Passage], corpus: tuple[Passage, ...] | None = None) -> list[tuple[float, Passage]]:
     """
     Score BM25 classique : récompense les mots RARES de la question présents dans le passage.
-    La rareté est mesurée sur tous les documents ; on ne note que les passages de `pool`.
+    La rareté est mesurée sur tous les documents du corpus (les RCP par défaut, ou le guide) ;
+    on ne note que les passages de `pool`.
     """
-    corpus = _load_passages()
+    corpus = corpus if corpus is not None else _load_passages()
     n = len(corpus)
     avg_len = sum(len(p.tokens) for p in corpus) / max(1, n)
     df = Counter(t for p in corpus for t in set(p.tokens))
@@ -127,11 +128,17 @@ def _bm25(query: list[str], pool: list[Passage]) -> list[tuple[float, Passage]]:
     return sorted(scored, key=lambda x: -x[0])
 
 
+def _named_brands(db: Session, question: str) -> set[str]:
+    """Produits dont le nom de marque ou la molécule apparaît dans la question."""
+    q = normalize(question)
+    return {p.brand_name for p in db.scalars(select(Product))
+            if normalize(p.brand_name) in q or normalize(p.molecule.split(" ")[0]) in q}
+
+
 def _target_brands(db: Session, request: AskRequest) -> set[str]:
     """Produit(s) concerné(s) : cité(s) dans la question, sinon celui de la page affichée."""
     products = list(db.scalars(select(Product)))
-    q = normalize(request.question)
-    named = {p.brand_name for p in products if normalize(p.brand_name) in q or normalize(p.molecule.split(" ")[0]) in q}
+    named = _named_brands(db, request.question)
     if named:
         return named
     ctx = request.context
@@ -165,7 +172,34 @@ REFUSAL = (
 
 
 def answer(db: Session, user: User, request: AskRequest) -> AskResponse:
-    """Répond à une question à partir des documents validés, avec citations."""
+    """
+    Point d'entrée de l'assistant NOOR : aiguille la question vers la bonne source.
+      1. « Mes chiffres » (CPA, tournée, médecins à voir...)  → outils de crm_data.py ;
+      2. produit cité dans la question                         → RCP (answer_product) ;
+      3. question « mode d'emploi » (comment, où...)           → guide du CRM (crm_guide.py) ;
+      4. sinon : RCP, puis guide ; si rien ne correspond, refus explicite.
+    """
+    from app.ai import crm_data, crm_guide  # import ici : ces modules réutilisent ce fichier-ci
+
+    howto = crm_data.is_howto(request.question)
+    detected = crm_data.detect_tool(db, user, request.question)
+    if detected and not howto:
+        return crm_data.answer(db, user, request, detected)
+    if _named_brands(db, request.question):
+        product = answer_product(db, user, request)
+        return crm_guide.answer(db, request) if product.refused and howto else product
+    if howto or crm_guide.mentions_crm(request.question):
+        guide = crm_guide.answer(db, request)
+        return guide if not guide.refused else answer_product(db, user, request)
+    product = answer_product(db, user, request)
+    if not product.refused:
+        return product
+    guide = crm_guide.answer(db, request)
+    return guide if not guide.refused else product
+
+
+def answer_product(db: Session, user: User, request: AskRequest) -> AskResponse:
+    """Répond à une question produit à partir des documents validés, avec citations."""
     brands = _target_brands(db, request)
     # Les noms de produits servent au filtrage : on les retire des mots recherchés
     product_words = {t for p in db.scalars(select(Product)) for t in tokenize(f"{p.brand_name} {p.molecule}")}

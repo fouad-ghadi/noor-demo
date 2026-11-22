@@ -49,6 +49,8 @@ class Citation(BaseModel):
     page: int | None = None  # numéro de page (PDF) ou de section (fiche texte)
     section: str | None = None  # titre de la section citée (ex. « Posologie et mode d'administration »)
     excerpt: str  # passage exact du document qui justifie la réponse
+    # Page de l'application où vérifier l'information (ex. « /statistiques »), pour les réponses sur vos chiffres
+    link: str | None = None
 
 
 class AskResponse(BaseModel):
@@ -57,6 +59,9 @@ class AskResponse(BaseModel):
     # True si aucun document validé ne permet de répondre : l'assistant le dit
     # explicitement au lieu d'inventer.
     refused: bool = False
+    # D'où vient la réponse : "produit" (RCP validés), "guide" (mode d'emploi du CRM)
+    # ou "donnees" (vos chiffres, calculés par les outils de app/ai/crm_data.py)
+    kind: str = "produit"
 
 
 # --- Pharmacovigilance -------------------------------------------------------------

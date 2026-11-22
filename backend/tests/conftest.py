@@ -1,8 +1,10 @@
 """
-Préparation des tests automatiques (pytest).
+Préparation commune des tests automatiques (pytest).
 
-Les tests utilisent une base TEMPORAIRE, remplie par le seed une seule fois pour toute
-la session : votre base de travail backend/noor.db n'est jamais modifiée.
+- Les tests utilisent leur PROPRE base SQLite (dossier temporaire), jamais backend/noor.db.
+- Claude est désactivé (pas de clé) : les tests vérifient les règles, qui marchent sans internet.
+- Les données de démo sont générées une seule fois (≈ 10 s) pour toute la session de tests.
+- Le dossier tests/pharmacovigilance/ a son propre conftest (petite base en mémoire).
 
 Lancer les tests (PowerShell, dans le dossier backend, venv activé) :
     pip install -r requirements-dev.txt
@@ -13,18 +15,18 @@ import sys
 import tempfile
 from pathlib import Path
 
-import pytest
-
-# À faire AVANT d'importer l'application : la base pointe vers un fichier temporaire
+# ⚠️ Doit être fait AVANT d'importer l'application (app/database.py lit cette variable)
 _TMP = Path(tempfile.mkdtemp(prefix="noor-tests-"))
 os.environ["NOOR_DB_PATH"] = str(_TMP / "noor-test.db")
 os.environ.pop("ANTHROPIC_API_KEY", None)  # tests sans IA générative : résultats reproductibles
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import pytest  # noqa: E402
+
 
 @pytest.fixture(scope="session")
 def seeded():
-    """Base de démo complète (≈ 10 s, une seule fois)."""
+    """Base de démo complète (≈ 10 s, une seule fois pour toute la session)."""
     import seed
 
     seed.main()
@@ -52,13 +54,22 @@ def client(seeded):
 
 @pytest.fixture
 def users(db):
-    """Comptes de démo par identifiant d'e-mail : users["salma.berrada"]..."""
+    """
+    Comptes de démo, accessibles de deux façons :
+    par identifiant d'e-mail (users["salma.berrada"]) ou par prénom (users["salma"]).
+    """
     from sqlalchemy import select
 
     from app.models import User
 
-    return {u.email.split("@")[0]: u for u in db.scalars(select(User))}
+    result = {}
+    for u in db.scalars(select(User)):
+        login = u.email.split("@")[0]
+        result[login] = u
+        result[login.split(".")[0]] = u
+    return result
 
 
 def headers(user) -> dict:
+    """En-tête d'identification de la démo."""
     return {"X-User-Id": str(user.id)}

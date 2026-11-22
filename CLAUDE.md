@@ -102,6 +102,10 @@ ni sur le site public** : on reproduit seulement la structure et les formules, a
   extraction par mots-clés darija/français ; formulaire pré-rempli, `report_source="dictee"`, relu par le délégué.
 - Assistant : RCP simplifiés `docs/products/<Produit>/rcp_<Produit>.md` (8 sections ; liés aux documents RCP par `file_path`),
   BM25 + citations (section), refus si hors documents (ex. prix). Panneau `components/assistant/AssistantPanel.tsx`.
+  Aiguillage dans `rag_assistant.answer` : « mes chiffres » → `ai/crm_data.py` (5 outils : indicateurs, médecins à voir,
+  tournée, objectifs, comptes-rendus en attente ; tool use avec Claude via `llm.run_tools`, mots-clés sinon ; droits via
+  `access`) ; « comment… » → guide `docs/guide/guide_noor.md` (`ai/crm_guide.py`, à tenir à jour quand un écran change) ;
+  sinon RCP. Réponse : `kind` (produit/guide/donnees) + `Citation.link` (page où vérifier).
 - Pharmacovigilance : analyse à chaque `submit_report` (`visit_service._scan_pharmacovigilance`) et `scan_all` à la fin du seed ;
   alertes PV en tête de liste. Évaluation : `backend/scripts/evaluer_pharmacovigilance.py` (12/12, 0 fausse alerte).
   **Conforme à la procédure** : effets + situations particulières (grossesse/allaitement, surdosage, mésusage,
@@ -137,17 +141,27 @@ Dockerfile/Render, refonte complète du gabarit : toutes les pages, 4 modules IA
 22 oct. 2026 : alignement sur le vrai CRM du partenaire (ciblage F1/F2, territoires, événements d'agenda,
 page Statistiques, analyse des ventes type IMS, n° de lot, statut de prescription, volumes réalistes).
 
-22 nov. 2026 : scan de carte de visite + doublons (5e module IA) ; premiers tests automatisés
+22 nov. 2026 : pharmacovigilance conforme, scan de carte de visite + doublons (5e module IA), assistant étendu
+(mode d'emploi du CRM, « mes chiffres ») ; premiers tests automatisés
 (`backend/tests/`, `python -m pytest` : base temporaire via `NOOR_DB_PATH`, la vraie base n'est pas touchée).
 
 Pistes pour la suite (à valider avec Fouad ; MVP le 8 déc. 2026) :
 1. ~~Pharmacovigilance conforme~~ : fait le 22 nov. 2026 (PR « pharmacovigilance conforme »).
-2. Chatbot étendu : informations médicales (formations), mode d'emploi du CRM, « quel est mon CPA ? ».
+2. Chatbot étendu : mode d'emploi du CRM et « quel est mon CPA ? » **faits** (22 nov.) ; reste : informations médicales (nos propres fiches).
 3. IA : tester avec une clé `ANTHROPIC_API_KEY` ; étendre les tests (pytest : autres services ; Playwright).
 4. Mise en ligne : vérifier une fois dans les journaux Render la ligne « Données de démo régénérées pour le … » (4 h du matin).
+
+## Tests automatiques
+
+`backend/` : `pip install -r requirements-dev.txt` puis `python -m pytest` (base temporaire via `NOOR_DB_PATH`,
+jamais `noor.db` ; seed rejoué une fois, ≈ 10 s ; Claude simulé, sans réseau). Couvre l'assistant (aiguillage, chiffres
+identiques aux services, droits d'accès, boucle d'outils), le scan de carte + doublons et la pharmacovigilance
+(`tests/pharmacovigilance/`, petite base en mémoire).
 
 ## Pièges connus
 
 - Lancer `python seed.py` modifie la base : relancer le seed le matin d'une démo (agenda du jour à jour).
 - La carte (OpenStreetMap) nécessite internet.
+- `useEffect(() => fn())` sans accolades : si `fn` renvoie une promesse (`scrollIntoView`, `scrollTo` dans Chrome récent),
+  React plante (« d/l is not a function »). Toujours écrire `useEffect(() => { fn(); }, …)`.
 - Vérifier visuellement les changements d'interface (captures Playwright, ordinateur 1440 px + mobile 390 px).

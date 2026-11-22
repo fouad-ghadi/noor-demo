@@ -57,10 +57,22 @@ export interface MergeProposal {
   changes: { field: string; label: string; old: string | null; new: string | null; action: "ajout" | "remplacement" | "conserve" }[];
 }
 
+/** Source d'une réponse : RCP validés, guide d'utilisation du CRM, ou vos chiffres (calculés par des outils). */
+export type AskKind = "produit" | "guide" | "donnees";
+
 export interface AskResponse {
   answer: string;
-  citations: { document_id: number; document_title: string; page: number | null; section: string | null; excerpt: string }[];
+  citations: {
+    document_id: number;
+    document_title: string;
+    page: number | null;
+    section: string | null;
+    excerpt: string;
+    /** Page de l'application où vérifier l'information (réponses sur vos chiffres). */
+    link: string | null;
+  }[];
   refused: boolean;
+  kind: AskKind;
 }
 
 /** ✨ Une visite recommandée, avec ses raisons. */
@@ -89,7 +101,7 @@ export const aiApi = {
   /** 🎤 Dictée (texte transcrit par le navigateur) → brouillon de compte-rendu. */
   voiceReport: (visit_id: number, transcript: string) =>
     post<VoiceReportResult>("/ai/voice-report", { visit_id, transcript }),
-  /** 💬 Question produit (RAG avec citations). */
+  /** 💬 Question à l'assistant : produit (RCP), mode d'emploi du CRM ou vos chiffres. */
   ask: (question: string, context?: Record<string, unknown>) => post<AskResponse>("/ai/assistant/ask", { question, context }),
   /** ✨ Visites recommandées (délégué connecté, ou délégué choisi par le superviseur). */
   recommendations: (delegue_id?: number, limit = 5) =>

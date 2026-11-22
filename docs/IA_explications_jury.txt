@@ -78,6 +78,21 @@ To say to the jury
     « Un assistant qui ne répond qu'à partir des documents approuvés, cite
       toujours sa source, et sait dire "je ne sais pas". »
 
+Extension (Nov. 2026): the assistant also answers two new kinds of questions
+    - "How do I...?" questions about the CRM itself ("How do I add a day off?"):
+      answered from a user guide written from the app's real screens
+      (docs/guide/guide_noor.md), with the section cited.
+    - Questions about the rep's OWN figures ("What is my CPA?", "Which F2 doctors
+      haven't I seen twice?", "My route for tomorrow?"): NOOR does not guess. It
+      calls TOOLS that query the database with exactly the same formulas as the
+      Statistics page, and links to the page where the figure can be checked.
+      With Claude, the model chooses the tool itself ("tool use"); without a key,
+      keyword rules choose it. Access rights are enforced by the tools: a rep asking
+      for a colleague's CPA gets a refusal, a supervisor sees the whole team.
+    To say to the jury:
+    « L'IA ne calcule rien de tête : elle appelle les mêmes fonctions que
+      l'application, et montre où vérifier. »
+
 
 3. PHARMACOVIGILANCE (detecting adverse effects)
 ------------------------------------------------
