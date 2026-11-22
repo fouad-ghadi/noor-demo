@@ -8,6 +8,7 @@ from app.models.alert import Alert
 from app.models.doctor import Doctor, DoctorProductStatus
 from app.models.event import Event
 from app.models.objective import Objective, ObjectiveProduct
+from app.models.pharmacovigilance import PharmacovigilanceCase
 from app.models.product import Document, Product
 from app.models.sales import MarketProduct, SalesRecord
 from app.models.user import User
@@ -22,6 +23,7 @@ __all__ = [
     "MarketProduct",
     "Objective",
     "ObjectiveProduct",
+    "PharmacovigilanceCase",
     "Product",
     "SalesRecord",
     "User",

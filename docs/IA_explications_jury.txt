@@ -96,6 +96,15 @@ How it works
        effect; if so it extracts the product, the effect, the excerpt and the
        severity (hospitalisation = serious).
     2. Alert: NOOR creates the alert, which appears on the dashboard.
+    3. Real procedure of the lab (since 22 Nov. 2026):
+       - it also detects "special situations" that must be reported even without
+         any adverse effect: pregnancy or breastfeeding, overdose, misuse,
+         medication error, lack of efficacy;
+       - it checks the 4 minimum facts (product, effect or situation,
+         identifiable patient, identifiable reporter) and shows what is missing;
+       - it shows the 24-hour reporting deadline as a live countdown;
+       - it pre-fills the declaration e-mail; the rep completes it, sends it and
+         clicks "Marquer comme declaree". The alert cannot be closed otherwise.
 
 Strong point: it can be measured
     The demo database contains 7 reports with an adverse effect hidden among about
@@ -154,8 +163,11 @@ Works without any API key (rules and text search). With an Anthropic API key
    Then "Quel est le prix d'Amoxira ?" -> it says it does not know (not in documents).
 3. Pharmacovigilance: alerts "Effet indesirable a declarer" at the top of the alerts.
    Live: dictate a report containing "une patiente avec des vertiges sous Cardiovex",
-   validate -> a new pharmacovigilance alert appears on the dashboard.
-   Measured result on the demo data: 7 of 7 found, 0 false alarm
+   validate -> a new pharmacovigilance alert appears on the dashboard with a 24 h
+   countdown -> "Preparer la declaration" -> type the patient (e.g. "femme, 40 ans")
+   -> the e-mail updates -> "Marquer comme declaree".
+   Measured result on the demo data: 12 of 12 found (7 effects + 5 special
+   situations), 0 false alarm
    (backend/scripts/evaluer_pharmacovigilance.py).
 4. Recommendations: log in as Hamza (behind schedule) -> card "Visites recommandees":
    overdue F2 doctors first, with products, market reasons and timing -> "Planifier".

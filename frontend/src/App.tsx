@@ -12,6 +12,8 @@ import { DoctorFormPage } from "@/pages/doctors/DoctorFormPage";
 import { DoctorsPage } from "@/pages/doctors/DoctorsPage";
 import { LoginPage } from "@/pages/login/LoginPage";
 import { ObjectivesPage } from "@/pages/objectives/ObjectivesPage";
+import { PharmacovigilancePage } from "@/pages/pharmacovigilance/PharmacovigilancePage";
+import { PvCasePage } from "@/pages/pharmacovigilance/PvCasePage";
 import { PlanningPage } from "@/pages/planning/PlanningPage";
 import { ProductDetailPage } from "@/pages/products/ProductDetailPage";
 import { ProductsPage } from "@/pages/products/ProductsPage";
@@ -54,6 +56,8 @@ export default function App() {
         <Route path="produits" element={<ProductsPage />} />
         <Route path="produits/:id" element={<ProductDetailPage />} />
         <Route path="objectifs" element={<ObjectivesPage />} />
+        <Route path="pharmacovigilance" element={<PharmacovigilancePage />} />
+        <Route path="pharmacovigilance/:id" element={<PvCasePage />} />
         <Route path="statistiques" element={<ActivityPage />} />
         <Route path="ventes" element={<SalesPage />} />
         <Route path="equipe" element={<TeamPage />} />

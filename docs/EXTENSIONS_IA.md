@@ -32,7 +32,7 @@ Règles :
 |---|---|---|---|
 | 🎤 Compte-rendu dicté | ✅ implémenté | transcription par le navigateur + mots-clés (darija / français) | extraction structurée par Claude |
 | 💬 Assistant produit | ✅ implémenté | recherche BM25 dans les RCP simplifiés + réponse extraite, citée | réponse rédigée par Claude à partir des seuls passages trouvés |
-| ⚠️ Pharmacovigilance | ✅ implémenté | règles (symptôme + cas réel + exposition, sans « crainte ») : 7/7, 0 fausse alerte | détection par Claude (comptes-rendus enregistrés) |
+| ⚠️ Pharmacovigilance | ✅ implémenté | règles (symptôme ou situation particulière + cas réel + exposition, sans « crainte ») : 12/12, 0 fausse alerte ; 4 infos minimales, délai 24 h, déclaration pré-remplie | détection par Claude (comptes-rendus enregistrés) |
 | ✨ Recommandations | ✅ implémenté | score expliqué (retard selon F1/F2, potentiel, opportunités produit, part de marché, créneau) | — |
 | 📷 Carte de visite | à faire | — | — |
 
@@ -44,7 +44,7 @@ Code commun : `app/ai/llm.py` (appel à Claude, sorties JSON garanties, retour a
 |---|---|---|---|
 | 🎤 Compte-rendu dicté | `voice_report.py` | ★★★ | n'importe quelle visite « compte-rendu à faire » |
 | 💬 Assistant produit (RAG) | `rag_assistant.py` | ★★★ | 10 produits, 30 documents (déposer les PDF dans `docs/products/`) |
-| ⚠️ Pharmacovigilance | `pharmacovigilance.py` | ★★ | 7 comptes-rendus avec effet indésirable (`seed_duplicates.md`, section 2 — fichier créé par `python seed.py`) |
+| ⚠️ Pharmacovigilance | `pharmacovigilance.py` | ★★ | 12 comptes-rendus à déclarer (7 effets + 5 situations particulières) (`seed_duplicates.md`, section 2 — fichier créé par `python seed.py`) |
 | 📷 Carte de visite + doublons | `card_scanner.py` | ★★ | 10 paires de doublons (`seed_duplicates.md`, section 1) |
 | ✨ Recommandations | `recommendations.py` | ★★ | 6 mois d'historique, créneaux, prescriptions, objectifs |
 

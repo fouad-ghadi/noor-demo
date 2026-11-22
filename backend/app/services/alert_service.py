@@ -11,7 +11,8 @@ ne sont plus d'actualité passent automatiquement en « traitée ». Une alerte 
 l'utilisateur a marquée « traitée » n'est pas recréée tant que la situation
 ne change pas (ex. : pour un médecin non visité, l'alerte est liée à sa
 dernière visite ; une nouvelle visite puis un nouveau retard = nouvelle alerte).
-Les alertes de pharmacovigilance (module IA app/ai/pharmacovigilance.py) ne sont jamais touchées ici.
+Les alertes de pharmacovigilance (module IA app/ai/pharmacovigilance.py) ne sont jamais touchées ici :
+elles se ferment quand le cas est déclaré (services/pharmacovigilance_service.py).
 """
 from datetime import timedelta
 
@@ -22,7 +23,8 @@ from sqlalchemy.orm import Session, selectinload
 from app.models import Alert, Doctor, User, Visit
 from app.models.enums import AlertSeverity, AlertStatus, AlertType, Frequency, VisitStatus
 from app.schemas.alert import AlertOut
-from app.services import access
+from app.schemas.pharmacovigilance import PvCaseSummary
+from app.services import access, pharmacovigilance_service
 from app.services.dates import now, period_label, period_of
 
 # Seuils (en jours) au-delà desquels un médecin ciblé est considéré « non visité » :
@@ -156,7 +158,7 @@ def refresh_alerts(db: Session, delegue_id: int) -> None:
 _SEVERITY_ORDER = {AlertSeverity.HAUTE: 0, AlertSeverity.MOYENNE: 1, AlertSeverity.FAIBLE: 2}
 
 
-def to_out(alert: Alert) -> AlertOut:
+def to_out(alert: Alert, pv_case: PvCaseSummary | None = None) -> AlertOut:
     return AlertOut(
         id=alert.id,
         type=alert.type,
@@ -169,6 +171,7 @@ def to_out(alert: Alert) -> AlertOut:
         doctor_name=alert.doctor.full_name if alert.doctor else None,
         visit_id=alert.visit_id,
         created_at=alert.created_at,
+        pv_case=pv_case,
     )
 
 
@@ -200,7 +203,12 @@ def list_alerts(
             -a.created_at.timestamp(),
         ),
     )
-    return [to_out(a) for a in (alerts[:limit] if limit else alerts)]
+    alerts = alerts[:limit] if limit else alerts
+    # Délai de 24 h et informations manquantes des alertes de pharmacovigilance
+    pv_cases = pharmacovigilance_service.summaries_by_alert(
+        db, [a.id for a in alerts if a.type == AlertType.PHARMACOVIGILANCE]
+    )
+    return [to_out(a, pv_cases.get(a.id)) for a in alerts]
 
 
 def update_alert_status(db: Session, user: User, alert_id: int, status: str) -> AlertOut:
@@ -210,6 +218,10 @@ def update_alert_status(db: Session, user: User, alert_id: int, status: str) -> 
     access.check_delegue_access(db, user, alert.delegue_id)
     if status not in {s.value for s in AlertStatus}:
         raise HTTPException(400, f"Statut invalide : {status}")
+    # Obligation légale : une alerte de pharmacovigilance ne se ferme qu'en déclarant le cas
+    if (alert.type == AlertType.PHARMACOVIGILANCE and status == AlertStatus.TRAITEE
+            and not pharmacovigilance_service.is_declared(db, alert.id)):
+        raise HTTPException(400, "Déclarez d'abord ce cas de pharmacovigilance (sous 24 h)")
     alert.status = status
     db.commit()
     return to_out(alert)

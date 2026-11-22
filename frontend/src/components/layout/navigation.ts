@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LineChart,
   Package,
+  ShieldAlert,
   Stethoscope,
   Target,
   Users,
@@ -31,6 +32,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     { to: "/ventes", label: "Analyse des ventes", short: "Ventes", icon: LineChart },
     { to: "/produits", label: "Produits", short: "Produits", icon: Package, mobile: true },
     { to: "/objectifs", label: "Objectifs", short: "Objectifs", icon: Target },
+    { to: "/pharmacovigilance", label: "Pharmacovigilance", short: "PV", icon: ShieldAlert },
   ],
   superviseur: [
     { to: "/equipe", label: "Vue équipe", short: "Équipe", icon: Users, mobile: true },
@@ -40,5 +42,6 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     { to: "/planning", label: "Planning", short: "Planning", icon: CalendarDays, mobile: true },
     { to: "/produits", label: "Produits", short: "Produits", icon: Package },
     { to: "/objectifs", label: "Objectifs", short: "Objectifs", icon: Target },
+    { to: "/pharmacovigilance", label: "Pharmacovigilance", short: "PV", icon: ShieldAlert },
   ],
 };

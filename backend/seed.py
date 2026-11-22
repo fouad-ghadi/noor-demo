@@ -42,6 +42,7 @@ from app.models import (
     MarketProduct,
     Objective,
     ObjectiveProduct,
+    PharmacovigilanceCase,
     Product,
     SalesRecord,
     User,
@@ -57,6 +58,8 @@ from app.models.enums import (
     Frequency,
     PrescribingStatus,
     PrescriptionFeedback,
+    PvCaseStatus,
+    PvSituation,
     ReportSource,
     Role,
     VisitFeedback,
@@ -75,8 +78,9 @@ from app.seed_data.texts import (
     NOTES_RESERVED,
     OBJECTION_COMMENTS,
     PHARMACOVIGILANCE_NOTES,
+    PHARMACOVIGILANCE_SITUATION_NOTES,
 )
-from app.services import alert_service
+from app.services import alert_service, pharmacovigilance_service
 from app.services.dates import (
     elapsed_fraction,
     is_working_day,
@@ -725,26 +729,81 @@ def create_visits(db, delegates, by_delegate, products, pairs, events):
 
 
 def add_pharmacovigilance_notes(db) -> list[tuple[Visit, str]]:
-    """Ajoute à quelques comptes-rendus récents une mention d'effet indésirable."""
+    """
+    Ajoute à quelques comptes-rendus récents une mention d'effet indésirable
+    ou de situation particulière (surdosage, grossesse, erreur médicamenteuse...).
+    """
     added = []
     for brand, note in PHARMACOVIGILANCE_NOTES:
-        candidates = (
-            db.query(Visit)
-            .join(VisitProduct, VisitProduct.visit_id == Visit.id)
-            .join(Product, Product.id == VisitProduct.product_id)
-            .filter(Product.brand_name == brand, Visit.status == VisitStatus.REALISEE,
-                    Visit.actual_at >= datetime.combine(TODAY - timedelta(days=75), time()),
-                    Visit.actual_at < datetime.combine(TODAY, time()))
-            .order_by(Visit.id)
-            .all()
-        )
+        candidates = _pv_candidates(db, brand)
         candidates = [v for v in candidates if v not in [a[0] for a in added]]
         if candidates:
             visit = RNG.choice(candidates)
             visit.notes = f"{visit.notes} {note}"
             added.append((visit, brand))
+
+    # Situations particulières : choix sans RNG (pour ne pas décaler le reste des données)
+    for i, (brand, note) in enumerate(PHARMACOVIGILANCE_SITUATION_NOTES):
+        if i == 0:
+            # Visite réalisée la plus récente du 1er délégué : le délai de 24 h est encore en cours
+            visit = (
+                db.query(Visit).join(User, User.id == Visit.delegue_id)
+                .filter(User.email == DELEGATES[0]["email"], Visit.status == VisitStatus.REALISEE,
+                        Visit.actual_at < datetime.combine(TODAY, time()))
+                .order_by(Visit.actual_at.desc()).first()
+            )
+        else:
+            candidates = [v for v in _pv_candidates(db, brand) if v not in [a[0] for a in added]]
+            visit = candidates[(len(candidates) * i) // 6] if candidates else None
+        if visit is not None:
+            visit.notes = f"{visit.notes} {note}"
+            added.append((visit, brand))
     db.flush()
     return added
+
+
+def _pv_candidates(db, brand: str) -> list[Visit]:
+    """Visites réalisées des 75 derniers jours où le produit a été présenté."""
+    return (
+        db.query(Visit)
+        .join(VisitProduct, VisitProduct.visit_id == Visit.id)
+        .join(Product, Product.id == VisitProduct.product_id)
+        .filter(Product.brand_name == brand, Visit.status == VisitStatus.REALISEE,
+                Visit.actual_at >= datetime.combine(TODAY - timedelta(days=75), time()),
+                Visit.actual_at < datetime.combine(TODAY, time()))
+        .order_by(Visit.id)
+        .all()
+    )
+
+
+def declare_past_pv_cases(db) -> int:
+    """
+    Historique réaliste : les cas anciens ont déjà été déclarés (presque tous dans les 24 h).
+    Restent « à déclarer » : le cas le plus récent (délai en cours) et un cas oublié (en retard).
+    """
+    cases = db.query(PharmacovigilanceCase).order_by(PharmacovigilanceCase.known_at).all()
+    if not cases:
+        return 0
+    fresh = next((c for c in cases if PvSituation.SURDOSAGE in c.situation_codes), cases[-1])
+    forgotten = next((c for c in cases if "diarrhées" in c.event), None)
+    declared = 0
+    for i, case in enumerate(cases):
+        if case in (fresh, forgotten):
+            continue
+        if not case.patient_details:
+            case.patient_details = "homme, 58 ans (précisé par le médecin)"
+        # Déclaré 2 à 20 h après la visite ; un cas déclaré hors délai (30 h) pour l'historique
+        hours = 30 if case.product and case.product.brand_name == "Statilia" else 2 + (i * 7) % 19
+        case.status = PvCaseStatus.DECLAREE
+        case.declared_at = case.known_at + timedelta(hours=hours, minutes=(i * 13) % 60)
+        case.declared_by_id = case.delegue_id
+        draft = pharmacovigilance_service.build_declaration(case)
+        case.declaration_text = f"{draft.subject}\n\n{draft.body}"
+        alert = db.get(Alert, case.alert_id)
+        alert.status = AlertStatus.TRAITEE
+        declared += 1
+    db.commit()
+    return declared
 
 
 def create_objectives(db, delegates):
@@ -869,10 +928,11 @@ def write_duplicates_doc(pairs, pv_notes) -> None:
         )
     lines += [
         "",
-        "## 2. Comptes-rendus mentionnant un effet indésirable (démo pharmacovigilance)",
+        "## 2. Comptes-rendus à déclarer en pharmacovigilance (démo)",
         "",
-        "Ces visites contiennent dans leurs notes une mention d'effet indésirable. "
-        "Le futur module `app/ai/pharmacovigilance.py` devra les détecter.",
+        "Ces visites contiennent dans leurs notes un effet indésirable ou une situation particulière "
+        "(surdosage, grossesse, erreur médicamenteuse, mésusage, manque d'efficacité). "
+        "Le module `app/ai/pharmacovigilance.py` les détecte (page Pharmacovigilance).",
         "",
         "| Visite (id) | Médecin | Produit | Date |",
         "|---|---|---|---|",
@@ -897,7 +957,8 @@ def main() -> None:
         create_objectives(db, delegates)
         n_sales = create_sales(db, products)
         create_alerts(db, delegates)
-        n_pv = pharmacovigilance.scan_all(db)  # IA : alertes « effet indésirable à déclarer »
+        n_pv = pharmacovigilance.scan_all(db)  # IA : cas « effet indésirable / situation à déclarer »
+        n_declared = declare_past_pv_cases(db)
         write_duplicates_doc(pairs, pv_notes)
 
         # Résumé
@@ -911,8 +972,8 @@ def main() -> None:
               f"{TODAY + timedelta(days=PLANNING_DAYS):%d/%m/%Y} : {dict(status_counts)}")
         print(f"✓ {db.query(Event).count()} jours d'événements d'agenda, {n_sales} lignes de ventes (marché)")
         print(f"✓ {db.query(Objective).count()} objectifs mensuels, {db.query(Alert).count()} alertes")
-        print(f"✓ {len(pv_notes)} notes de pharmacovigilance ({n_pv} alertes créées par le module IA), "
-              "seed_duplicates.md généré")
+        print(f"✓ {len(pv_notes)} notes de pharmacovigilance ({n_pv} cas créés par le module IA, "
+              f"{n_declared} déjà déclarés), seed_duplicates.md généré")
         print("\nComptes de démo (mot de passe : demo) :")
         print(f"  Superviseur : {supervisor.email}")
         for user, _ in delegates:

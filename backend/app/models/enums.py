@@ -110,7 +110,46 @@ class AlertType(StrEnum):
     MEDECIN_NON_VISITE = "medecin_non_visite"
     OBJECTIF_EN_RETARD = "objectif_en_retard"
     COMPTE_RENDU_EN_RETARD = "compte_rendu_en_retard"
-    PHARMACOVIGILANCE = "pharmacovigilance"  # sera produite par app/ai/pharmacovigilance.py
+    PHARMACOVIGILANCE = "pharmacovigilance"  # produite par app/ai/pharmacovigilance.py
+
+
+class PvCaseKind(StrEnum):
+    """Nature d'un cas de pharmacovigilance (procédure de déclaration du laboratoire)."""
+    EFFET_INDESIRABLE = "effet_indesirable"
+    SITUATION_PARTICULIERE = "situation_particuliere"  # même sans effet indésirable
+
+
+class PvSituation(StrEnum):
+    """
+    « Situations particulières » à déclarer comme un effet indésirable,
+    même si le patient n'a eu aucun symptôme.
+    """
+    GROSSESSE_ALLAITEMENT = "grossesse_allaitement"
+    SURDOSAGE = "surdosage"
+    MESUSAGE = "mesusage"                    # mauvais usage, abus, hors indication
+    ERREUR_MEDICAMENTEUSE = "erreur_medicamenteuse"
+    MANQUE_EFFICACITE = "manque_efficacite"
+
+
+# Libellés des situations particulières (alertes, déclaration pré-remplie)
+PV_SITUATION_LABELS: dict[str, str] = {
+    PvSituation.GROSSESSE_ALLAITEMENT: "exposition pendant la grossesse ou l'allaitement",
+    PvSituation.SURDOSAGE: "surdosage",
+    PvSituation.MESUSAGE: "mésusage",
+    PvSituation.ERREUR_MEDICAMENTEUSE: "erreur médicamenteuse",
+    PvSituation.MANQUE_EFFICACITE: "manque d'efficacité",
+}
+
+
+class PvCaseStatus(StrEnum):
+    A_DECLARER = "a_declarer"
+    DECLAREE = "declaree"
+
+
+# Délai réglementaire de déclaration à l'équipe de pharmacovigilance (procédure du laboratoire)
+PV_DEADLINE_HOURS = 24
+# Adresse fictive de l'équipe de pharmacovigilance (démo : jamais la vraie adresse du partenaire)
+PV_TEAM_EMAIL = "pharmacovigilance@noor-demo.ma"
 
 
 class AlertSeverity(StrEnum):

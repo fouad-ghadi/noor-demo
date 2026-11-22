@@ -3,6 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from app.schemas.pharmacovigilance import PvCaseSummary
+
 
 class AlertOut(BaseModel):
     id: int
@@ -16,6 +18,8 @@ class AlertOut(BaseModel):
     doctor_name: str | None
     visit_id: int | None
     created_at: datetime
+    # Alertes « pharmacovigilance » : délai de 24 h et informations manquantes
+    pv_case: PvCaseSummary | None = None
 
 
 class AlertUpdate(BaseModel):

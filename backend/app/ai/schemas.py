@@ -68,10 +68,18 @@ class PharmacovigilanceRequest(BaseModel):
 class AdverseEventSignal(BaseModel):
     product_id: int | None
     product_name: str | None
-    event: str               # ex. « éruption cutanée »
+    event: str               # ex. « éruption cutanée » ou « surdosage »
     excerpt: str             # phrase du compte-rendu qui mentionne l'effet
     seriousness: str         # "non_grave" | "grave" (hospitalisation, etc.)
     confidence: float        # 0 → 1
+    # "effet_indesirable" ou "situation_particuliere" (enums.PvCaseKind)
+    kind: str = "effet_indesirable"
+    # Situations particulières repérées (codes enums.PvSituation), ex. ["grossesse_allaitement"]
+    situations: list[str] = []
+    # Ce qui permet d'identifier le patient (âge, sexe, initiales), None si rien
+    patient: str | None = None
+    # True si le produit est nommé dans la phrase (sinon déduit des produits présentés)
+    product_in_text: bool = True
 
 
 class PharmacovigilanceResult(BaseModel):

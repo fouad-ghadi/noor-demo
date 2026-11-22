@@ -67,9 +67,10 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
 - Volumes calqués sur un vrai rapport d'activité : 5 utilisateurs, ~860 médecins (≈ 215 par délégué, ≈ 190 ciblés
   F1/F2, + 10 quasi-doublons), 10 produits fictifs (molécules réelles, BU chronique/aiguë, gamme), ~4 900 visites
   (8 à 12 par jour travaillé selon le profil), ~140 jours d'événements, objectifs mensuels, alertes,
-  7 comptes-rendus mentionnant un effet indésirable, ~31 000 lignes de ventes (marché type IMS, `create_sales`,
+  12 comptes-rendus à déclarer en pharmacovigilance, ~31 000 lignes de ventes (marché type IMS, `create_sales`,
   hasard séparé `random.Random(4242)` pour ne pas décaler le reste des données).
-- Seed ≈ 11 s. Évaluation pharmacovigilance : 7/7, 0 fausse alerte sur ~4 100 comptes-rendus.
+- Seed ≈ 11 s. Évaluation pharmacovigilance : 12/12 (7 effets + 5 situations particulières), 0 fausse alerte sur ~4 200 comptes-rendus.
+  Le seed laisse 2 cas « à déclarer » (le plus récent de Youssef, et un oublié en retard) ; les autres sont déjà déclarés.
 - `seed_duplicates.md` (racine) est **généré** par le seed et **non versionné** (il bloquait `git pull`).
 
 ## Réalité terrain du laboratoire partenaire (son vrai CRM s'appelle aussi « NOOR »)
@@ -102,7 +103,13 @@ ni sur le site public** : on reproduit seulement la structure et les formules, a
 - Assistant : RCP simplifiés `docs/products/<Produit>/rcp_<Produit>.md` (8 sections ; liés aux documents RCP par `file_path`),
   BM25 + citations (section), refus si hors documents (ex. prix). Panneau `components/assistant/AssistantPanel.tsx`.
 - Pharmacovigilance : analyse à chaque `submit_report` (`visit_service._scan_pharmacovigilance`) et `scan_all` à la fin du seed ;
-  alertes PV en tête de liste. Évaluation : `backend/scripts/evaluer_pharmacovigilance.py` (7/7, 0 fausse alerte).
+  alertes PV en tête de liste. Évaluation : `backend/scripts/evaluer_pharmacovigilance.py` (12/12, 0 fausse alerte).
+  **Conforme à la procédure** : effets + situations particulières (grossesse/allaitement, surdosage, mésusage,
+  erreur médicamenteuse, manque d'efficacité) ; table `pv_cases` (`models/pharmacovigilance.py`) ;
+  `services/pharmacovigilance_service.py` = 4 infos minimales, délai 24 h depuis la visite (urgent < 6 h),
+  déclaration pré-remplie (e-mail fictif `pharmacovigilance@noor-demo.ma`), « Marquer comme déclarée » (délégué seul).
+  Une alerte PV ne se ferme qu'en déclarant. Pages `/pharmacovigilance` et `/pharmacovigilance/:id`.
+- **Tests** : `cd backend ; pip install -r requirements-dev.txt ; python -m pytest` (base en mémoire, < 2 s).
 - Recommandations : carte « Visites recommandées » (`components/dashboard/RecommendedVisits.tsx`) avec « Planifier ».
 - Explications pour le jury : `docs/IA_explications_jury.txt` ; guide technique : `docs/EXTENSIONS_IA.md`.
 
@@ -125,8 +132,7 @@ Dockerfile/Render, refonte complète du gabarit : toutes les pages, 4 modules IA
 page Statistiques, analyse des ventes type IMS, n° de lot, statut de prescription, volumes réalistes).
 
 Pistes pour la suite (à valider avec Fouad ; MVP le 8 déc. 2026) :
-1. Pharmacovigilance alignée sur la procédure réelle : 4 infos minimales, situations particulières
-   (surdosage, mésusage, grossesse, manque d'efficacité...), compte à rebours 24 h, déclaration pré-remplie.
+1. ~~Pharmacovigilance conforme~~ : fait le 22 nov. 2026 (PR « pharmacovigilance conforme »).
 2. Chatbot étendu : informations médicales (formations), mode d'emploi du CRM, « quel est mon CPA ? ».
 3. Scan de carte de visite + détection des doublons (demandé explicitement par le partenaire).
 4. IA : tester avec une clé `ANTHROPIC_API_KEY` ; tests automatisés (pytest, Playwright).

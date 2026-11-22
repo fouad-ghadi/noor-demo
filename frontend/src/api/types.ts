@@ -233,6 +233,81 @@ export interface Alert {
   doctor_name: string | null;
   visit_id: number | null;
   created_at: string;
+  /** Alertes « pharmacovigilance » : délai de 24 h et informations manquantes */
+  pv_case: PvCaseSummary | null;
+}
+
+// --- Pharmacovigilance (déclaration sous 24 h) ------------------------------
+export type PvKind = "effet_indesirable" | "situation_particuliere";
+export type PvSituation =
+  | "grossesse_allaitement"
+  | "surdosage"
+  | "mesusage"
+  | "erreur_medicamenteuse"
+  | "manque_efficacite";
+export type PvStatus = "a_declarer" | "declaree";
+export type PvDeadlineState = "a_temps" | "urgent" | "en_retard" | "declaree_a_temps" | "declaree_en_retard";
+
+export interface PvDeadline {
+  known_at: string;
+  deadline_at: string;
+  state: PvDeadlineState;
+  minutes_left: number;
+}
+
+export interface PvCaseSummary {
+  id: number;
+  status: PvStatus;
+  kind: PvKind;
+  deadline: PvDeadline;
+  missing: string[];
+}
+
+/** Une des 4 informations minimales d'une déclaration. */
+export interface PvMinimumInfo {
+  key: "produit" | "evenement" | "patient" | "notificateur";
+  label: string;
+  found: boolean;
+  value: string | null;
+  hint: string | null;
+}
+
+export interface PvDeclarationDraft {
+  to: string;
+  subject: string;
+  body: string;
+}
+
+export interface PvCase {
+  id: number;
+  alert_id: number | null;
+  visit_id: number;
+  delegue_id: number;
+  delegue_name: string;
+  doctor_id: number;
+  doctor_name: string;
+  product_id: number | null;
+  product_name: string | null;
+  product_in_text: boolean;
+  kind: PvKind;
+  event: string;
+  situations: PvSituation[];
+  seriousness: "grave" | "non_grave";
+  excerpt: string;
+  patient_details: string | null;
+  status: PvStatus;
+  deadline: PvDeadline;
+  declared_at: string | null;
+  declared_by_name: string | null;
+  minimum_info: PvMinimumInfo[];
+  complete: boolean;
+  declarable: boolean;
+  declaration: PvDeclarationDraft;
+}
+
+export interface PvDeclarationInput {
+  patient_details?: string | null;
+  additional_info?: string | null;
 }
 
 export interface CountItem {

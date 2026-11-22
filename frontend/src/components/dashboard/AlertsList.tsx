@@ -1,11 +1,12 @@
 /** Liste des alertes ouvertes (gravité = icône + libellé, jamais la couleur seule). */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Bell, Check, CircleAlert, Info } from "lucide-react";
+import { AlertTriangle, Bell, Check, CircleAlert, FileText, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 import { api } from "@/api/client";
 import type { Alert } from "@/api/types";
+import { PvDeadlineBadge } from "@/components/pharmacovigilance/PvDeadlineBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatAgo } from "@/lib/format";
@@ -49,7 +50,10 @@ export function AlertsList({ alerts, readOnly }: { alerts: Alert[]; readOnly?: b
         )}
         {alerts.map((a) => {
           const S = SEVERITY[a.severity];
-          const target = a.visit_id && a.type === "compte_rendu_en_retard"
+          const pv = a.pv_case;
+          const target = pv
+            ? `/pharmacovigilance/${pv.id}`
+            : a.visit_id && a.type === "compte_rendu_en_retard"
             ? `/visites/${a.visit_id}/compte-rendu`
             : a.doctor_id
               ? `/medecins/${a.doctor_id}`
@@ -69,8 +73,25 @@ export function AlertsList({ alerts, readOnly }: { alerts: Alert[]; readOnly?: b
                   {a.title}
                 </Link>
                 {a.message && <p className="text-muted-foreground text-xs">{a.message}</p>}
+                {/* Pharmacovigilance : délai de 24 h, informations manquantes, déclaration */}
+                {pv && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <PvDeadlineBadge deadline={pv.deadline} />
+                    {pv.missing.length > 0 && (
+                      <span className="text-xs text-rose-800">À compléter : {pv.missing.join(", ").toLowerCase()}</span>
+                    )}
+                    {!readOnly && (
+                      <Button asChild size="sm" className="h-7">
+                        <Link to={target}>
+                          <FileText /> Préparer la déclaration
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
-              {!readOnly && (
+              {/* Une alerte de pharmacovigilance ne se ferme qu'en déclarant le cas */}
+              {!readOnly && !pv && (
                 <Button
                   variant="ghost"
                   size="icon"

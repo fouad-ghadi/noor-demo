@@ -291,6 +291,7 @@ aux règles en cas d'erreur (`app/ai/llm.py`). La clé ne doit jamais être écr
 
 - Les documents de l'assistant sont des RCP simplifiés : `docs/products/<Produit>/rcp_<Produit>.md`.
 - Évaluation de la pharmacovigilance : `python scripts/evaluer_pharmacovigilance.py` (dans `backend/`).
+- Tests automatiques du backend : `pip install -r requirements-dev.txt` puis `python -m pytest` (dans `backend/`).
 - La transcription vocale est faite par le navigateur (Chrome) ; le texte reste modifiable.
 
 Les points d'extension sont repérables dans le code par le commentaire `POINT D'EXTENSION IA`.
@@ -316,7 +317,7 @@ même jour (hasard « figé »), quelle que soit l'heure.
 - **Ventes du marché** (type IMS, tout est fictif) : 3 ans de ventes mensuelles par territoire pour nos
   10 produits et 26 concurrents ; certains territoires gagnent des parts de marché, d'autres en perdent.
 - **Objectifs mensuels** (délégués en avance / en retard) et **alertes** calculées par les règles métier.
-- **7 comptes-rendus mentionnant un effet indésirable** (pour tester la pharmacovigilance).
+- **12 comptes-rendus à déclarer** (7 effets indésirables + 5 situations particulières, pour tester la pharmacovigilance).
 
 Les doublons et les comptes-rendus « pharmacovigilance » (avec leurs identifiants) sont listés dans
 **`seed_duplicates.md`**, à la racine du projet. Ce fichier est **créé par `python seed.py`** (il n'est
