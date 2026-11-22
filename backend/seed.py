@@ -728,6 +728,41 @@ def create_visits(db, delegates, by_delegate, products, pairs, events):
     db.flush()
 
 
+def add_cabinet_profiles(db) -> None:
+    """
+    Fréquentation du cabinet (patients par jour) et jours de réception des délégués.
+
+    - Patients / jour : cohérent avec le potentiel A/B/C de la fiche dans ~85 % des cas ;
+      les autres fiches ont un potentiel « à revoir » (le module ai/potential.py le signale, avec le pourquoi).
+    - Jours de réception : déduits de l'historique (les 2 ou 3 jours où le médecin a le plus reçu),
+      un quart des médecins reçoivent tous les jours.
+    Hasard séparé (comme create_sales) pour ne pas décaler le reste des données.
+    """
+    rng = random.Random(2027)
+    weekdays = defaultdict(Counter)
+    for doctor_id, planned_at in db.query(Visit.doctor_id, Visit.planned_at).filter(
+            Visit.status == VisitStatus.REALISEE):
+        weekdays[doctor_id][planned_at.weekday()] += 1
+    ranges = {  # (fourchette habituelle, fourchette « potentiel à revoir »)
+        "A": ((28, 45), (13, 20)),
+        "B": ((14, 25), (30, 40)),
+        "C": ((5, 11), (18, 25)),
+    }
+    for doctor in db.query(Doctor).order_by(Doctor.id):
+        usual, unusual = ranges[doctor.segment]
+        doctor.patients_per_day = rng.randint(*(unusual if rng.random() < 0.12 else usual))
+        if rng.random() < 0.25:
+            doctor.reception_days = None  # reçoit tous les jours
+            continue
+        seen = weekdays[doctor.id]
+        if sum(seen.values()) >= 4:
+            days = [d for d, _ in seen.most_common(3 if rng.random() < 0.6 else 2)]
+        else:
+            days = rng.sample(range(5), 3)
+        doctor.reception_days = ",".join(str(d) for d in sorted(days))
+    db.flush()
+
+
 def add_pharmacovigilance_notes(db) -> list[tuple[Visit, str]]:
     """
     Ajoute à quelques comptes-rendus récents une mention d'effet indésirable
@@ -953,6 +988,7 @@ def main() -> None:
         by_delegate, pairs = create_doctors(db, delegates, products)
         events = create_events(db, delegates)
         create_visits(db, delegates, by_delegate, products, pairs, events)
+        add_cabinet_profiles(db)
         pv_notes = add_pharmacovigilance_notes(db)
         create_objectives(db, delegates)
         n_sales = create_sales(db, products)

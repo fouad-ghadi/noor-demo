@@ -83,7 +83,8 @@ def recommend(db: Session, user: User, delegue_id: int | None = None, limit: int
     return recos
 
 
-def _recommend_for(db: Session, delegue_id: int) -> list[VisitRecommendation]:
+def _recommend_for(db: Session, delegue_id: int, as_of: date | None = None) -> list[VisitRecommendation]:
+    """`as_of` : date à laquelle on évalue les retards (par défaut aujourd'hui ; « Remplir ma semaine » la décale)."""
     doctors = list(
         db.scalars(
             select(Doctor).where(Doctor.delegue_id == delegue_id).options(selectinload(Doctor.prescriptions))
@@ -93,7 +94,7 @@ def _recommend_for(db: Session, delegue_id: int) -> list[VisitRecommendation]:
     last = last_visit_dates(db, ids)
     planned = next_planned_visits(db, ids)
     products = list(db.scalars(select(Product)))
-    today = now().date()
+    today = as_of or now().date()
 
     # Produits en retard sur l'objectif du mois (présentations réalisées < rythme attendu)
     progress = get_progress(db, delegue_id, period_of(today))

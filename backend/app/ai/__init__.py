@@ -17,6 +17,12 @@ automatiquement (voir app/api/ai.py) : rien d'autre à brancher.
 | pharmacovigilance.py   | Détection d'effets indésirables dans les comptes-rendus | POST /api/ai/pharmacovigilance/scan |
 | card_scanner.py        | Scan de carte de visite + détection de doublons        | POST /api/ai/card-scanner         |
 | recommendations.py     | Quels médecins voir, quand, avec quels produits        | GET  /api/ai/recommendations      |
+| medical_info.py        | Infos médicales (fiches validées docs/medical/)        | POST /api/ai/assistant/ask        |
+| potential.py           | Potentiel A/B/C expliqué + fréquence conseillée        | GET  /api/ai/potential/{id}       |
+| visit_prep.py          | « Préparer la visite » (produits scorés, argument)     | GET  /api/ai/visit-prep/{id}      |
+| week_planner.py        | « Remplir ma semaine » (quartiers, jours de réception) | GET  /api/ai/week-plan            |
+| sales_insights.py      | Analyse des ventes : ce que NOOR en déduit             | GET  /api/ai/sales-insights       |
+| closing.py             | Clôturer ma journée / mon mois (rapport rédigé)        | GET  /api/ai/closing/day, /month  |
 
 Règles communes :
 - Les formats d'entrée / sortie sont définis dans `schemas.py` (contrat entre équipes).

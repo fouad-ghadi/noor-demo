@@ -5,6 +5,8 @@ Les noms commerciaux sont inventés pour la démo (aucune marque réelle).
 Les molécules (DCI), classes et indications sont réelles et simplifiées.
 Chaque produit appartient à une unité commerciale (BU chronique / aiguë) et à une gamme,
 comme dans les rapports d'activité des laboratoires.
+Pour « Préparer la visite » : circuit de vente (pharmacie / parapharmacie), niveau de marge
+pour le laboratoire, mois forts (saisonnalité) et forme des échantillons. Valeurs fictives.
 """
 
 PRODUCTS: list[dict] = [
@@ -28,6 +30,10 @@ PRODUCTS: list[dict] = [
             "Prix accessible, remboursé par l'AMO",
         ],
         "target_specialties": ["Cardiologue", "Généraliste", "Endocrinologue"],
+        "channel": "pharmacie",
+        "margin_level": "moyenne",
+        "peak_months": [],
+        "sample_unit": "boîte échantillon de 7 comprimés",
     },
     {
         "brand_name": "Statilia",
@@ -48,6 +54,10 @@ PRODUCTS: list[dict] = [
             "Bénéfice démontré en prévention secondaire",
         ],
         "target_specialties": ["Cardiologue", "Endocrinologue", "Généraliste"],
+        "channel": "pharmacie",
+        "margin_level": "forte",
+        "peak_months": [],
+        "sample_unit": "boîte échantillon de 7 comprimés",
     },
     {
         "brand_name": "Glucanor",
@@ -67,6 +77,10 @@ PRODUCTS: list[dict] = [
             "Pas de prise de poids, pas d'hypoglycémie en monothérapie",
         ],
         "target_specialties": ["Endocrinologue", "Généraliste"],
+        "channel": "pharmacie",
+        "margin_level": "faible",
+        "peak_months": [],
+        "sample_unit": "boîte échantillon de 10 comprimés",
     },
     {
         "brand_name": "Amoxira",
@@ -88,6 +102,10 @@ PRODUCTS: list[dict] = [
             "Rapport efficacité / coût optimal en première intention",
         ],
         "target_specialties": ["Généraliste", "Pédiatre", "ORL"],
+        "channel": "pharmacie",
+        "margin_level": "moyenne",
+        "peak_months": [11, 12, 1, 2, 3],
+        "sample_unit": "flacon échantillon (suspension buvable)",
     },
     {
         "brand_name": "Gastrozen",
@@ -109,6 +127,10 @@ PRODUCTS: list[dict] = [
             "Boîte de 28 adaptée aux traitements de 4 semaines",
         ],
         "target_specialties": ["Gastro-entérologue", "Généraliste", "Rhumatologue"],
+        "channel": "pharmacie",
+        "margin_level": "moyenne",
+        "peak_months": [2, 3, 4],
+        "sample_unit": "boîte échantillon de 7 gélules",
     },
     {
         "brand_name": "Respiflow",
@@ -129,6 +151,10 @@ PRODUCTS: list[dict] = [
             "Compteur de doses intégré",
         ],
         "target_specialties": ["Pneumologue", "Pédiatre", "Généraliste"],
+        "channel": "pharmacie",
+        "margin_level": "forte",
+        "peak_months": [3, 4, 5, 10, 11],
+        "sample_unit": "inhalateur échantillon",
     },
     {
         "brand_name": "Calmapyr",
@@ -148,6 +174,10 @@ PRODUCTS: list[dict] = [
             "Excellent profil de tolérance aux doses recommandées",
         ],
         "target_specialties": ["Généraliste", "Pédiatre", "Rhumatologue", "ORL"],
+        "channel": "pharmacie",
+        "margin_level": "faible",
+        "peak_months": [11, 12, 1, 2],
+        "sample_unit": "boîte échantillon de 8 comprimés",
     },
     {
         "brand_name": "Artrinol",
@@ -168,6 +198,10 @@ PRODUCTS: list[dict] = [
             "Associer un IPP (Gastrozen) chez le patient à risque digestif",
         ],
         "target_specialties": ["Rhumatologue", "Généraliste"],
+        "channel": "pharmacie",
+        "margin_level": "moyenne",
+        "peak_months": [11, 12, 1, 2],
+        "sample_unit": "tube échantillon de gel",
     },
     {
         "brand_name": "Cutalis",
@@ -188,6 +222,10 @@ PRODUCTS: list[dict] = [
             "Tube de 30 g adapté aux traitements courts",
         ],
         "target_specialties": ["Dermatologue", "Généraliste", "Pédiatre"],
+        "channel": "parapharmacie",
+        "margin_level": "forte",
+        "peak_months": [5, 6, 7, 8],
+        "sample_unit": "tube échantillon de crème",
     },
     {
         "brand_name": "Gestavia",
@@ -207,5 +245,9 @@ PRODUCTS: list[dict] = [
             "Bonne tolérance digestive",
         ],
         "target_specialties": ["Gynécologue", "Généraliste"],
+        "channel": "parapharmacie",
+        "margin_level": "forte",
+        "peak_months": [],
+        "sample_unit": "boîte échantillon de 10 comprimés",
     },
 ]

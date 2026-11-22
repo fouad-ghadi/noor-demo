@@ -23,6 +23,11 @@ class Product(Base):
     key_messages: Mapped[list[str]] = mapped_column(JSON, default=list)
     # Spécialités ciblées en priorité par ce produit
     target_specialties: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # Pour « Préparer la visite » (scores des produits à pousser) :
+    channel: Mapped[str] = mapped_column(String(20), default="pharmacie")   # pharmacie / parapharmacie
+    margin_level: Mapped[str] = mapped_column(String(10), default="moyenne")  # marge pour le labo : forte / moyenne / faible
+    peak_months: Mapped[list[int]] = mapped_column(JSON, default=list)      # saisonnalité : mois forts (1 = janvier)
+    sample_unit: Mapped[str] = mapped_column(String(60), default="boîte échantillon")
 
     documents: Mapped[list["Document"]] = relationship(
         back_populates="product", cascade="all, delete-orphan"

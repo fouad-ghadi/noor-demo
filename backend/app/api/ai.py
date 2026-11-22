@@ -7,22 +7,43 @@ Tant que la fonction lève `NotImplementedError`, la route renvoie
 la route fonctionne : il n'y a rien d'autre à modifier ici.
 """
 from collections.abc import Callable
+from datetime import date
 from typing import TypeVar
 
 from fastapi import APIRouter, HTTPException
 
-from app.ai import FEATURES, card_scanner, llm, pharmacovigilance, rag_assistant, recommendations, voice_report
+from app.ai import (
+    FEATURES,
+    card_scanner,
+    closing,
+    llm,
+    pharmacovigilance,
+    potential,
+    rag_assistant,
+    recommendations,
+    sales_insights,
+    visit_prep,
+    week_planner,
+    voice_report,
+)
 from app.ai.schemas import (
     AskRequest,
     AskResponse,
     CardScanRequest,
     CardScanResult,
+    ClosingReport,
     DuplicateCheckRequest,
     DuplicateMatch,
     MergeProposal,
     MergeRequest,
     PharmacovigilanceRequest,
     PharmacovigilanceResult,
+    PotentialApply,
+    PotentialAssessment,
+    SalesInsights,
+    WeekPlan,
+    WeekPlanConfirm,
+    VisitPreparation,
     VisitRecommendation,
     VoiceReportRequest,
     VoiceReportResult,
@@ -129,3 +150,57 @@ def ai_recommendations(db: DB, user: CurrentUser, delegue_id: int | None = None,
     if target is not None:
         access.check_delegue_access(db, user, target)
     return _run("recommendations", lambda: recommendations.recommend(db, user, target, limit))
+
+
+@router.get("/potential/review", response_model=list[PotentialAssessment])
+def ai_potential_review(db: DB, user: CurrentUser, delegue_id: int | None = None, limit: int = 50):
+    """🅰️ Médecins dont le potentiel ou la fréquence de visite sont à revoir (avec le pourquoi)."""
+    return potential.to_review(db, user, delegue_id, limit)
+
+
+@router.get("/potential/{doctor_id}", response_model=PotentialAssessment)
+def ai_potential(doctor_id: int, db: DB, user: CurrentUser):
+    """🅰️ Potentiel A/B/C proposé pour un médecin, fréquence de visite conseillée et explication."""
+    return potential.assess_doctor(db, user, doctor_id)
+
+
+@router.post("/potential/{doctor_id}/apply", response_model=PotentialAssessment)
+def ai_potential_apply(doctor_id: int, data: PotentialApply, db: DB, user: CurrentUser):
+    """✅ Le délégué valide : la fiche prend le potentiel et la fréquence choisis."""
+    return potential.apply(db, user, doctor_id, data.segment, data.frequency)
+
+
+@router.get("/visit-prep/{doctor_id}", response_model=VisitPreparation)
+def ai_visit_prep(doctor_id: int, db: DB, user: CurrentUser):
+    """📋 Préparer la visite : dernier compte-rendu, produits à pousser (score + pourquoi), argument, échantillons."""
+    return visit_prep.prepare(db, user, doctor_id)
+
+
+@router.get("/week-plan", response_model=WeekPlan)
+def ai_week_plan(db: DB, user: CurrentUser, start: date | None = None, delegue_id: int | None = None):
+    """🗓️ « Remplir ma semaine » : visites proposées par quartier, les jours de réception (rien n'est enregistré)."""
+    return week_planner.plan_week(db, user, start, delegue_id)
+
+
+@router.post("/week-plan/confirm")
+def ai_week_plan_confirm(data: WeekPlanConfirm, db: DB, user: CurrentUser) -> dict:
+    """✅ Le délégué valide les visites cochées : elles sont ajoutées à son planning."""
+    return {"planned": week_planner.confirm(db, user, data.visits)}
+
+
+@router.get("/sales-insights", response_model=SalesInsights)
+def ai_sales_insights(db: DB, user: CurrentUser, delegue_id: int | None = None):
+    """📈 Ce que NOOR déduit des ventes : zones à prioriser, produits en croissance, médecins à revoir."""
+    return sales_insights.insights(db, user, delegue_id)
+
+
+@router.get("/closing/day", response_model=ClosingReport)
+def ai_close_day(db: DB, user: CurrentUser, day: date | None = None):
+    """🌙 Clôturer ma journée : points à régler et rapport rédigé automatiquement (à relire)."""
+    return closing.close_day(db, user, day)
+
+
+@router.get("/closing/month", response_model=ClosingReport)
+def ai_close_month(db: DB, user: CurrentUser, period: str | None = None):
+    """📅 Clôturer mon mois : indicateurs du rapport mensuel et objectifs, rapport rédigé (à relire)."""
+    return closing.close_month(db, user, period)

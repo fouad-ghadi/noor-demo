@@ -176,10 +176,11 @@ def answer(db: Session, user: User, request: AskRequest) -> AskResponse:
     Point d'entrée de l'assistant NOOR : aiguille la question vers la bonne source.
       1. « Mes chiffres » (CPA, tournée, médecins à voir...)  → outils de crm_data.py ;
       2. produit cité dans la question                         → RCP (answer_product) ;
-      3. question « mode d'emploi » (comment, où...)           → guide du CRM (crm_guide.py) ;
-      4. sinon : RCP, puis guide ; si rien ne correspond, refus explicite.
+      3. question médicale générale (antibiotique, Gram, CMI...) → fiches médicales (medical_info.py) ;
+      4. question « mode d'emploi » (comment, où...)           → guide du CRM (crm_guide.py) ;
+      5. sinon : RCP, puis guide ; si rien ne correspond, refus explicite.
     """
-    from app.ai import crm_data, crm_guide  # import ici : ces modules réutilisent ce fichier-ci
+    from app.ai import crm_data, crm_guide, medical_info  # import ici : ces modules réutilisent ce fichier-ci
 
     howto = crm_data.is_howto(request.question)
     detected = crm_data.detect_tool(db, user, request.question)
@@ -187,7 +188,15 @@ def answer(db: Session, user: User, request: AskRequest) -> AskResponse:
         return crm_data.answer(db, user, request, detected)
     if _named_brands(db, request.question):
         product = answer_product(db, user, request)
+        if product.refused and medical_info.mentions_medical(request.question):
+            medical = medical_info.answer(request)
+            if not medical.refused:
+                return medical
         return crm_guide.answer(db, request) if product.refused and howto else product
+    if medical_info.mentions_medical(request.question) and not crm_guide.mentions_crm(request.question):
+        medical = medical_info.answer(request)
+        if not medical.refused:
+            return medical
     if howto or crm_guide.mentions_crm(request.question):
         guide = crm_guide.answer(db, request)
         return guide if not guide.refused else answer_product(db, user, request)

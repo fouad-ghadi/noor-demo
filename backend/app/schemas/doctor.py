@@ -35,6 +35,8 @@ class DoctorBase(BaseModel):
     segment: str = "B"
     frequency: str | None = None      # F1 / F2 ; None = hors cible
     preferred_slot: str | None = None
+    patients_per_day: int | None = Field(default=None, ge=0, le=200)  # fréquentation du cabinet
+    reception_days: str | None = None  # jours de réception, ex. "1,3" (0 = lundi) ; vide = tous les jours
     notes: str | None = None
 
 

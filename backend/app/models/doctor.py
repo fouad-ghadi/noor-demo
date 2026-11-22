@@ -1,7 +1,7 @@
 """Médecin visité par les délégués, et son statut de prescription par produit."""
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -28,6 +28,11 @@ class Doctor(Base):
     # Ciblage : F1 (1 visite / mois) ou F2 (2 visites / mois) ; None = hors cible
     frequency: Mapped[str | None] = mapped_column(String(2), index=True)  # enums.Frequency
     preferred_slot: Mapped[str | None] = mapped_column(String(20))  # enums.TimeSlot
+    # Fréquentation du cabinet (patients vus par jour) : critère n°1 du potentiel A/B/C (voir ai/potential.py)
+    patients_per_day: Mapped[int | None] = mapped_column(Integer)
+    # Jours où le médecin reçoit les délégués : numéros de jours séparés par des virgules
+    # (0 = lundi ... 5 = samedi), ex. "1,3" = mardi et jeudi. Vide = tous les jours.
+    reception_days: Mapped[str | None] = mapped_column(String(20))
     notes: Mapped[str | None] = mapped_column(Text)
     source: Mapped[str] = mapped_column(String(30), default="manuel")  # enums.DoctorSource
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
