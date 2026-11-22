@@ -1,8 +1,8 @@
 /**
  * Détail d'une visite (clic dans le planning ou l'agenda du jour) + actions :
- * rédiger le compte-rendu, déplacer, annuler / reporter, itinéraire, fiche médecin.
+ * préparer la visite, rédiger le compte-rendu, déplacer, annuler / reporter, itinéraire, fiche médecin.
  */
-import { CalendarClock, CalendarX2, FileText, MapPin, Navigation, Stethoscope } from "lucide-react";
+import { CalendarClock, CalendarX2, ClipboardList, FileText, MapPin, Navigation, Stethoscope } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { Visit } from "@/api/types";
@@ -18,6 +18,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onMove: (v: Visit) => void;
   onCancel: (v: Visit) => void;
+  onPrepare?: (v: Visit) => void;
 }
 
 /** Lien d'itinéraire Google Maps vers le cabinet (pratique sur le terrain). */
@@ -29,7 +30,7 @@ export function directionsUrl(v: Pick<Visit, "doctor_latitude" | "doctor_longitu
   return `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
 }
 
-export function VisitDetailDialog({ visit, readOnly, onOpenChange, onMove, onCancel }: Props) {
+export function VisitDetailDialog({ visit, readOnly, onOpenChange, onMove, onCancel, onPrepare }: Props) {
   if (!visit) return null;
   const isPlanned = visit.status === "planifiee";
   // Compte-rendu possible pour une visite planifiée aujourd'hui ou dans le passé
@@ -77,6 +78,11 @@ export function VisitDetailDialog({ visit, readOnly, onOpenChange, onMove, onCan
               <Link to={`/visites/${visit.id}/compte-rendu`}>
                 <FileText /> {visit.status === "realisee" ? "Modifier le compte-rendu" : "Rédiger le compte-rendu"}
               </Link>
+            </Button>
+          )}
+          {!readOnly && isPlanned && new Date(visit.planned_at) > new Date() && onPrepare && (
+            <Button className="sm:col-span-2" onClick={() => onPrepare(visit)}>
+              <ClipboardList /> Préparer la visite
             </Button>
           )}
           {!readOnly && isPlanned && (

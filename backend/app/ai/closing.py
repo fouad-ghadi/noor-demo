@@ -53,11 +53,22 @@ def _day_visits(db: Session, delegue_id: int, day: date) -> list[Visit]:
 
 def close_day(db: Session, user: User, day: date | None = None) -> ClosingReport:
     me = _delegue(user)
-    day = day or now().date()
+    if day is None:
+        # Par défaut : aujourd'hui, ou le dernier jour travaillé si aujourd'hui est sans visite (dimanche...)
+        day = now().date()
+        if not _day_visits(db, me.id, day):
+            last = db.scalar(select(Visit.planned_at).where(Visit.delegue_id == me.id, Visit.planned_at < now())
+                             .order_by(Visit.planned_at.desc()).limit(1))
+            day = last.date() if last else day
     visits = _day_visits(db, me.id, day)
     done = [v for v in visits if v.status == VisitStatus.REALISEE and v.reported_at]
-    missing = [v for v in visits if v.status == VisitStatus.PLANIFIEE and v.planned_at <= now()]
+    # Comptes-rendus manquants : ceux du jour ET ceux des jours précédents encore en attente
+    missing = list(db.scalars(
+        select(Visit).where(Visit.delegue_id == me.id, Visit.status == VisitStatus.PLANIFIEE,
+                            Visit.planned_at <= min(now(), datetime.combine(day + timedelta(days=1), time(0))))
+        .order_by(Visit.planned_at).options(selectinload(Visit.doctor))))
     later = [v for v in visits if v.status == VisitStatus.PLANIFIEE and v.planned_at > now()]
+    missing_today = [v for v in visits if v in missing]
     cancelled = [v for v in visits if v.status in (VisitStatus.ANNULEE, VisitStatus.REPORTEE)]
     products = Counter(vp.product.brand_name for v in done for vp in v.products)
     samples = Counter()
@@ -68,7 +79,7 @@ def close_day(db: Session, user: User, day: date | None = None) -> ClosingReport
             if s.lot_number:
                 lots.setdefault(s.product.brand_name, set()).add(s.lot_number)
 
-    to_fix = [ClosingCheck(label=f"Compte-rendu à saisir : {v.doctor.full_name} ({v.planned_at:%H:%M})",
+    to_fix = [ClosingCheck(label=f"Compte-rendu à saisir : {v.doctor.full_name} ({v.planned_at:%d/%m à %H:%M})",
                            link=f"/visites/{v.id}/compte-rendu") for v in missing]
     if later:
         to_fix.append(ClosingCheck(label=f"{len(later)} visite(s) encore prévue(s) plus tard aujourd'hui", link="/planning"))
@@ -107,7 +118,7 @@ def close_day(db: Session, user: User, day: date | None = None) -> ClosingReport
     return ClosingReport(
         scope="jour", title=f"Journée du {_fmt(day)}",
         figures={"prevues": len(visits), "realisees": len(done), "annulees": len(cancelled),
-                 "comptes_rendus_manquants": len(missing), "echantillons": sum(samples.values())},
+                 "comptes_rendus_manquants": len(missing), "manquants_du_jour": len(missing_today), "echantillons": sum(samples.values())},
         to_fix=to_fix, report="\n".join(lines),
     )
 

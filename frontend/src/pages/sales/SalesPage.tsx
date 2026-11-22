@@ -20,6 +20,7 @@ import { useCurrentUser } from "@/auth/AuthContext";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { ChartTooltip } from "@/components/dashboard/ChartTooltip";
 import { KpiCard, KpiStrip, type KpiStatus } from "@/components/dashboard/KpiCard";
+import { SalesInsightsCard } from "@/components/sales/SalesInsightsCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ErrorState, LoadingState } from "@/components/shared/states";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -173,6 +174,8 @@ function SalesContent({ s }: { s: Sales }) {
           detail={`Indice de pénétration : ${num(sc.ip)}. National : IE ${num(n.ie)}`}
         />
       </KpiStrip>
+
+      <SalesInsightsCard />
 
       {losing.length > 0 && (
         <div className="border-line bg-mint-wash/60 flex gap-3 rounded-xl border px-4 py-3 text-sm">

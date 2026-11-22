@@ -161,6 +161,10 @@ export interface DoctorFields {
   segment: Segment;
   frequency: Frequency | null;
   preferred_slot: TimeSlot | null;
+  /** Patients vus par jour (fréquentation du cabinet : critère n° 1 du potentiel). */
+  patients_per_day?: number | null;
+  /** Jours de réception des délégués : "1,3" = mardi et jeudi (0 = lundi) ; vide = tous les jours. */
+  reception_days?: string | null;
   notes: string | null;
 }
 

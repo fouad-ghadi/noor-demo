@@ -8,12 +8,15 @@ import {
   ArrowLeft,
   Building2,
   CalendarPlus,
+  CalendarDays,
+  ClipboardList,
   Clock,
   Mail,
   MapPin,
   Pencil,
   Phone,
   UserRound,
+  Users,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
@@ -26,17 +29,20 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/shared/states
 import { ZelligeField } from "@/components/brand/ZelligeField";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PotentialCard } from "@/components/doctors/PotentialCard";
 import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
+import { VisitPrepSheet } from "@/components/visits/VisitPrepSheet";
 import { VisitHistory } from "@/components/visits/VisitHistory";
 import { useProducts } from "@/hooks/queries";
 import { formatDate, formatLongDay, formatShortDate, formatTime, initials } from "@/lib/format";
-import { FREQUENCY, OUT_OF_TARGET, PRACTICE_TYPE, SEGMENT, SOURCE, TIME_SLOT } from "@/lib/labels";
+import { FREQUENCY, OUT_OF_TARGET, PRACTICE_TYPE, SEGMENT, SOURCE, TIME_SLOT, receptionText } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 export function DoctorDetailPage() {
   const id = Number(useParams().id);
   const { isSupervisor } = useAuth();
   const [planOpen, setPlanOpen] = useState(false);
+  const [prepOpen, setPrepOpen] = useState(false);
   const doctor = useQuery({ queryKey: ["doctor", id], queryFn: () => api.doctor(id) });
 
   const d = doctor.data;
@@ -94,6 +100,11 @@ export function DoctorDetailPage() {
               </Link>
             </Button>
             {!isSupervisor && (
+              <Button variant="outline" onClick={() => setPrepOpen(true)}>
+                <ClipboardList /> Préparer la visite
+              </Button>
+            )}
+            {!isSupervisor && (
               <Button onClick={() => setPlanOpen(true)}>
                 <CalendarPlus /> Planifier une visite
               </Button>
@@ -115,6 +126,7 @@ export function DoctorDetailPage() {
         {/* Colonne gauche : infos */}
         <div className="space-y-5">
           <InfoCard doctor={d} />
+          <PotentialCard doctorId={d.id} readOnly={isSupervisor} />
           <ReceptivityCard doctor={d} />
         </div>
 
@@ -156,6 +168,7 @@ export function DoctorDetailPage() {
         </div>
       </div>
 
+      <VisitPrepSheet doctorId={prepOpen ? d.id : null} onOpenChange={setPrepOpen} />
       <PlanVisitDialog
         open={planOpen}
         onOpenChange={setPlanOpen}
@@ -219,6 +232,10 @@ function InfoCard({ doctor: d }: { doctor: DoctorDetail }) {
         <InfoRow icon={Building2}>{PRACTICE_TYPE[d.practice_type]}</InfoRow>
         <InfoRow icon={Clock}>
           Créneau préféré : {d.preferred_slot ? TIME_SLOT[d.preferred_slot] : "non renseigné"}
+        </InfoRow>
+        <InfoRow icon={CalendarDays}>Réception des délégués : {receptionText(d.reception_days)}</InfoRow>
+        <InfoRow icon={Users}>
+          Fréquentation : {d.patients_per_day != null ? `${d.patients_per_day} patients par jour` : "non renseignée"}
         </InfoRow>
         <InfoRow icon={UserRound}>
           <p>Délégué : {d.delegue_name}</p>

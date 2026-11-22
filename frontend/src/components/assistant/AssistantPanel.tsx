@@ -1,6 +1,7 @@
 /**
  * 💬 IA — « Assistant NOOR » : trois sortes de questions, toujours avec la source citée.
  *   - produits (posologie, contre-indications...) : RCP validés (app/ai/rag_assistant.py) ;
+ *   - infos médicales (antibiotiques, bactériologie) : fiches validées docs/medical/ (app/ai/medical_info.py) ;
  *   - mode d'emploi du CRM : guide docs/guide/guide_noor.md (app/ai/crm_guide.py) ;
  *   - vos chiffres (CPA, médecins à voir, tournée...) : outils qui lisent vos données (app/ai/crm_data.py),
  *     avec un lien vers la page où vérifier.
@@ -16,7 +17,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { BarChart3, BookOpen, FileText, Info, Loader2, SendHorizontal, X, type LucideIcon } from "lucide-react";
+import { BarChart3, BookOpen, FileText, Info, Loader2, SendHorizontal, Stethoscope, X, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { aiApi, type AskKind, type AskResponse } from "@/api/ai";
@@ -33,7 +34,7 @@ interface AssistantPanelProps {
 }
 
 /** Icône de la source : document produit, guide du CRM, ou vos données. */
-const SOURCE_ICON: Record<AskKind, LucideIcon> = { produit: FileText, guide: BookOpen, donnees: BarChart3 };
+const SOURCE_ICON: Record<AskKind, LucideIcon> = { produit: FileText, medical: Stethoscope, guide: BookOpen, donnees: BarChart3 };
 
 interface Exchange {
   question: string;
@@ -52,7 +53,7 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
   const suggestions = [
     product ? `Contre-indications de ${product.brand_name} ?` : "Peut-on donner Amoxira à un enfant de moins de 6 ans ?",
     "Quel est mon CPA ?",
-    "Quels médecins F2 n'ai-je pas encore vus deux fois ?",
+    "Quelle différence entre Gram positif et Gram négatif ?",
     "Comment ajouter un jour de congé ?",
   ];
 

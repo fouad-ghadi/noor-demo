@@ -2,7 +2,7 @@ NOOR DEMO - THE AI MODULES, EXPLAINED FOR THE JURY
 =================================================
 
 NOOR is a CRM for medical reps (delegues medicaux) of a Moroccan pharmaceutical lab.
-Five AI modules each answer a real problem in a rep's day.
+Five AI modules, plus the daily copilot asked for by the lab (section 6), each answer a real problem in a rep's day.
 
 
 THE COMMON IDEA (say this first)
@@ -231,6 +231,48 @@ Works without any API key (rules and text search). With an Anthropic API key
    The form is filled; NOOR shows "Dr Mohammed El Amrani: very likely the same doctor"
    (same phone, name written differently) -> "Completer cette fiche" -> review, save.
    Then the "Dr Leila Bennis" card: no duplicate, "Creer le medecin".
+
+
+6. THE LAB'S REQUESTS (Nov. 2026): THE REP'S DAILY COPILOT
+-----------------------------------------------------------
+After reading the partner lab's documents (targeting rules, KPI training, monthly report,
+pharmacovigilance procedure), we added six features. Same rule: NOOR proposes, shows why,
+the rep validates. All work without an API key (explained rules).
+
+A/B/C potential (backend/app/ai/potential.py)
+    The lab's own targeting rule: practice potential (patients per day) + prescription
+    potential. NOOR scores each doctor out of 100 (70 + 30 points), proposes A/B/C and a
+    visit frequency (F1/F2), and shows each criterion. "Apply" updates the record.
+
+"Prepare the visit" (backend/app/ai/visit_prep.py)
+    Last report, then the products to push with a score where every point is explained:
+    planned follow-up, prescribing habit, monthly objective, local market share,
+    seasonality, margin, pharmacy or parapharmacy. Suggested argument (the answer to the
+    doctor's last objection) and samples with the last batch number.
+
+"Fill my week" (backend/app/ai/week_planner.py) - an agent that plans
+    Priority doctors (overdue F1/F2, potential, products, market), grouped by district
+    each day, only on the doctor's reception days, in his preferred slot. The rep unticks
+    what he does not want, then confirms: only then are visits created.
+
+Sales insights (backend/app/ai/sales_insights.py)
+    From the market data: zones to prioritise (losing market share, with lost sales
+    estimated), growing products, and doctors to see again in those zones.
+
+Close my day / my month (backend/app/ai/closing.py)
+    What is left to do (missing reports, pharmacovigilance to declare) and a written
+    report: visits, products, samples and batches, tomorrow's round; for the month the
+    exact indicators of the lab's monthly report (calls, contacts, average, coverage, CPA).
+
+Medical information in the chatbot (backend/app/ai/medical_info.py)
+    Two validated sheets written by our team (antibiotics, bacteriology) in docs/medical/:
+    the assistant answers ONLY from them and cites the section, otherwise it refuses.
+    We did not copy the lab's own training material (confidentiality).
+
+To say to the jury
+    "The lab asked for an assistant that helps the rep every day. We followed their own
+    rules: their targeting criteria, their KPI formulas, their report format. Every
+    suggestion shows its reasons, and nothing is saved until the rep validates."
 
 
 QUESTIONS THE JURY WILL PROBABLY ASK

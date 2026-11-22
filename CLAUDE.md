@@ -127,6 +127,17 @@ ni sur le site public** : on reproduit seulement la structure et les formules, a
   pré-remplie par `/ai/card-scanner/merge` (graphie de la base gardée, ancien téléphone noté). Éval. `scripts/evaluer_doublons.py` : 10/10, 0 fausse alerte.
 - **Tests** : `cd backend ; pip install -r requirements-dev.txt ; python -m pytest` (base de démo temporaire via `NOOR_DB_PATH`,
   la vraie base n'est pas touchée ; `tests/pharmacovigilance/` utilise sa propre petite base en mémoire).
+- **Demandes du laboratoire (22 nov. 2026, tout sans clé, « l'IA propose, le délégué valide », pourquoi toujours affiché)** :
+  `ai/potential.py` (potentiel A/B/C = patients/jour 70 pts + prescription 30 pts, fréquence conseillée, « Appliquer » ;
+  carte `components/doctors/PotentialCard.tsx`), `ai/visit_prep.py` (« Préparer la visite » : produits scorés + pourquoi,
+  argument, échantillons + lot ; `components/visits/VisitPrepSheet.tsx`, depuis la fiche médecin ou une visite à venir),
+  `ai/week_planner.py` (« Remplir ma semaine » : quartiers + jours de réception, cases à décocher puis validation ;
+  `components/planning/FillWeekDialog.tsx`), `ai/sales_insights.py` (carte « Ce que NOOR en déduit » sur `/ventes`),
+  `ai/closing.py` (« Clôturer ma journée / mon mois » sur le tableau de bord, `components/dashboard/ClosingDialog.tsx`),
+  `ai/medical_info.py` (fiches `docs/medical/fiche_*.md`, `kind="medical"`). Phrases prédéfinies du compte-rendu :
+  `src/lib/reportPhrases.ts`. Nouveaux champs : `Doctor.patients_per_day`, `Doctor.reception_days` ("1,3" = mar. et jeu.),
+  `Product.channel/margin_level/peak_months/sample_unit` (seed : `add_cabinet_profiles`, hasard séparé `Random(2027)`).
+  Tests : `backend/tests/test_sothema.py`. Guide du chatbot : sections 19 à 24.
 - Recommandations : carte « Visites recommandées » (`components/dashboard/RecommendedVisits.tsx`) avec « Planifier ».
 - Catalogue médicaments (`/produits`, `pages/products/ProductsPage.tsx`) : grille animée (CSS, coupée par
   prefers-reduced-motion), filtres par gamme + recherche (`src/lib/catalogue.ts`, testé par `npm test` / vitest),
@@ -157,9 +168,13 @@ page Statistiques, analyse des ventes type IMS, n° de lot, statut de prescripti
 (mode d'emploi du CRM, « mes chiffres ») ; premiers tests automatisés
 (`backend/tests/`, `python -m pytest` : base temporaire via `NOOR_DB_PATH`, la vraie base n'est pas touchée).
 
+22 nov. 2026 (soir) : demandes du laboratoire intégrées (potentiel A/B/C expliqué, Préparer la visite,
+Remplir ma semaine, conclusions des ventes, phrases prédéfinies, clôture jour/mois, fiches médicales du chatbot).
+Reste de leur liste : saisie hors-ligne (option).
+
 Pistes pour la suite (à valider avec Fouad ; MVP le 8 déc. 2026) :
 1. ~~Pharmacovigilance conforme~~ : fait le 22 nov. 2026 (PR « pharmacovigilance conforme »).
-2. Chatbot étendu : mode d'emploi du CRM et « quel est mon CPA ? » **faits** (22 nov.) ; reste : informations médicales (nos propres fiches).
+2. Chatbot étendu : mode d'emploi du CRM, « quel est mon CPA ? » et informations médicales (nos fiches) **faits** (22 nov.).
 3. IA : tester avec une clé `ANTHROPIC_API_KEY` ; étendre les tests (pytest : autres services ; Playwright).
 4. Mise en ligne : vérifier une fois dans les journaux Render la ligne « Données de démo régénérées pour le … » (4 h du matin).
 

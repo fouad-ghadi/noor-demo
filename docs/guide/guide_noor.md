@@ -75,3 +75,27 @@ Un superviseur voit les données de tous les délégués de son équipe. La page
 ## 18. Vocabulaire : VM, DSM, ciblage, F1, F2, segment, calls, contacts
 
 VM : visiteur médical, c'est-à-dire le délégué médical. DSM : superviseur d'une équipe de délégués. Ciblage : liste des médecins à visiter régulièrement, revue deux fois par an. F1 : médecin ciblé à voir une fois par mois. F2 : médecin ciblé à voir deux fois par mois. Hors cible : médecin sans fréquence de visite. Segment ou potentiel : A fort, B moyen, C faible. Calls : visites réalisées. Contacts : médecins différents vus. Couverture : part des médecins ciblés vus au moins une fois dans le mois. CPA (Call Plan Adherence) : part des médecins ciblés vus à la bonne fréquence. BU : unité commerciale (chronique ou aiguë). Gamme : ensemble des produits présentés par un délégué.
+
+## 19. Préparer une visite
+
+Avant d'entrer chez un médecin, ouvrez sa fiche (page Médecins) et cliquez sur « Préparer la visite », ou cliquez sur une visite à venir dans le planning puis sur « Préparer la visite ». NOOR affiche le dernier compte-rendu (accueil, objections, suite prévue, échantillons remis), puis les produits à pousser, classés par score. Chaque point du score est expliqué : suite prévue, habitude de prescription, objectif du mois en retard, marché du territoire, saisonnalité, marge, pharmacie ou parapharmacie. Pour chaque produit, NOOR propose un argument (la réponse à la dernière objection s'il y en a une) et le nombre d'échantillons à remettre avec le dernier numéro de lot. Rien n'est enregistré.
+
+## 20. Remplir ma semaine automatiquement
+
+Dans la page Planning, cliquez sur « Remplir ma semaine ». NOOR propose des visites pour les places libres de la semaine affichée (ou de la première semaine qui a de la place) : 10 visites par jour, 5 le samedi matin, moins les visites déjà prévues et les jours d'événements. Chaque jour est regroupé par quartier pour limiter la route, et un médecin n'est proposé que les jours où il reçoit les délégués, sur son créneau préféré. Chaque visite proposée affiche son pourquoi. Décochez celles que vous ne voulez pas, puis cliquez sur « Ajouter les visites » : seules les visites cochées sont planifiées.
+
+## 21. Potentiel A, B, C et fréquence conseillée
+
+Sur la fiche d'un médecin, la carte « Potentiel et fréquence de visite » montre le potentiel calculé par NOOR, sur 100 points : la fréquentation du cabinet (nombre de patients par jour, 70 points) et le potentiel de prescription de nos produits (30 points). A à partir de 65 points, B à partir de 38, sinon C. NOOR conseille aussi une fréquence : F2 ou F1 pour un médecin A, F1 pour un B, F1 ou hors cible pour un C. Si la fiche diffère de la proposition, le bouton « Appliquer la proposition » met la fiche à jour ; à valider avec le superviseur au prochain ciblage (janvier ou juillet). Le nombre de patients par jour et les jours de réception se modifient avec le bouton Modifier de la fiche.
+
+## 22. Phrases prédéfinies dans le compte-rendu
+
+Dans le compte-rendu, à l'étape Notes, des phrases prêtes à l'emploi sont rangées par thème : accueil, produit, prescription, patients. Un clic ajoute la phrase aux notes, avec le nom du premier produit présenté. Vous pouvez ensuite modifier le texte. Vous pouvez aussi dicter le compte-rendu avec le micro (bouton Dicter).
+
+## 23. Clôturer ma journée ou mon mois
+
+Sur le tableau de bord, cliquez sur « Clôturer ma journée » ou « Clôturer mon mois ». NOOR liste ce qu'il reste à régler (comptes-rendus en attente, cas de pharmacovigilance à déclarer), avec un lien pour le faire, puis rédige le rapport : visites réalisées, médecins vus, produits présentés, échantillons et numéros de lot, tournée du lendemain. Pour le mois : jours travaillés, calls, contacts, moyenne de visites, couverture, CPA F1 et F2, objectifs. Relisez le rapport puis cliquez sur « Copier le rapport » pour le coller dans un e-mail.
+
+## 24. Ce que NOOR déduit des ventes
+
+Dans la page Analyse des ventes (Mes performances), la carte « Ce que NOOR en déduit » donne trois conclusions, chacune avec ses chiffres : les zones à prioriser (territoire et produit qui perdent des parts de marché, avec les ventes perdues estimées), les produits en progression, et les médecins à revoir dans ces zones (bonne spécialité, potentiel A ou B, peu ou pas prescripteurs). Cliquez sur un médecin pour ouvrir sa fiche.

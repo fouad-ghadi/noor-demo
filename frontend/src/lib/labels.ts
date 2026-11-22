@@ -140,3 +140,13 @@ export const PV_DEADLINE: Record<PvDeadlineState, { label: string; dot: string }
   declaree_a_temps: { label: "Déclarée dans les 24 h", dot: "bg-emerald-500" },
   declaree_en_retard: { label: "Déclarée hors délai", dot: "bg-slate-400" },
 };
+
+export const RECEPTION_WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+
+/** « 1,3 » → « mardi et jeudi » ; vide → « tous les jours ». */
+export function receptionText(days: string | null | undefined): string {
+  if (!days) return "tous les jours";
+  const names = days.split(",").map((x) => RECEPTION_WEEKDAYS[Number(x)]).filter(Boolean);
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} et ${names[names.length - 1]}` : names[0];
+}
+

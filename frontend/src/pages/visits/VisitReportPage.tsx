@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TIME_OPTIONS } from "@/components/visits/PlanVisitDialog";
 import { VoiceDictationDialog } from "@/components/visits/VoiceDictationDialog";
 import { invalidateVisitData, useMeta, useProducts } from "@/hooks/queries";
+import { REPORT_PHRASES, appendPhrase } from "@/lib/reportPhrases";
 import { formatDate, formatLongDay, formatTime, toApiDateTime } from "@/lib/format";
 import { FEEDBACK, PRESCRIPTION_FEEDBACK } from "@/lib/labels";
 import { cn } from "@/lib/utils";
@@ -512,6 +513,28 @@ function ReportForm({ visit, products, objectionCategories }: {
         </Section>
 
         <Section n={6} title="Notes">
+          {/* Phrases prédéfinies : un clic les ajoute aux notes (« {p} » = premier produit présenté) */}
+          <div className="mb-3 space-y-2">
+            {REPORT_PHRASES.map((g) => (
+              <div key={g.group} className="flex flex-wrap items-center gap-1.5">
+                <span className="text-muted-foreground w-20 shrink-0 text-xs">{g.group}</span>
+                {g.phrases.map((ph) => {
+                  const product = products.find((p) => p.id === productIds[0])?.brand_name;
+                  const label = ph.replace(/\{p\}/g, product ?? "le produit");
+                  return (
+                    <button
+                      key={ph}
+                      type="button"
+                      onClick={() => setNotes((n) => appendPhrase(n, ph, product))}
+                      className="border-line text-ink hover:bg-mint-wash/60 cursor-pointer rounded-full border bg-white px-2.5 py-1 text-left text-xs"
+                    >
+                      + {label}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}

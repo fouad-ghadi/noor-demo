@@ -204,7 +204,8 @@ def prepare(db: Session, user: User, doctor_id: int) -> VisitPreparation:
     if last:
         intro = f"Dernière visite il y a {last.days_ago} jours"
         if last.objections:
-            intro += f", objection : {last.objections[0].lower()}"
+            first = last.objections[0]
+            intro += f", objection : {first[0].lower()}{first[1:]}"
     else:
         intro = "Première visite chez ce médecin"
     focus = ", ".join(t.brand_name for t in to_push[:2])

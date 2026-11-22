@@ -16,13 +16,14 @@
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Eye, FileClock, Gauge, Repeat, Target, Users } from "lucide-react";
+import { ArrowLeft, CalendarCheck2, Eye, FileClock, Gauge, Moon, Repeat, Target, Users } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 import { api } from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { AlertsList } from "@/components/dashboard/AlertsList";
+import { ClosingDialog, type ClosingScope } from "@/components/dashboard/ClosingDialog";
 import { DoctorsToRevisit } from "@/components/dashboard/DoctorsToRevisit";
 import { DayRoute } from "@/components/dashboard/DayRoute";
 import { HeroBand, HeroPace } from "@/components/dashboard/HeroBand";
@@ -33,9 +34,13 @@ import { RecommendedVisits } from "@/components/dashboard/RecommendedVisits";
 import { TopObjections } from "@/components/dashboard/TopObjections";
 import { VisitsPerWeekChart } from "@/components/dashboard/VisitsPerWeekChart";
 import { ErrorState, LoadingState } from "@/components/shared/states";
+import { Button } from "@/components/ui/button";
 import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
 import { useVisitDialogs } from "@/components/visits/useVisitDialogs";
 import { formatLongDay } from "@/lib/format";
+
+// Bouton secondaire posé sur le bandeau vert pin
+const ON_DARK = "border-white/25 bg-white/5 text-white hover:bg-white/10 hover:text-white";
 
 export function DashboardPage() {
   const params = useParams();
@@ -56,6 +61,7 @@ export function DashboardPage() {
 
   const { openVisit, dialogs } = useVisitDialogs({ readOnly });
   const [planOpen, setPlanOpen] = useState(false);
+  const [closing, setClosing] = useState<ClosingScope | null>(null);
 
   if (dashboard.isLoading) return <LoadingState rows={5} />;
   if (dashboard.isError || !d) return <ErrorState error={dashboard.error} onRetry={() => dashboard.refetch()} />;
@@ -113,7 +119,8 @@ export function DashboardPage() {
             </>
           }
           summary={
-            k.visits_target ? (
+            <>
+            {k.visits_target ? (
               <HeroPace
                 caption={caption}
                 done={k.visits_done}
@@ -123,7 +130,18 @@ export function DashboardPage() {
                 status={<KpiStatusLine onDark status={visitsStatus} />}
                 detail={`${k.visits_planned_remaining} encore planifiée(s) d'ici la fin du mois. Le trait blanc indique le rythme attendu.`}
               />
-            ) : undefined
+            ) : null}
+            {!readOnly && (
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" className={ON_DARK} onClick={() => setClosing("jour")}>
+                  <Moon /> Clôturer ma journée
+                </Button>
+                <Button size="sm" variant="outline" className={ON_DARK} onClick={() => setClosing("mois")}>
+                  <CalendarCheck2 /> Clôturer mon mois
+                </Button>
+              </div>
+            )}
+            </>
           }
           aside={<DayRoute visits={d.today_visits} readOnly={readOnly} onVisitClick={openVisit} onPlan={() => setPlanOpen(true)} />}
         />
@@ -197,6 +215,7 @@ export function DashboardPage() {
         </p>
       )}
       <PlanVisitDialog open={planOpen} onOpenChange={setPlanOpen} />
+      <ClosingDialog scope={closing} onOpenChange={(o) => !o && setClosing(null)} />
       {dialogs}
     </>
   );

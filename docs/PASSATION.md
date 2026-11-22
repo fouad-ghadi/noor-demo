@@ -99,10 +99,12 @@ Plan d'origine :
 - ✅ (22 nov.) **Mode d'emploi du CRM** : guide `docs/guide/guide_noor.md` (18 sections) indexé comme les RCP.
 - ✅ (22 nov.) **« Quel est mon CPA ? », « Quels médecins F2 n'ai-je pas vus ? »**, tournée, objectifs, comptes-rendus
   en attente : outils dans `app/ai/crm_data.py`, avec lien vers la page où vérifier. Tests : `backend/tests/`.
-- **Informations médicales** : rédiger nos propres fiches simplifiées (antibiothérapie, bactériologie...) ;
-  ne pas copier les formations du partenaire sans autorisation.
+- ✅ (22 nov.) **Informations médicales** : nos propres fiches `docs/medical/` (antibiothérapie, bactériologie),
+  sans copier les formations du partenaire.
 
-### P4. Agent « Prépare ma tournée » (piste présentée au pitch)
+### P4. Agent « Prépare ma tournée » (piste présentée au pitch) — ✅ FAIT le 22 nov. 2026 (« Remplir ma semaine »)
+- Fait aussi le 22 nov. (demandes du laboratoire) : potentiel A/B/C expliqué, « Préparer la visite », conclusions des ventes,
+  phrases prédéfinies, clôture jour/mois, fiches médicales du chatbot. Voir CLAUDE.md. Reste en option : saisie hors-ligne.
 - Le délégué demande « Prépare ma tournée de mardi » → l'agent propose une liste ordonnée (visites recommandées,
   créneaux, carte), le délégué confirme, les visites sont planifiées. Toujours « l'IA propose, le délégué valide ».
 

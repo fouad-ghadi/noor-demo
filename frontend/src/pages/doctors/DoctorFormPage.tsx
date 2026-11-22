@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMeta, useProducts, useTeamUsers } from "@/hooks/queries";
 import { useDebounce } from "@/hooks/useDebounce";
 import { PRACTICE_TYPE, PRESCRIBING, TIME_SLOT } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 
 const EMPTY: DoctorInput = {
   first_name: "",
@@ -45,9 +46,47 @@ const EMPTY: DoctorInput = {
   // Nouvelle fiche : hors cible tant que le superviseur ne l'a pas ciblée (ciblage en janvier et juillet)
   frequency: null,
   preferred_slot: "matin",
+  patients_per_day: null,
+  reception_days: null,
   notes: "",
   prescriptions: [],
 };
+
+/**
+ * Jours où le médecin reçoit les délégués (lun. → sam.). Aucun jour coché = tous les jours.
+ * Stocké comme "1,3" (0 = lundi) ; sert à « Remplir ma semaine ».
+ */
+function ReceptionDays({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) {
+  const days = new Set((value ?? "").split(",").filter(Boolean));
+  const toggle = (d: string) => {
+    const next = new Set(days);
+    if (next.has(d)) next.delete(d);
+    else next.add(d);
+    onChange(next.size ? [...next].sort().join(",") : null);
+  };
+  return (
+    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Jours de réception">
+      {["lun.", "mar.", "mer.", "jeu.", "ven.", "sam."].map((label, i) => {
+        const on = days.has(String(i));
+        return (
+          <button
+            key={label}
+            type="button"
+            aria-pressed={on}
+            onClick={() => toggle(String(i))}
+            className={cn(
+              "h-9 rounded-lg border px-3 text-sm transition-colors",
+              on ? "bg-pine border-pine text-white" : "border-line text-ink hover:bg-mint-wash/60 bg-white",
+            )}
+          >
+            {label}
+          </button>
+        );
+      })}
+      {days.size === 0 && <span className="text-muted-foreground self-center text-xs">Tous les jours</span>}
+    </div>
+  );
+}
 
 /** Champ de formulaire : libellé + contenu. `uncertain` : champ deviné sur la carte, à vérifier. */
 function Field({ label, htmlFor, children, required, uncertain }: { label: string; htmlFor?: string; children: React.ReactNode; required?: boolean; uncertain?: boolean }) {
@@ -146,6 +185,8 @@ function DoctorForm() {
       segment: d.segment,
       frequency: d.frequency,
       preferred_slot: d.preferred_slot,
+      patients_per_day: d.patients_per_day ?? null,
+      reception_days: d.reception_days ?? null,
       notes: d.notes ?? "",
     });
     setPrescriptions(Object.fromEntries(d.prescriptions.map((p) => [p.product_id, p.status])));
@@ -477,6 +518,21 @@ function DoctorForm() {
                 onChange={(v) => set("preferred_slot", v as DoctorInput["preferred_slot"])}
                 options={TIME_SLOT}
               />
+            </Field>
+            <Field label="Patients par jour (fréquentation du cabinet)" htmlFor="patients_per_day">
+              <Input
+                id="patients_per_day"
+                type="number"
+                min={0}
+                max={200}
+                inputMode="numeric"
+                value={form.patients_per_day ?? ""}
+                onChange={(e) => set("patients_per_day", e.target.value === "" ? null : Number(e.target.value))}
+                placeholder="Ex. 25 (sert au calcul du potentiel A/B/C)"
+              />
+            </Field>
+            <Field label="Jours de réception des délégués">
+              <ReceptionDays value={form.reception_days ?? null} onChange={(v) => set("reception_days", v)} />
             </Field>
             <div className="sm:col-span-2">
               <Field label="Notes" htmlFor="notes">
