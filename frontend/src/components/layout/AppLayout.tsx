@@ -3,10 +3,20 @@
  *
  *  Ordinateur :  [ Sidebar | Contenu de la page | Assistant NOOR (repliable) ]
  *  Téléphone  :  [ Barre du haut ] / [ Contenu ] / [ Barre de navigation en bas ]
+ *
+ * Animations (toutes coupées si l'utilisateur réduit les animations) :
+ *  - menu : motif zellige éclairé en fond, la pastille de l'onglet actif GLISSE d'une entrée à l'autre
+ *    (`layoutId` de motion) ;
+ *  - changement de page : la nouvelle page monte en fondu (courte, 0,35 s) ;
+ *  - juste après la connexion : le voile vert pin du « rideau » s'efface sur le tableau de bord.
  */
+import { useEffect, useState } from "react";
 import { LogOut, Sparkles } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
+import { NoorMark } from "@/components/brand/NoorMark";
+import { ZelligeField } from "@/components/brand/ZelligeField";
 import { AssistantPanel } from "@/components/assistant/AssistantPanel";
 import { useAssistant } from "@/components/assistant/AssistantContext";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
@@ -36,31 +46,47 @@ function Sidebar() {
   const navigate = useNavigate();
 
   return (
-    <aside className="bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-30 hidden w-64 flex-col lg:flex">
-      <div className="px-5 pt-5 pb-4">
+    <aside
+      className="bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-30 hidden w-64 isolate flex-col overflow-hidden lg:flex"
+      style={{ background: "linear-gradient(180deg, #11494A 0%, var(--pine) 45%, #0B3031 100%)" }}
+    >
+      <ZelligeField className="-z-10" intensity={0.4} />
+      <div className="group w-fit px-5 pt-5 pb-4">
         <Logo light />
       </div>
       {/* La date du jour : le point safran signifie « maintenant », comme partout dans l'application */}
       <p className="text-sidebar-muted mx-5 mb-3 flex items-center gap-2 border-t border-white/10 pt-4 text-[13px]">
-        <span className="bg-saffron size-1.5 rounded-full" aria-hidden="true" />
+        <span className="now-pulse bg-saffron size-1.5 rounded-full" aria-hidden="true" />
         <span className="first-letter:uppercase">{formatLongDay(new Date())}</span>
       </p>
-      <nav className="flex-1 space-y-1 px-3 py-2">
+      <nav className="relative isolate flex-1 space-y-1 px-3 py-2">
         {NAV_ITEMS[user.role].map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-mint/60 focus-visible:outline-none",
-                isActive
-                  ? "bg-sidebar-accent text-white before:bg-mint before:absolute before:inset-y-2 before:-left-3 before:w-1 before:rounded-r-full"
-                  : "text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-white",
+                "group/nav relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-mint/60 focus-visible:outline-none",
+                isActive ? "text-white" : "text-sidebar-muted hover:bg-white/5 hover:text-white",
               )
             }
           >
-            <Icon className="size-[18px]" />
-            {label}
+            {({ isActive }) => (
+              <>
+                {/* Pastille de l'onglet actif : un seul élément qui glisse d'une entrée à l'autre */}
+                {isActive && (
+                  <motion.span
+                    layoutId="sidebar-active"
+                    className="bg-sidebar-accent absolute inset-0 -z-10 rounded-lg ring-1 ring-white/10"
+                    transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                  >
+                    <span className="bg-mint absolute inset-y-2 -left-3 w-1 rounded-r-full" />
+                  </motion.span>
+                )}
+                <Icon className={cn("size-[18px] transition-transform duration-300", !isActive && "group-hover/nav:scale-110")} />
+                {label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -99,7 +125,9 @@ function MobileTopBar() {
   const navigate = useNavigate();
   return (
     <header className="bg-pine sticky top-0 z-30 flex items-center justify-between px-4 py-2.5 lg:hidden">
-      <Logo light />
+      <div className="group">
+        <Logo light />
+      </div>
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" className="text-mint hover:bg-white/10 hover:text-white" onClick={() => setOpen(true)} aria-label="Ouvrir l'assistant NOOR">
           <Sparkles />
@@ -154,16 +182,27 @@ function MobileBottomNav() {
             to={to}
             className={({ isActive }) =>
               cn(
-                "group flex flex-col items-center gap-0.5 py-1.5 text-[11px] font-medium",
+                "flex flex-col items-center gap-0.5 py-1.5 text-[11px] font-medium transition-colors",
                 isActive ? "text-pine" : "text-muted-foreground",
               )
             }
           >
-            {/* Onglet actif : pastille menthe derrière l'icône */}
-            <span className="group-aria-[current=page]:bg-mint flex h-7 w-12 items-center justify-center rounded-full transition-colors">
-              <Icon className="size-5" />
-            </span>
-            {short}
+            {({ isActive }) => (
+              <>
+                {/* Onglet actif : pastille menthe derrière l'icône, qui glisse d'un onglet à l'autre */}
+                <span className="relative flex h-7 w-12 items-center justify-center">
+                  {isActive && (
+                    <motion.span
+                      layoutId="bottom-nav-active"
+                      className="bg-mint absolute inset-0 rounded-full"
+                      transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                    />
+                  )}
+                  <Icon className="relative size-5" />
+                </span>
+                {short}
+              </>
+            )}
           </NavLink>
         ))}
       </div>
@@ -171,10 +210,42 @@ function MobileBottomNav() {
   );
 }
 
+/**
+ * Voile d'entrée : prolonge le « rideau » de la page de connexion (même fond, même étoile),
+ * puis s'efface pour laisser apparaître le tableau de bord. Affiché une seule fois par connexion
+ * (drapeau `noor-entree` posé par LoginPage dans sessionStorage).
+ */
+function EntryVeil() {
+  const [show, setShow] = useState(() => sessionStorage.getItem("noor-entree") === "1");
+  useEffect(() => {
+    if (!show) return;
+    sessionStorage.removeItem("noor-entree");
+    const t = setTimeout(() => setShow(false), 450);
+    return () => clearTimeout(t);
+  }, [show]);
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          className="bg-pine fixed inset-0 z-50 flex items-center justify-center"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          aria-hidden="true"
+        >
+          <motion.div exit={{ scale: 1.6, opacity: 0 }} transition={{ duration: 0.5 }}>
+            <NoorMark className="size-16 rotate-[315deg]" color="#5EEAD4" core="#0F3D3E" />
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 export function AppLayout() {
   const { context, open, setOpen } = useAssistant();
   const location = useLocation();
   const isWide = useMediaQuery("(min-width: 1280px)");
+  const reduceMotion = useReducedMotion();
 
   return (
     <div className="min-h-dvh">
@@ -197,7 +268,15 @@ export function AppLayout() {
               Le filet reste en place d'une page à l'autre (pas de « key ») : une erreur levée pendant
               qu'on QUITTE une page est rattrapée ici, et non par le filet global qui masque le menu. */}
           <ErrorBoundary resetKey={location.pathname}>
-            <Outlet />
+            {/* Chaque page arrive en fondu (clé = adresse de la page) */}
+            <motion.div
+              key={location.pathname}
+              initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}
+            >
+              <Outlet />
+            </motion.div>
           </ErrorBoundary>
         </main>
       </div>
@@ -220,6 +299,7 @@ export function AppLayout() {
       </Sheet>
 
       <MobileBottomNav />
+      <EntryVeil />
     </div>
   );
 }

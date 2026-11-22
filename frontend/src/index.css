@@ -203,3 +203,99 @@
   .catalogue-rise { animation: none; opacity: 1; }
   .slide-next, .slide-prev { animation: none; }
 }
+
+/* ------------------------------------------------------------------
+   Motif zellige « éclairé » (components/brand/ZelligeField.tsx)
+   La lumière est décrite par 3 variables CSS animables :
+   --lx / --ly = position, --lr = rayon. Au chargement elle « se lève » (dawn),
+   puis dérive lentement, ou suit la souris (data-follow, posé par le composant).
+   ------------------------------------------------------------------ */
+@property --lr { syntax: "<length>"; inherits: true; initial-value: 0px; }
+@property --lx { syntax: "<length-percentage>"; inherits: true; initial-value: 72%; }
+@property --ly { syntax: "<length-percentage>"; inherits: true; initial-value: 28%; }
+
+@keyframes zellige-dawn {
+  from { --lr: 0px; }
+  to { --lr: 340px; }
+}
+@keyframes zellige-drift {
+  0% { --lx: 72%; --ly: 28%; }
+  50% { --lx: 30%; --ly: 55%; }
+  100% { --lx: 62%; --ly: 82%; }
+}
+.zellige-field {
+  --lr: 340px;
+  animation:
+    zellige-dawn 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s both,
+    zellige-drift 22s ease-in-out 1.9s infinite alternate;
+  transition: --lx 0.35s ease-out, --ly 0.35s ease-out;
+}
+.zellige-field[data-follow="true"] {
+  animation: zellige-dawn 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s both;
+}
+.zellige-lit {
+  mask-image: radial-gradient(circle var(--lr) at var(--lx) var(--ly), #000 0%, rgb(0 0 0 / 0.35) 45%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle var(--lr) at var(--lx) var(--ly), #000 0%, rgb(0 0 0 / 0.35) 45%, transparent 100%);
+}
+.zellige-glow {
+  background: radial-gradient(circle calc(var(--lr) * 1.15) at var(--lx) var(--ly), rgb(159 227 214 / 0.13), transparent 70%);
+}
+
+/* ------------------------------------------------------------------
+   Petites animations partagées (toutes coupées si l'utilisateur réduit les animations)
+   ------------------------------------------------------------------ */
+/* Barre de progression qui se remplit à l'arrivée */
+@keyframes bar-grow { from { transform: scaleX(0); } to { transform: none; } }
+.bar-grow { transform-origin: left center; animation: bar-grow 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s both; }
+
+/* Onde autour de « maintenant » (prochaine visite) : un seul signal qui respire */
+@keyframes now-pulse {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.now-pulse { position: relative; }
+.now-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--saffron);
+  animation: now-pulse 2.2s cubic-bezier(0.2, 0.7, 0.2, 1) infinite;
+}
+
+/* Rail de la tournée qui se dessine de haut en bas, arrêt après arrêt */
+@keyframes rail-draw { from { transform: scaleY(0); } to { transform: none; } }
+.rail-draw { transform-origin: top center; animation: rail-draw 0.5s ease-out both; }
+
+/* Élément qui monte en douceur (séquence d'arrivée d'une page, délai posé par élément) */
+@keyframes noor-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.noor-enter { animation: noor-enter 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+/* Titre révélé ligne par ligne (masque) */
+@keyframes line-reveal { from { transform: translateY(105%); } to { transform: none; } }
+.line-mask { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.line-reveal { display: block; animation: line-reveal 0.9s cubic-bezier(0.2, 0.75, 0.15, 1) both; }
+
+/* Trajet à venir : les pointillés avancent doucement (« la tournée continue ») */
+@keyframes route-march { to { stroke-dashoffset: -40; } }
+.route-march { animation: route-march 2.4s linear infinite; }
+
+/* Emblème NOOR qui tourne d'un huitième de tour au survol du logo */
+.noor-mark-spin { transition: transform 0.7s cubic-bezier(0.3, 1.4, 0.4, 1); }
+.group:hover .noor-mark-spin { transform: rotate(45deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .zellige-field, .zellige-field[data-follow="true"] { animation: none; --lr: 340px; transition: none; }
+  .bar-grow, .rail-draw, .noor-enter, .line-reveal { animation: none; }
+  .now-pulse::after, .route-march { animation: none; }
+  .now-pulse::after { opacity: 0; }
+  .noor-mark-spin { transition: none; }
+}
+
+/* Onde sur un cercle SVG (arrêt en cours de l'illustration de connexion) */
+@keyframes svg-pulse { from { transform: scale(1); opacity: 0.5; } to { transform: scale(3.2); opacity: 0; } }
+.svg-pulse { transform-box: fill-box; transform-origin: center; animation: svg-pulse 2.2s cubic-bezier(0.2, 0.7, 0.2, 1) 2.4s infinite both; }
+@media (prefers-reduced-motion: reduce) { .svg-pulse { animation: none; opacity: 0; } }

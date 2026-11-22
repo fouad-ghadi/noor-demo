@@ -23,6 +23,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { FrequencyBadge, PrescribingBadge, SegmentBadge } from "@/components/shared/badges";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/states";
+import { ZelligeField } from "@/components/brand/ZelligeField";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
@@ -59,11 +60,17 @@ export function DoctorDetailPage() {
       <section className="border-line mb-5 overflow-hidden rounded-xl border bg-white lg:mb-6">
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center lg:p-6">
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            <span className="bg-pine font-display text-mint flex size-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-semibold tracking-tight">
+            {/* Monogramme : tuile vert pin au motif zellige (même signature que la connexion) */}
+            <span className="bg-pine font-display text-mint relative isolate flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl font-semibold tracking-tight lg:size-20 lg:text-[1.75rem]">
+              <ZelligeField className="-z-10" interactive={false} intensity={0.7} />
               {initials(name)}
             </span>
             <div className="min-w-0">
-              <h1 className="font-display text-ink text-[1.6rem] leading-tight font-semibold tracking-[-0.02em] lg:text-[2rem]">{name}</h1>
+              <h1 className="font-display text-ink text-[1.6rem] leading-tight font-semibold tracking-[-0.02em] lg:text-[2rem]">
+                <span className="line-mask">
+                  <span className="line-reveal">{name}</span>
+                </span>
+              </h1>
               <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px]">
                 <SegmentBadge segment={d.segment} className="size-5 text-[11px]" />
                 <FrequencyBadge frequency={d.frequency} />

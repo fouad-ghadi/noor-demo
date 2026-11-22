@@ -160,11 +160,12 @@ export function WeekCalendar({ weekStart, visits, events = [], readOnly, onVisit
 
                 {isToday && now.getHours() >= START_HOUR && now.getHours() < END_HOUR && (
                   <div className="bg-saffron absolute inset-x-0 z-10 h-0.5" style={{ top: topFor(now) }} aria-label="Heure actuelle">
-                    <span className="bg-saffron absolute -top-1 -left-1 size-2.5 rounded-full" />
+                    {/* Le point « maintenant » respire (onde safran) */}
+                    <span className="now-pulse bg-saffron absolute -top-1 -left-1 size-2.5 rounded-full" />
                   </div>
                 )}
 
-                {dayVisits.map((v) => {
+                {dayVisits.map((v, j) => {
                   const start = parseISO(v.planned_at);
                   const draggable = !readOnly && v.status === "planifiee";
                   return (
@@ -178,11 +179,12 @@ export function WeekCalendar({ weekStart, visits, events = [], readOnly, onVisit
                       }}
                       onClick={() => onVisitClick(v)}
                       className={cn(
-                        "border-line absolute inset-x-1 z-[5] cursor-pointer overflow-hidden rounded-md border border-l-[3px] px-1.5 py-0.5 text-left text-[11px] leading-tight transition hover:z-20 hover:shadow-md hover:shadow-pine/10",
+                        "noor-enter border-line absolute inset-x-1 z-[5] cursor-pointer overflow-hidden rounded-md border border-l-[3px] px-1.5 py-0.5 text-left text-[11px] leading-tight transition hover:z-20 hover:shadow-md hover:shadow-pine/10",
                         visitBlockClass(v),
                         draggable && "cursor-grab active:cursor-grabbing",
                       )}
-                      style={{ top: topFor(start) + 1, height: (BLOCK_MINUTES / 60) * HOUR_HEIGHT - 2 }}
+                      // Arrivée en cascade : jour après jour, puis de haut en bas dans la journée
+                      style={{ top: topFor(start) + 1, height: (BLOCK_MINUTES / 60) * HOUR_HEIGHT - 2, animationDelay: `${i * 0.06 + j * 0.025}s` }}
                       title={`${format(start, "HH:mm")} — ${v.doctor_name} (${v.doctor_specialty})`}
                     >
                       <span className="font-semibold">{format(start, "HH:mm")}</span> {v.doctor_name.replace("Dr ", "")}

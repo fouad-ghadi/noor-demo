@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, CircleAlert, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { animateValue } from "@/components/shared/AnimatedNumber";
 import { ProgressWithMarker } from "./ProgressWithMarker";
 
 export type KpiStatus = "good" | "warning" | "critical";
@@ -55,7 +56,7 @@ export function KpiCard({ label, icon: Icon, value, suffix, detail, progress, st
         <Icon className="size-4" /> {label}
       </span>
       <span className="font-display tabular text-ink block text-3xl font-semibold tracking-tight">
-        {value}
+        {animateValue(value)}
         {suffix && <span className="text-muted-foreground ml-1.5 font-sans text-base font-normal">{suffix}</span>}
       </span>
       {progress && (

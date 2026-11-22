@@ -2,6 +2,7 @@
  * Barre de progression avec un repère « attendu à date ».
  * Ex. : 34 visites sur 62 (55 %) alors que 54 % étaient attendus aujourd'hui.
  *
+ * La barre se remplit à l'arrivée (classe CSS `bar-grow`, coupée si animations réduites).
  * `onDark` : version pour le bandeau vert pin du tableau de bord (piste claire, repère blanc).
  */
 import { cn } from "@/lib/utils";
@@ -33,7 +34,7 @@ export function ProgressWithMarker({ value, expected, tone = "neutral", onDark =
   return (
     <div className={cn("relative h-2 w-full rounded-full", onDark ? "bg-white/15" : "bg-secondary", className)}>
       <div
-        className={cn("h-full rounded-full transition-all", (onDark ? TONE_ON_DARK : TONE)[tone])}
+        className={cn("bar-grow h-full rounded-full transition-all", (onDark ? TONE_ON_DARK : TONE)[tone])}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
       {expected !== undefined && expected > 0 && expected < 100 && (

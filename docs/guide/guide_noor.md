@@ -6,7 +6,7 @@ Ce guide décrit les écrans réels de l'application : le mettre à jour quand u
 
 ## 1. Se connecter et naviguer
 
-Sur la page de connexion, choisissez votre profil puis cliquez sur Connexion. Le menu donne accès aux pages Tableau de bord, Médecins, Planning, Statistiques, Analyse des ventes, Catalogue médicaments et Objectifs. Sur téléphone, le menu est une barre de navigation en bas de l'écran ; les autres pages sont dans le menu utilisateur (votre photo, en haut à droite). Un superviseur dispose en plus de la page Vue équipe. Pour vous déconnecter, ouvrez le menu utilisateur.
+Sur la page de connexion, cliquez sur votre nom parmi les délégués : l'application s'ouvre directement sur votre tableau de bord. Le menu donne accès aux pages Tableau de bord, Médecins, Planning, Statistiques, Analyse des ventes, Catalogue médicaments et Objectifs. Sur téléphone, le menu est une barre de navigation en bas de l'écran ; les autres pages sont dans le menu utilisateur (votre photo, en haut à droite). Un superviseur (connexion par email) dispose en plus de la page Vue équipe. Pour vous déconnecter, ouvrez le menu utilisateur.
 
 ## 2. Le tableau de bord
 

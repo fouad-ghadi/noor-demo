@@ -312,8 +312,13 @@ export function DoctorsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sorted.map((d) => (
-                  <TableRow key={d.id} className="cursor-pointer" onClick={() => navigate(`/medecins/${d.id}`)}>
+                {sorted.map((d, i) => (
+                  // Les premières lignes arrivent en cascade (au chargement et après un filtre)
+                  <TableRow
+                    key={d.id}
+                    className={cn("group cursor-pointer", i < 14 && "noor-enter")}
+                    style={i < 14 ? { animationDelay: `${i * 0.03}s` } : undefined}
+                    onClick={() => navigate(`/medecins/${d.id}`)}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <SegmentBadge segment={d.segment} />
@@ -345,7 +350,7 @@ export function DoctorsPage() {
                     </TableCell>
                     {isSupervisor && <TableCell className="text-sm">{d.delegue_name}</TableCell>}
                     <TableCell>
-                      <ChevronRight className="text-muted-foreground size-4" />
+                      <ChevronRight className="text-muted-foreground group-hover:text-pine size-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -355,8 +360,8 @@ export function DoctorsPage() {
 
           {/* Mobile : une seule feuille, une ligne par médecin */}
           <div className="divide-line border-line divide-y overflow-hidden rounded-xl border bg-white lg:hidden">
-            {sorted.map((d) => (
-              <DoctorCard key={d.id} doctor={d} />
+            {sorted.map((d, i) => (
+              <DoctorCard key={d.id} doctor={d} index={i} />
             ))}
           </div>
         </>
@@ -365,11 +370,14 @@ export function DoctorsPage() {
   );
 }
 
-function DoctorCard({ doctor: d }: { doctor: DoctorListItem }) {
+function DoctorCard({ doctor: d, index }: { doctor: DoctorListItem; index: number }) {
   // Toute la ligne est cliquable grâce à un lien « étiré » (absolute inset-0) ;
   // le bouton « Appeler » est placé au-dessus (z-10) : pas de lien imbriqué dans un lien.
   return (
-    <div className="active:bg-mint-wash/60 relative px-4 py-3">
+    <div
+      className={cn("active:bg-mint-wash/60 relative px-4 py-3", index < 10 && "noor-enter")}
+      style={index < 10 ? { animationDelay: `${index * 0.04}s` } : undefined}
+    >
       <Link to={`/medecins/${d.id}`} className="absolute inset-0" aria-label={`Dr ${d.first_name} ${d.last_name}`} />
       <div className="flex items-start gap-3">
         <SegmentBadge segment={d.segment} className="mt-0.5" />

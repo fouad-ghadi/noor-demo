@@ -4,7 +4,8 @@
  * - Un plan de rues très discret (lignes fines), la côte en haut à gauche.
  * - Le trajet du jour relie 5 cabinets. La partie déjà parcourue est pleine,
  *   la suite est en pointillés. L'arrêt en cours est la seule touche safran.
- * - Au chargement, le trajet se dessine et les arrêts apparaissent dans l'ordre
+ * - Au chargement, le trajet se dessine et les arrêts apparaissent dans l'ordre ;
+ *   ensuite, les pointillés de la suite avancent et l'arrêt en cours « respire »
  *   (animation CSS « route-draw », désactivée si l'utilisateur réduit les animations).
  *
  * Le SVG utilise un repère de 600 × 440 ; les étiquettes HTML sont placées en %
@@ -76,18 +77,19 @@ export function RouteIllustration({ className }: { className?: string }) {
         </text>
 
         {/* Suite du trajet (pointillés), visible après le tracé principal */}
-        <path
-          d={ROUTE_NEXT}
-          fill="none"
-          stroke={MINT}
-          strokeOpacity="0.45"
-          strokeWidth="2.5"
-          strokeDasharray="2 8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="stop-appear"
-          style={{ animationDelay: "1.9s" }}
-        />
+        <g className="stop-appear" style={{ animationDelay: "1.9s" }}>
+          <path
+            d={ROUTE_NEXT}
+            fill="none"
+            stroke={MINT}
+            strokeOpacity="0.5"
+            strokeWidth="2.5"
+            strokeDasharray="2 8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="route-march"
+          />
+        </g>
         {/* Trajet déjà parcouru : se dessine au chargement */}
         <path
           d={ROUTE_DONE}
@@ -103,7 +105,13 @@ export function RouteIllustration({ className }: { className?: string }) {
         {/* Arrêts */}
         {STOPS.map((s, i) => (
           <g key={s.time} className="stop-appear" style={{ animationDelay: DELAYS[i] }}>
-            {s.state === "current" && <circle cx={s.x} cy={s.y} r="15" fill={SAFFRON} fillOpacity="0.22" />}
+            {s.state === "current" && (
+              <>
+                {/* Onde safran : l'arrêt « maintenant » respire */}
+                <circle cx={s.x} cy={s.y} r="9" fill={SAFFRON} className="svg-pulse" />
+                <circle cx={s.x} cy={s.y} r="15" fill={SAFFRON} fillOpacity="0.22" />
+              </>
+            )}
             <circle
               cx={s.x}
               cy={s.y}

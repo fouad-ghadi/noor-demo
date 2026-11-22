@@ -56,6 +56,13 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
     statuts = point de couleur + libellé (`StatusPill` dans `shared/badges.tsx`, `dot` dans `lib/labels.ts`) ;
     segments = tuiles A (pin plein) / B (menthe) / C (contour). Titres en Bricolage (`font-display`),
     pas de libellés en majuscules, pas de « · » entre les informations (phrases simples).
+  - **Refonte animée (22 nov. 2026)** : motif zellige « éclairé » `components/brand/ZelligeField.tsx` (SVG + variables CSS
+    `--lx/--ly/--lr`, la lumière suit la souris, dérive seule sur mobile) sur la connexion, le menu, `HeroBand` et le monogramme
+    de la fiche médecin ; `motion` (paquet npm, `motion/react`) pour la pastille du menu qui glisse (`layoutId`), le fondu entre
+    pages, le rideau d'entrée de la connexion (`EntryCurtain`) prolongé par `EntryVeil` (AppLayout, drapeau `noor-entree`).
+    Classes CSS partagées dans `index.css` : `noor-enter`, `line-reveal`, `bar-grow`, `now-pulse` (safran = maintenant), `rail-draw`.
+    Chiffres qui comptent : `shared/AnimatedNumber.tsx`. Tout est coupé par prefers-reduced-motion. Aucun crédit Higgsfield utilisé.
+  - Page de connexion : **seulement les 4 délégués** (le superviseur reste en base, accessible par email : demande de Fouad).
   - Tableaux de bord : bandeau `HeroBand` + tournée `DayRoute` ; fiche médecin avec monogramme ;
     compte-rendu en étapes reliées par un rail. Règle CSS `main .grid > * { min-width: 0 }` : évite les débordements mobiles.
 - **Commits** en français, poussés sur `main` (pas de PR sauf demande).

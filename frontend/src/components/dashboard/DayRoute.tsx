@@ -6,6 +6,8 @@
  *  - arrêt en cours (la prochaine visite planifiée) : la SEULE touche safran ;
  *  - arrêts à venir : pastille creuse, trait en pointillés ;
  *  - visites annulées / reportées : barrées, en retrait.
+ * À l'arrivée, les arrêts apparaissent dans l'ordre et le rail se dessine de l'un à l'autre ;
+ * l'arrêt en cours « respire » (onde safran). Tout est coupé si les animations sont réduites.
  * Clic sur un arrêt → fiche de la visite. Actions à droite : compte-rendu ou itinéraire.
  */
 import { CalendarPlus, Check, FileText, Navigation, X } from "lucide-react";
@@ -77,15 +79,16 @@ export function DayRoute({ visits, readOnly, onVisitClick, onPlan }: Props) {
             // Le trait vers l'arrêt suivant est « parcouru » tant qu'on n'a pas atteint l'arrêt en cours
             const travelled = currentIndex === -1 ? state !== "next" : i < currentIndex;
             return (
-              <li key={v.id} className="relative flex items-start gap-3">
+              <li key={v.id} className="noor-enter relative flex items-start gap-3" style={{ animationDelay: `${0.3 + i * 0.09}s` }}>
                 {/* Rail : pastille + trait vers l'arrêt suivant */}
                 {!isLast && (
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "absolute top-[1.125rem] -bottom-[1.125rem] left-[4.25rem] w-0 -translate-x-px border-l-2",
+                      "rail-draw absolute top-[1.125rem] -bottom-[1.125rem] left-[4.25rem] w-0 -translate-x-px border-l-2",
                       travelled ? "border-mint" : "border-dashed border-white/30",
                     )}
+                    style={{ animationDelay: `${0.45 + i * 0.09}s` }}
                   />
                 )}
                 <button
@@ -136,7 +139,7 @@ function StopDot({ state }: { state: StopState }) {
           <Check className="size-3" strokeWidth={3} />
         </span>
       )}
-      {state === "current" && <span className="bg-saffron ring-saffron/30 size-4 rounded-full ring-4" />}
+      {state === "current" && <span className="now-pulse bg-saffron ring-saffron/30 size-4 rounded-full ring-4" />}
       {state === "next" && <span className="bg-pine size-3.5 rounded-full border-2 border-white/70" />}
       {state === "cancelled" && (
         <span className="bg-pine flex size-4 items-center justify-center rounded-full border border-white/40 text-white/60">
