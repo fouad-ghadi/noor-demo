@@ -66,6 +66,8 @@ export interface Product {
   brand_name: string;
   molecule: string;
   therapeutic_class: string;
+  business_unit: string; // "chronique" | "aigue"
+  product_line: string; // gamme, ex. "CARDIO"
   form_dosage: string;
   description: string | null;
   indications: string[];

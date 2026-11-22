@@ -48,7 +48,7 @@ export function ProductDetailPage() {
     <>
       <PageHeader
         backTo="/produits"
-        backLabel="Produits"
+        backLabel="Catalogue"
         title={p.brand_name}
         description={`${p.molecule}. ${p.therapeutic_class}`}
       />

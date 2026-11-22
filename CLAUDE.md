@@ -121,6 +121,11 @@ ni sur le site public** : on reproduit seulement la structure et les formules, a
 - **Tests** : `cd backend ; pip install -r requirements-dev.txt ; python -m pytest` (base de démo temporaire via `NOOR_DB_PATH`,
   la vraie base n'est pas touchée ; `tests/pharmacovigilance/` utilise sa propre petite base en mémoire).
 - Recommandations : carte « Visites recommandées » (`components/dashboard/RecommendedVisits.tsx`) avec « Planifier ».
+- Catalogue médicaments (`/produits`, `pages/products/ProductsPage.tsx`) : grille animée (CSS, coupée par
+  prefers-reduced-motion), filtres par gamme + recherche (`src/lib/catalogue.ts`, testé par `npm test` / vitest),
+  aperçu latéral, mode plein écran « Présenter au médecin » (`components/catalogue/PresentationMode.tsx`, flèches, balayage).
+  Photos de boîtes générées avec Higgsfield (22 nov. 2026, marque fictive « NOOR », fond détouré) dans
+  `frontend/public/products/<produit>.webp` ; boîte dessinée en CSS si un visuel manque (`GENERATED_PACKSHOTS`).
 - Explications pour le jury : `docs/IA_explications_jury.txt` ; guide technique : `docs/EXTENSIONS_IA.md`.
 
 ## Mise en ligne

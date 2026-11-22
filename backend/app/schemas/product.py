@@ -25,6 +25,8 @@ class ProductOut(ORMModel):
     brand_name: str
     molecule: str
     therapeutic_class: str
+    business_unit: str = "chronique"   # BU : chronique / aigue
+    product_line: str = ""             # gamme (ex. « CARDIO ») : sert de filtre au catalogue
     form_dosage: str
     description: str | None = None
     indications: list[str]

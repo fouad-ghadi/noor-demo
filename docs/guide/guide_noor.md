@@ -6,7 +6,7 @@ Ce guide décrit les écrans réels de l'application : le mettre à jour quand u
 
 ## 1. Se connecter et naviguer
 
-Sur la page de connexion, choisissez votre profil puis cliquez sur Connexion. Le menu donne accès aux pages Tableau de bord, Médecins, Planning, Statistiques, Analyse des ventes, Produits et Objectifs. Sur téléphone, le menu est une barre de navigation en bas de l'écran ; les autres pages sont dans le menu utilisateur (votre photo, en haut à droite). Un superviseur dispose en plus de la page Vue équipe. Pour vous déconnecter, ouvrez le menu utilisateur.
+Sur la page de connexion, choisissez votre profil puis cliquez sur Connexion. Le menu donne accès aux pages Tableau de bord, Médecins, Planning, Statistiques, Analyse des ventes, Catalogue médicaments et Objectifs. Sur téléphone, le menu est une barre de navigation en bas de l'écran ; les autres pages sont dans le menu utilisateur (votre photo, en haut à droite). Un superviseur dispose en plus de la page Vue équipe. Pour vous déconnecter, ouvrez le menu utilisateur.
 
 ## 2. Le tableau de bord
 
@@ -62,7 +62,7 @@ La page Objectifs montre l'objectif du mois : nombre de visites à réaliser, co
 
 ## 15. Produits et documents
 
-La page Produits présente le catalogue du laboratoire. La fiche d'un produit donne les messages clés à transmettre pendant la visite, les indications, les spécialités ciblées, le nombre de présentations et d'échantillons remis sur 30 jours, et les documents (RCP, notice patient, support promotionnel). Sur la fiche d'un produit, l'assistant NOOR cherche d'abord dans les documents de ce produit.
+La page Catalogue médicaments présente les produits du laboratoire avec leur photo. Filtrez par gamme (Cardiologie, Gastro-entérologie...) ou tapez un nom, une molécule ou une indication dans la recherche. Cliquez sur un produit pour voir ses 3 messages clés, ses indications et ses formes. Le bouton « Présenter au médecin » ouvre un mode plein écran pour montrer les produits au médecin sur la tablette : passez d'un produit à l'autre avec les flèches ou en faisant glisser le doigt, et fermez avec « Fermer » ou la touche Échap. Le bouton « Fiche complète » ouvre la fiche du produit, qui donne les messages clés à transmettre pendant la visite, les indications, les spécialités ciblées, le nombre de présentations et d'échantillons remis sur 30 jours, et les documents (RCP, notice patient, support promotionnel). Sur la fiche d'un produit, l'assistant NOOR cherche d'abord dans les documents de ce produit.
 
 ## 16. Utiliser l'assistant NOOR
 

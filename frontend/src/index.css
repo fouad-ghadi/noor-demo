@@ -170,3 +170,36 @@
   .route-draw { animation: none; stroke-dashoffset: 0; }
   .stop-appear { animation: none; opacity: 1; }
 }
+
+/* ------------------------------------------------------------------
+   Catalogue médicaments (src/pages/products/) :
+   - les cartes montent l'une après l'autre à l'arrivée (délai fixé par carte) ;
+   - en mode présentation, la boîte flotte doucement et chaque produit glisse.
+   Tout est coupé si l'utilisateur réduit les animations.
+   ------------------------------------------------------------------ */
+@keyframes noor-rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes noor-float {
+  0%, 100% { transform: translateY(0) rotateY(-8deg); }
+  50% { transform: translateY(-10px) rotateY(8deg); }
+}
+@keyframes noor-slide-next {
+  from { opacity: 0; transform: translateX(48px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes noor-slide-prev {
+  from { opacity: 0; transform: translateX(-48px); }
+  to { opacity: 1; transform: none; }
+}
+.catalogue-rise {
+  opacity: 0;
+  animation: noor-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+.slide-next { animation: noor-slide-next 0.45s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.slide-prev { animation: noor-slide-prev 0.45s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .catalogue-rise { animation: none; opacity: 1; }
+  .slide-next, .slide-prev { animation: none; }
+}
