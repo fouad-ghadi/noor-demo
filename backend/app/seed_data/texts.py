@@ -96,7 +96,7 @@ CANCEL_REASONS = [
 ]
 
 # Notes contenant volontairement une mention d'effet indésirable.
-# Elles serviront à démontrer le futur module de pharmacovigilance
+# Elles servent à démontrer et évaluer le module de pharmacovigilance
 # (app/ai/pharmacovigilance.py). Liste reprise dans seed_duplicates.md.
 PHARMACOVIGILANCE_NOTES: list[tuple[str, str]] = [
     ("Amoxira", "Le docteur signale qu'une patiente de 34 ans a présenté une éruption cutanée avec démangeaisons 2 jours après le début d'Amoxira. Traitement arrêté."),
@@ -106,4 +106,15 @@ PHARMACOVIGILANCE_NOTES: list[tuple[str, str]] = [
     ("Artrinol", "Patient hospitalisé pour douleurs épigastriques et méléna après 10 jours d'Artrinol sans protection gastrique."),
     ("Respiflow", "Une maman rapporte des palpitations et tremblements chez son enfant de 7 ans après plusieurs bouffées de Respiflow."),
     ("Gestavia", "Une patiente enceinte se plaint de constipation et nausées importantes sous Gestavia, la gynécologue hésite à continuer."),
+]
+
+# « Situations particulières » à déclarer même sans effet indésirable (procédure de pharmacovigilance) :
+# grossesse / allaitement, surdosage, mésusage, erreur médicamenteuse, manque d'efficacité.
+# La 1re (surdosage, patient non identifié) est placée sur la visite la plus récente : délai de 24 h en cours.
+PHARMACOVIGILANCE_SITUATION_NOTES: list[tuple[str, str]] = [
+    ("Calmapyr", "Le docteur signale qu'un patient a pris 12 comprimés de Calmapyr 1 g en une journée, il a été vu aux urgences."),
+    ("Cardiovex", "Le docteur signale qu'une patiente de 29 ans traitée par Cardiovex 5 mg vient d'apprendre qu'elle est enceinte de 8 semaines."),
+    ("Glucanor", "Le Dr rapporte une erreur de dispensation : la pharmacie a remis Glucanor 1000 mg au lieu de 500 mg à une patiente de 70 ans."),
+    ("Amoxira", "Chez un enfant de 4 ans sous Amoxira, aucune amélioration de l'otite après 7 jours de traitement bien suivi."),
+    ("Gastrozen", "Le docteur signale un mésusage : un homme de 52 ans prend Gastrozen en continu depuis un an sans avis médical."),
 ]

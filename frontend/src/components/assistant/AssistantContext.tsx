@@ -23,6 +23,7 @@ export type PageName =
   | "objectives"
   | "stats"
   | "sales"
+  | "pharmacovigilance"
   | "other";
 
 export interface PageContext {

@@ -19,6 +19,9 @@ import type {
   ObjectiveProgress,
   Product,
   ProductDetail,
+  PvCase,
+  PvDeclarationDraft,
+  PvDeclarationInput,
   Sales,
   Team,
   User,
@@ -137,6 +140,14 @@ export const api = {
   objectives: (delegue_id?: number) => apiRequest<ObjectiveProgress[]>("GET", `/objectives${qs({ delegue_id })}`),
   alerts: (delegue_id?: number) => apiRequest<Alert[]>("GET", `/alerts${qs({ delegue_id })}`),
   updateAlert: (id: number, status: string) => apiRequest<Alert>("PATCH", `/alerts/${id}`, { status }),
+
+  // Pharmacovigilance : cas à déclarer sous 24 h
+  pvCases: (delegue_id?: number) => apiRequest<PvCase[]>("GET", `/pharmacovigilance/cases${qs({ delegue_id })}`),
+  pvCase: (id: number) => apiRequest<PvCase>("GET", `/pharmacovigilance/cases/${id}`),
+  pvPreview: (id: number, data: PvDeclarationInput) =>
+    apiRequest<PvDeclarationDraft>("POST", `/pharmacovigilance/cases/${id}/preview`, data),
+  pvDeclare: (id: number, data: PvDeclarationInput) =>
+    apiRequest<PvCase>("POST", `/pharmacovigilance/cases/${id}/declare`, data),
   dashboard: (delegue_id?: number) => apiRequest<Dashboard>("GET", `/stats/dashboard${qs({ delegue_id })}`),
   teamStats: () => apiRequest<Team>("GET", "/stats/team"),
 

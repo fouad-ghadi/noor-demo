@@ -1,0 +1,4 @@
+# Outils de développement (tests). Installer avec :  pip install -r requirements-dev.txt
+-r requirements.txt
+pytest>=8
+httpx>=0.27

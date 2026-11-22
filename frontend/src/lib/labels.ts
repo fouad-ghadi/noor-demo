@@ -11,6 +11,9 @@ import type {
   PrescribingStatus,
   PrescriptionFeedback,
   ProgressStatus,
+  PvDeadlineState,
+  PvKind,
+  PvSituation,
   Segment,
   TimeSlot,
   VisitStatus,
@@ -113,4 +116,27 @@ export const LAST_VISIT_FILTERS: Record<string, string> = {
   "30_60": "Entre 30 et 60 jours",
   gt60: "Plus de 60 jours",
   never: "Jamais visité",
+};
+
+/** Pharmacovigilance : nature du cas et situations particulières (procédure de déclaration). */
+export const PV_KIND: Record<PvKind, string> = {
+  effet_indesirable: "Effet indésirable",
+  situation_particuliere: "Situation particulière",
+};
+
+export const PV_SITUATION: Record<PvSituation, string> = {
+  grossesse_allaitement: "Grossesse ou allaitement",
+  surdosage: "Surdosage",
+  mesusage: "Mésusage",
+  erreur_medicamenteuse: "Erreur médicamenteuse",
+  manque_efficacite: "Manque d'efficacité",
+};
+
+/** Délai de déclaration de 24 h (le safran est réservé à « maintenant » : pas utilisé ici). */
+export const PV_DEADLINE: Record<PvDeadlineState, { label: string; dot: string }> = {
+  a_temps: { label: "À déclarer", dot: "bg-sky-500" },
+  urgent: { label: "À déclarer d'urgence", dot: "bg-orange-500" },
+  en_retard: { label: "Délai de 24 h dépassé", dot: "bg-rose-500" },
+  declaree_a_temps: { label: "Déclarée dans les 24 h", dot: "bg-emerald-500" },
+  declaree_en_retard: { label: "Déclarée hors délai", dot: "bg-slate-400" },
 };

@@ -71,7 +71,9 @@ du partenaire. On reproduit la structure et les formules avec des données ficti
 
 ## 5. Ce qui reste à faire d'ici le 8 décembre (par priorité)
 
-### P1. Pharmacovigilance conforme à la procédure réelle
+### P1. Pharmacovigilance conforme à la procédure réelle — FAIT (22 nov. 2026)
+- Fait : situations particulières, 4 infos minimales, délai 24 h, déclaration pré-remplie, « Marquer comme déclarée »,
+  évaluation 12/12 sans fausse alerte, 28 tests pytest (`backend/tests`). Détail ci-dessous pour mémoire.
 - Détecter aussi les **situations particulières** (surdosage, mésusage, grossesse / allaitement, manque d'efficacité,
   erreur médicamenteuse) dans `app/ai/pharmacovigilance.py`, sans casser l'évaluation (7/7, 0 fausse alerte).
 - Pour chaque alerte : **liste des 4 informations** (trouvées / manquantes), **compte à rebours 24 h**
