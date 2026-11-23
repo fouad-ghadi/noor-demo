@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copier-ocr.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/copier-ocr.mjs",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "preview": "vite preview",
@@ -32,6 +34,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@tesseract.js-data/fra": "^1.0.0",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",

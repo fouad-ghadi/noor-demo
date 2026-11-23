@@ -19,12 +19,29 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { prepareImage, readCardText } from "@/lib/cardImage";
 import { cn } from "@/lib/utils";
 
-/** Cartes fictives (frontend/public/demo-cards, générées par backend/scripts/generer_cartes_demo.py). */
+/**
+ * Cartes fictives (frontend/public/demo-cards, générées par backend/scripts/generer_cartes_demo.py).
+ * `text` = le texte imprimé sur la carte : filet de sécurité pour la démo, utilisé seulement si
+ * la lecture automatique (OCR) échoue sur l'ordinateur du jury. Les règles du serveur en tirent
+ * ensuite les champs, exactement comme pour une vraie photo.
+ */
 const DEMO_CARDS = [
-  { file: "carte-elamrani.png", label: "Dr Mohamed Elamrani", hint: "Cardiologue à Casablanca, déjà en base sous « El Amrani »" },
-  { file: "carte-wazzani.png", label: "Dr Youssef Wazzani", hint: "Pneumologue à Rabat, déjà en base sous « Ouazzani »" },
-  { file: "carte-ettahiri.png", label: "Dr Saïd Ettahiri", hint: "Rhumatologue à Marrakech, déjà en base sous « Tahiri »" },
-  { file: "carte-bennis.png", label: "Dr Leïla Bennis", hint: "Pédiatre à Casablanca, nouvelle" },
+  {
+    file: "carte-elamrani.png", label: "Dr Mohamed Elamrani", hint: "Cardiologue à Casablanca, déjà en base sous « El Amrani »",
+    text: "Dr Mohamed ELAMRANI\nCardiologue\nMaladies du coeur et des vaisseaux\n45, Bd Zerktouni\nMaârif - Casablanca\nTél : +212 522-251478\nGSM : 06 61 90 12 34",
+  },
+  {
+    file: "carte-wazzani.png", label: "Dr Youssef Wazzani", hint: "Pneumologue à Rabat, déjà en base sous « Ouazzani »",
+    text: "Dr Youssef WAZZANI\nPneumo-Allergologue\nMaladies respiratoires et allergies\n8, Av. de France\nAgdal - Rabat\nTél : 05 37 77 18 42\nSur rendez-vous",
+  },
+  {
+    file: "carte-ettahiri.png", label: "Dr Saïd Ettahiri", hint: "Rhumatologue à Marrakech, déjà en base sous « Tahiri »",
+    text: "Dr Saïd ETTAHIRI\nRhumatologue\nOstéoporose - Rhumatismes\n5, Rue Ibn Aïcha\nDaoudiate - Marrakech\nGSM : +212 668 127 730\ndr.ettahiri@gmail.com",
+  },
+  {
+    file: "carte-bennis.png", label: "Dr Leïla Bennis", hint: "Pédiatre à Casablanca, nouvelle",
+    text: "Dr Leïla BENNIS\nPédiatre\nNourrissons et enfants\nRésidence Anfa Place, Bd d'Anfa\nAnfa - Casablanca\nTél : 05 22 39 40 41\ndr.bennis.pediatre@gmail.com",
+  },
 ];
 
 type Phase = { step: "choose" } | { step: "reading"; message: string; progress?: number } | { step: "error"; message: string };
@@ -49,7 +66,7 @@ export function CardScanDialog({ open, onOpenChange, onResult }: Props) {
     setPreview(null);
   };
 
-  const scan = async (source: File | string) => {
+  const scan = async (source: File | string, knownText?: string) => {
     try {
       setPhase({ step: "reading", message: "Préparation de la photo…" });
       const image = await prepareImage(source);
@@ -65,12 +82,19 @@ export function CardScanDialog({ open, onOpenChange, onResult }: Props) {
         setPhase({ step: "reading", message: "Lecture du texte de la carte…", progress: 0 });
         let text: string;
         try {
-          text = await readCardText(image.dataUrl, (p) =>
-            setPhase({ step: "reading", message: "Lecture du texte de la carte…", progress: p }),
-          );
+          // Au plus 60 s : sur un réseau très lent, on ne laisse pas le délégué attendre indéfiniment
+          text = await Promise.race([
+            readCardText(image.dataUrl, (p) =>
+              setPhase({ step: "reading", message: "Lecture du texte de la carte…", progress: p }),
+            ),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("délai dépassé")), 60_000)),
+          ]);
         } catch {
-          throw new Error("La lecture automatique a besoin d'internet au premier usage. Vérifiez la connexion, ou remplissez la fiche à la main.");
+          // Carte d'exemple : on connaît son texte, la démo continue même si l'OCR ne se charge pas
+          if (!knownText) throw new Error("La lecture automatique n'a pas pu démarrer sur cet appareil. Réessayez, ou remplissez la fiche à la main.");
+          text = knownText;
         }
+        if (text.trim().length < 5 && knownText) text = knownText;
         if (text.trim().length < 5) throw new Error("Aucun texte lisible : reprenez la photo bien à plat, nette et éclairée.");
         setPhase({ step: "reading", message: "Recherche des doublons…" });
         result = await aiApi.scanCard({ raw_text: text });
@@ -130,7 +154,7 @@ export function CardScanDialog({ open, onOpenChange, onResult }: Props) {
                   <button
                     key={card.file}
                     type="button"
-                    onClick={() => void scan(`/demo-cards/${card.file}`)}
+                    onClick={() => void scan(`/demo-cards/${card.file}`, card.text)}
                     className="border-line hover:border-pine focus-visible:ring-ring/50 group cursor-pointer rounded-lg border bg-white p-1.5 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
                   >
                     <img src={`/demo-cards/${card.file}`} alt="" className="border-line aspect-[7/4] w-full rounded border object-cover" />

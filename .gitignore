@@ -22,3 +22,6 @@ dist/
 
 # Généré par backend/seed.py (change selon la date) : non versionné
 seed_duplicates.md
+
+# Fichiers de l'OCR copiés depuis node_modules (frontend/scripts/copier-ocr.mjs)
+frontend/public/ocr/

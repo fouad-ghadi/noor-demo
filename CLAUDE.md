@@ -121,7 +121,7 @@ ni sur le site public** : on reproduit seulement la structure et les formules, a
   déclaration pré-remplie (e-mail fictif `pharmacovigilance@noor-demo.ma`), « Marquer comme déclarée » (délégué seul).
   Une alerte PV ne se ferme qu'en déclarant. Pages `/pharmacovigilance` et `/pharmacovigilance/:id`.
 - Carte de visite : photo / import / 4 cartes d'exemple (`frontend/public/demo-cards/`, `scripts/generer_cartes_demo.py`).
-  Avec clé : Claude vision ; sans clé : OCR Tesseract.js dans le navigateur (`src/lib/cardImage.ts`, CDN jsdelivr au 1er usage)
+  Avec clé : Claude vision ; sans clé : OCR Tesseract.js dans le navigateur (`src/lib/cardImage.ts`, fichiers servis par NOOR dans `/ocr`, copiés par `frontend/scripts/copier-ocr.mjs` avant dev/build ; plus de CDN ; cartes d'exemple : texte connu si l'OCR échoue)
   + règles `extract_fields`. Doublons : `services/duplicate_service.py` (cherchés dans toute la base, fiche d'un collègue
   signalée sans accès), vérifiés aussi pendant la saisie manuelle ; « Compléter cette fiche » → page de modification
   pré-remplie par `/ai/card-scanner/merge` (graphie de la base gardée, ancien téléphone noté). Éval. `scripts/evaluer_doublons.py` : 10/10, 0 fausse alerte.
