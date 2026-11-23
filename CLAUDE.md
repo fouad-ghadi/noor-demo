@@ -137,7 +137,7 @@ ni sur le site public** : on reproduit seulement la structure et les formules, a
   `ai/medical_info.py` (fiches `docs/medical/fiche_*.md`, `kind="medical"`). Phrases prédéfinies du compte-rendu :
   `src/lib/reportPhrases.ts`. Nouveaux champs : `Doctor.patients_per_day`, `Doctor.reception_days` ("1,3" = mar. et jeu.),
   `Product.channel/margin_level/peak_months/sample_unit` (seed : `add_cabinet_profiles`, hasard séparé `Random(2027)`).
-  Tests : `backend/tests/test_sothema.py`. Guide du chatbot : sections 19 à 24.
+  Tests : `backend/tests/test_sothema.py`. Guide du chatbot : sections 19 à 25 (25 = scan de carte).
 - Recommandations : carte « Visites recommandées » (`components/dashboard/RecommendedVisits.tsx`) avec « Planifier ».
 - Catalogue médicaments (`/produits`, `pages/products/ProductsPage.tsx`) : grille animée (CSS, coupée par
   prefers-reduced-motion), filtres par gamme + recherche (`src/lib/catalogue.ts`, testé par `npm test` / vitest),

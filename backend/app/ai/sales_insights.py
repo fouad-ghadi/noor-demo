@@ -139,7 +139,7 @@ def insights(db: Session, user: User, delegue_id: int | None = None) -> SalesIns
                     continue
                 why = [f"{d.specialty}, potentiel {d.segment}, {HABIT[PrescribingStatus(status)]} {p.brand_name}",
                        f"{p.brand_name} perd des parts à {d.territory}"]
-                why.append(f"Dernière visite il y a {days} jours" if days is not None else "Jamais visité")
+                why.append(("Vu aujourd'hui" if days == 0 else "Vu hier" if days == 1 else f"Dernière visite il y a {days} jours") if days is not None else "Jamais visité")
                 impact = z.impact * (1.5 if d.segment == "A" else 1) * (1 + min(days or 90, 90) / 90)
                 doctor_insights.append(SalesInsight(kind="medecin_a_revoir", title=f"{d.full_name} ({d.district})",
                                                     why=why, territory=d.territory, product_id=p.id,

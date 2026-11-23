@@ -171,6 +171,15 @@ REFUSAL = (
 )
 
 
+# « Bonjour », « Salam », « Merci »... : on répond poliment au lieu de refuser
+GREETING = re.compile(r"^\s*(bonjour|bonsoir|salut|salam|slm|hello|coucou|merci|ok|d.?accord)\b[\s!.?,a-z]{0,20}$")
+WELCOME = (
+    "Bonjour ! Je suis l'assistant NOOR. Je peux vous aider sur trois sujets : vos produits "
+    "(« Quelle est la posologie d'Amoxira ? »), le fonctionnement de NOOR (« Comment remplir ma semaine ? ») "
+    "et vos chiffres (« Quel est mon CPA ? », « Ma tournée de demain »). Je cite toujours ma source."
+)
+
+
 def answer(db: Session, user: User, request: AskRequest) -> AskResponse:
     """
     Point d'entrée de l'assistant NOOR : aiguille la question vers la bonne source.
@@ -182,6 +191,8 @@ def answer(db: Session, user: User, request: AskRequest) -> AskResponse:
     """
     from app.ai import crm_data, crm_guide, medical_info  # import ici : ces modules réutilisent ce fichier-ci
 
+    if GREETING.match(normalize(request.question)):
+        return AskResponse(answer=WELCOME, citations=[], kind="guide")
     howto = crm_data.is_howto(request.question)
     detected = crm_data.detect_tool(db, user, request.question)
     if detected and not howto:
@@ -214,9 +225,16 @@ def answer_product(db: Session, user: User, request: AskRequest) -> AskResponse:
     product_words = {t for p in db.scalars(select(Product)) for t in tokenize(f"{p.brand_name} {p.molecule}")}
     query = [t for t in tokenize(request.question) if t not in product_words]
     pool = [p for p in _load_passages() if not brands or p.brand in brands]
-    ranked = [(s, p) for s, p in _bm25(query, pool) if s > 0]
-    # Seuil : en dessous, les documents ne parlent pas vraiment de la question
-    if not query or not ranked or ranked[0][0] < 2.0:
+    # Bonus quand un mot de la question est dans le TITRE de la section : « posologie de Calmapyr »
+    # doit citer la section Posologie, même si une autre section répète souvent le mot « dose ».
+    ranked = sorted(((s + 1.5 * len(set(query) & set(tokenize(p.section_title))), p)
+                     for s, p in _bm25(query, pool) if s > 0), key=lambda x: -x[0])
+    # Seuil : en dessous, les documents ne parlent pas vraiment de la question.
+    # Quand un produit précis est visé, on cherche dans son seul RCP : un mot courant
+    # comme « posologie » (présent dans presque tous les RCP, donc peu « rare ») suffit alors.
+    # Un mot absent du RCP (« prix ») vaut toujours 0 : la question reste refusée.
+    min_score = 1.0 if brands else 2.0
+    if not query or not ranked or ranked[0][0] < min_score:
         return AskResponse(answer=REFUSAL, citations=[], refused=True)
 
     docs = {

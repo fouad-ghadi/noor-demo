@@ -41,7 +41,10 @@ export const REPORT_PHRASES: { group: string; phrases: string[] }[] = [
 
 /** Ajoute une phrase à la fin des notes (avec un espace), en remplaçant {p} par le produit présenté. */
 export function appendPhrase(notes: string, phrase: string, product?: string): string {
-  const text = phrase.replace(/\{p\}/g, product ?? "le produit");
+  // « de {p} » : « du produit », « d'Amoxira », « de Cardiovex » (élision et contraction)
+  const text = phrase
+    .replace(/\bde \{p\}/g, product ? (/^[aeiouyhâéèêîôû]/i.test(product) ? `d'${product}` : `de ${product}`) : "du produit")
+    .replace(/\{p\}/g, product ?? "le produit");
   const trimmed = notes.trimEnd();
   return trimmed ? `${trimmed} ${text}` : text;
 }

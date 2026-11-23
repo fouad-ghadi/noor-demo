@@ -36,6 +36,10 @@ export function formatRelativeDay(d: DateInput): string {
   return format(date, "EEE d MMM", { locale: fr });
 }
 
+/** « aujourd'hui », « hier », « il y a 3 jours » (à partir d'un nombre de jours) */
+export const formatDaysAgo = (days: number) =>
+  days <= 0 ? "aujourd'hui" : days === 1 ? "hier" : `il y a ${days} jours`;
+
 /** "il y a 3 jours" */
 export const formatAgo = (d: DateInput) => `il y a ${formatDistanceToNowStrict(toDate(d), { locale: fr })}`;
 

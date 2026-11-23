@@ -249,3 +249,41 @@ def test_route_api(users):
     assert r.status_code == 200
     body = r.json()
     assert body["kind"] == "donnees" and body["citations"][0]["link"] == "/statistiques"
+
+
+# ---------------------------------------------------------------------------
+# Audit du 23 nov. 2026 : questions qui échouaient avant la soutenance
+# ---------------------------------------------------------------------------
+
+PRODUCTS = ["Amoxira", "Artrinol", "Calmapyr", "Cardiovex", "Cutalis",
+            "Gastrozen", "Gestavia", "Glucanor", "Respiflow", "Statilia"]
+
+
+@pytest.mark.parametrize("brand", PRODUCTS)
+def test_posologie_de_chaque_produit(db, users, brand):
+    """« Posologie » est dans presque tous les RCP (mot peu rare) : la question doit quand même aboutir."""
+    response = ask(db, users["hamza"], f"Quelle est la posologie de {brand} ?")
+    assert not response.refused
+    assert response.citations[0].section.startswith("Posologie")
+
+
+def test_prix_toujours_refuse_meme_avec_un_produit(db, users):
+    assert ask(db, users["hamza"], "Quel est le prix de l'Amoxira ?").refused
+
+
+@pytest.mark.parametrize("question, section", [
+    ("Comment créer un médecin ?", "Ajouter ou modifier un médecin"),
+    ("Comment ajouter un médecin ?", "Ajouter ou modifier un médecin"),
+    ("Comment scanner une carte de visite ?", "Scanner une carte de visite"),
+])
+def test_guide_trouve_la_bonne_section(db, users, question, section):
+    response = ask(db, users["hamza"], question)
+    assert response.kind == "guide"
+    assert response.citations[0].section.startswith(section)
+
+
+@pytest.mark.parametrize("question", ["Bonjour", "salam", "Merci !"])
+def test_salutation(db, users, question):
+    response = ask(db, users["hamza"], question)
+    assert not response.refused
+    assert "Bonjour" in response.answer

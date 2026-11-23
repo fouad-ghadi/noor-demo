@@ -126,6 +126,13 @@ Plan d'origine :
 - Les plugins Claude Code ne sont pas disponibles dans les sessions cloud (d'où la compétence copiée dans le dépôt).
 - Alternative gratuite à Claude discutée (Gemini) : non implémentée.
 
+- **Audit du 23 nov. 2026** (avant la soutenance) : chatbot corrigé (posologie refusée pour 7 produits sur 10,
+  « créer un médecin » mal aiguillé, salutations refusées), guide du CRM mis à jour (scan de carte = section 25,
+  déclaration PV), « il y a 0 jours » → « aujourd'hui », phrase « posologie de le produit ».
+  **À savoir pour la démo** : le cas PV « délai en cours » du seed est souvent déjà en retard (lundi, après un week-end
+  ou une réunion) ; pour montrer le compte à rebours de 24 h, rédiger en direct un compte-rendu qui mentionne un effet
+  (ex. « une patiente a fait une éruption cutanée sous Amoxira ») : l'alerte apparaît avec « il reste ~24 h ».
+
 ## 7. Méthode de travail attendue
 
 1. Lire `CLAUDE.md` puis ce fichier.

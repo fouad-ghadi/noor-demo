@@ -13,7 +13,7 @@ import { aiApi, type ProductToPush } from "@/api/ai";
 import { FrequencyBadge, SegmentBadge, StatusPill } from "@/components/shared/badges";
 import { ErrorState } from "@/components/shared/states";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDaysAgo } from "@/lib/format";
 import { FEEDBACK, PRESCRIPTION_FEEDBACK } from "@/lib/labels";
 
 interface Props {
@@ -76,7 +76,7 @@ export function VisitPrepSheet({ doctorId, onOpenChange }: Props) {
               ) : (
                 <div className="border-line space-y-1.5 rounded-lg border bg-white p-3 text-[13px]">
                   <p className="text-ink font-medium">
-                    {formatDate(p.last_report.date)}, il y a {p.last_report.days_ago} jours
+                    {formatDate(p.last_report.date)}, {formatDaysAgo(p.last_report.days_ago)}
                     {p.last_report.feedback && (
                       <span className={FEEDBACK[p.last_report.feedback].className}>
                         {" "}: accueil {FEEDBACK[p.last_report.feedback].label.toLowerCase()}

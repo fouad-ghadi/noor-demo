@@ -9,4 +9,10 @@ describe("appendPhrase", () => {
   it("ajoute à la suite des notes existantes", () => {
     expect(appendPhrase("Bon accueil. ", "Intéressé par {p}.")).toBe("Bon accueil. Intéressé par le produit.");
   });
+  it("accorde « de {p} » : du produit, d'Amoxira, de Cardiovex", () => {
+    const phrase = "Questions sur la posologie de {p}.";
+    expect(appendPhrase("", phrase)).toBe("Questions sur la posologie du produit.");
+    expect(appendPhrase("", phrase, "Amoxira")).toBe("Questions sur la posologie d'Amoxira.");
+    expect(appendPhrase("", phrase, "Cardiovex")).toBe("Questions sur la posologie de Cardiovex.");
+  });
 });

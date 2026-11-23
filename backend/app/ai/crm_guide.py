@@ -38,11 +38,17 @@ CRM_WORDS = re.compile(
 
 
 # Verbes trop courants dans les questions « mode d'emploi » pour aider la recherche
-GUIDE_STOPWORDS = {"voir", "trouver", "ouvrir", "afficher", "faire", "cliquer", "aller", "acceder", "consulter"}
+# (« posologie » vient du synonyme « combien » des RCP : inutile pour le guide)
+GUIDE_STOPWORDS = {"voir", "trouver", "ouvrir", "afficher", "faire", "cliquer", "aller", "acceder", "consulter",
+                   "posologie"}
+# Synonymes propres au guide : « créer un médecin » = « ajouter un médecin »
+GUIDE_SYNONYMS = {"creer": "ajouter", "nouveau": "ajouter", "nouvelle": "ajouter", "enregistrer": "ajouter",
+                  "rajouter": "ajouter", "editer": "modifier", "changer": "modifier", "corriger": "modifier"}
 
 
 def guide_tokens(text: str) -> list[str]:
-    return [t for t in tokenize(text) if t not in GUIDE_STOPWORDS]
+    tokens = (GUIDE_SYNONYMS.get(t, t) for t in tokenize(text))
+    return [t for t in tokens if t not in GUIDE_STOPWORDS]
 
 
 @lru_cache(maxsize=1)
@@ -76,7 +82,10 @@ def answer(db: Session, request: AskRequest) -> AskResponse:
     """Répond à une question « mode d'emploi » à partir du guide, avec la section citée."""
     query = guide_tokens(request.question)
     corpus = load_passages()
-    ranked = [(s, p) for s, p in _bm25(query, list(corpus), corpus) if s > 0]
+    # Bonus quand les mots de la question sont dans le titre de la section :
+    # « ajouter un médecin » doit trouver « Ajouter ou modifier un médecin », pas « Ajouter un événement »
+    ranked = sorted(((s + 0.5 * len(set(query) & set(guide_tokens(p.section_title))), p)
+                     for s, p in _bm25(query, list(corpus), corpus) if s > 0), key=lambda x: -x[0])
     # « C'est quoi un F2 ? », « Que signifie DSM ? » : on privilégie la section Vocabulaire
     if DEFINITION.search(normalize(request.question)):
         ranked = sorted(((s * 1.5 if p.section_title.startswith("Vocabulaire") else s, p) for s, p in ranked),

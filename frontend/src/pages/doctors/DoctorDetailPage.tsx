@@ -115,7 +115,7 @@ export function DoctorDetailPage() {
           <MiniStat label="Visites réalisées" value={String(d.visits_count)} />
           <MiniStat
             label="Dernière visite"
-            value={d.days_since_last_visit === null ? "Jamais" : `il y a ${d.days_since_last_visit} j`}
+            value={d.days_since_last_visit === null ? "Jamais" : d.days_since_last_visit === 0 ? "Aujourd'hui" : `il y a ${d.days_since_last_visit} j`}
             tone={d.days_since_last_visit === null || d.days_since_last_visit > 30 ? "warning" : "default"}
           />
           <MiniStat label="Prochaine visite" value={d.next_visit ? formatShortDate(d.next_visit.planned_at) : "Non planifiée"} />

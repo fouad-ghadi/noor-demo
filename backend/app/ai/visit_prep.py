@@ -51,6 +51,11 @@ OBJECTION_TIPS: dict[str, tuple[list[str], str]] = {
 }
 
 
+def _days_ago(days: int) -> str:
+    """« aujourd'hui », « hier » ou « il y a 5 jours »."""
+    return "aujourd'hui" if days <= 0 else "hier" if days == 1 else f"il y a {days} jours"
+
+
 def _reception_text(doctor: Doctor) -> str:
     slot = SLOTS.get(doctor.preferred_slot or "", "")
     if not doctor.reception_days:
@@ -202,7 +207,7 @@ def prepare(db: Session, user: User, doctor_id: int) -> VisitPreparation:
         reminders.append("Demander le nombre de patients par jour (sert au calcul du potentiel)")
 
     if last:
-        intro = f"Dernière visite il y a {last.days_ago} jours"
+        intro = f"Dernière visite {_days_ago(last.days_ago)}"
         if last.objections:
             first = last.objections[0]
             intro += f", objection : {first[0].lower()}{first[1:]}"

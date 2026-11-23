@@ -14,7 +14,7 @@ Le tableau de bord est la page d'accueil. En haut, le bandeau résume le mois : 
 
 ## 3. Ajouter ou modifier un médecin
 
-Ouvrez la page Médecins puis cliquez sur Nouveau médecin. Remplissez l'identité (prénom, nom, spécialité), le segment (A fort potentiel, B potentiel moyen, C faible potentiel), le ciblage (F2 deux visites par mois, F1 une visite par mois, ou Hors cible) et le lieu d'exercice (ville, quartier, adresse, téléphone). Le territoire de vente est calculé automatiquement à partir du quartier. Pour modifier une fiche existante, ouvrez la fiche du médecin et cliquez sur Modifier. Le bouton « Scanner une carte de visite » n'est pas encore disponible.
+Ouvrez la page Médecins puis cliquez sur Nouveau médecin. Remplissez l'identité (prénom, nom, spécialité), le segment (A fort potentiel, B potentiel moyen, C faible potentiel), le ciblage (F2 deux visites par mois, F1 une visite par mois, ou Hors cible) et le lieu d'exercice (ville, quartier, adresse, téléphone). Le territoire de vente est calculé automatiquement à partir du quartier. Pour modifier une fiche existante, ouvrez la fiche du médecin et cliquez sur Modifier. Pour gagner du temps, utilisez le bouton « Scanner une carte de visite » (voir la section Scanner une carte de visite).
 
 ## 4. Rechercher un médecin
 
@@ -42,7 +42,7 @@ Dans le compte-rendu, cliquez sur « Dicter le compte-rendu », choisissez la la
 
 ## 10. Signaler un effet indésirable (pharmacovigilance)
 
-Si un médecin vous rapporte un effet indésirable ou une situation particulière (surdosage, mésusage, grossesse, manque d'efficacité, erreur médicamenteuse) avec un produit du laboratoire, décrivez-le dans les notes du compte-rendu. NOOR analyse chaque compte-rendu et crée une alerte « Pharmacovigilance » en tête de la liste des alertes. Transmettez ensuite l'information à l'équipe de pharmacovigilance (pharmacovigilance@noor-demo.ma) dans les 24 heures, avec au minimum le produit, l'effet ou la situation, un patient identifiable et le médecin notificateur.
+Si un médecin vous rapporte un effet indésirable ou une situation particulière (surdosage, mésusage, grossesse, manque d'efficacité, erreur médicamenteuse) avec un produit du laboratoire, décrivez-le dans les notes du compte-rendu. NOOR analyse chaque compte-rendu et crée une alerte « Pharmacovigilance » en tête de la liste des alertes. Ouvrez l'alerte (ou la page Pharmacovigilance) : NOOR affiche le temps restant sur les 24 heures depuis la visite et vérifie les 4 informations minimales (produit, effet ou situation, patient identifiable, médecin notificateur). Complétez ce qui manque, relisez la déclaration pré-remplie, puis « Copier le texte » ou « Ouvrir dans la messagerie » pour l'envoyer à pharmacovigilance@noor-demo.ma. Une fois envoyée, cliquez sur « Marquer comme déclarée » : l'alerte se ferme.
 
 ## 11. Comprendre les statistiques : CPA, couverture, moyenne de visites
 
@@ -99,3 +99,7 @@ Sur le tableau de bord, cliquez sur « Clôturer ma journée » ou « Clôturer 
 ## 24. Ce que NOOR déduit des ventes
 
 Dans la page Analyse des ventes (Mes performances), la carte « Ce que NOOR en déduit » donne trois conclusions, chacune avec ses chiffres : les zones à prioriser (territoire et produit qui perdent des parts de marché, avec les ventes perdues estimées), les produits en progression, et les médecins à revoir dans ces zones (bonne spécialité, potentiel A ou B, peu ou pas prescripteurs). Cliquez sur un médecin pour ouvrir sa fiche.
+
+## 25. Scanner une carte de visite et éviter les doublons
+
+Sur la page Nouveau médecin, cliquez sur « Scanner une carte de visite ». Choisissez « Prendre une photo » (sur téléphone), « Importer une image », ou une carte d'exemple. NOOR lit la carte et pré-remplit le formulaire : nom, prénom, spécialité, adresse, ville, téléphone, e-mail. Relisez toujours les champs avant d'enregistrer. NOOR cherche aussi les doublons dans toute la base, même si l'orthographe diffère (Ouazzani et Wazzani, El Amrani et Elamrani, numéros écrits autrement). Si une fiche proche existe, cliquez sur « Compléter cette fiche » pour mettre à jour la fiche existante au lieu d'en créer une deuxième, ou sur « Ce n'est pas le même médecin » pour continuer. La vérification des doublons fonctionne aussi pendant la saisie manuelle.
