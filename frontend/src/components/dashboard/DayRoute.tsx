@@ -10,7 +10,7 @@
  * l'arrêt en cours « respire » (onde safran). Tout est coupé si les animations sont réduites.
  * Clic sur un arrêt → fiche de la visite. Actions à droite : compte-rendu ou itinéraire.
  */
-import { CalendarPlus, Check, FileText, Navigation, X } from "lucide-react";
+import { CalendarPlus, Check, ClipboardList, FileText, Navigation, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { Visit } from "@/api/types";
@@ -25,6 +25,8 @@ interface Props {
   visits: Visit[];
   readOnly?: boolean;
   onVisitClick: (v: Visit) => void;
+  /** « Préparer la visite » (prochain arrêt) : ouvre la fiche de préparation. */
+  onPrepare?: (v: Visit) => void;
   onPlan?: () => void;
 }
 
@@ -39,7 +41,7 @@ function stopStates(visits: Visit[]): StopState[] {
   });
 }
 
-export function DayRoute({ visits, readOnly, onVisitClick, onPlan }: Props) {
+export function DayRoute({ visits, readOnly, onVisitClick, onPlan, onPrepare }: Props) {
   const states = stopStates(visits);
   const active = states.filter((s) => s !== "cancelled").length;
   const done = states.filter((s) => s === "done").length;
@@ -119,7 +121,7 @@ export function DayRoute({ visits, readOnly, onVisitClick, onPlan }: Props) {
                   </span>
                 </button>
                 <span className="flex shrink-0 items-center self-center">
-                  <StopAction visit={v} state={state} readOnly={readOnly} />
+                  <StopAction visit={v} state={state} readOnly={readOnly} onPrepare={onPrepare} />
                 </span>
               </li>
             );
@@ -150,7 +152,7 @@ function StopDot({ state }: { state: StopState }) {
   );
 }
 
-function StopAction({ visit, state, readOnly }: { visit: Visit; state: StopState; readOnly?: boolean }) {
+function StopAction({ visit, state, readOnly, onPrepare }: { visit: Visit; state: StopState; readOnly?: boolean; onPrepare?: (v: Visit) => void }) {
   if (visit.report_pending) {
     return readOnly ? (
       <span className="text-xs text-amber-200">Compte-rendu à faire</span>
@@ -165,11 +167,19 @@ function StopAction({ visit, state, readOnly }: { visit: Visit; state: StopState
   }
   if (state === "current" || state === "next") {
     return (
+      <span className="flex items-center">
+        {onPrepare && !readOnly && state === "current" && (
+          <Button size="sm" variant="ghost" className="text-mint hover:bg-white/10 hover:text-white" onClick={() => onPrepare(visit)}>
+            <ClipboardList /> <span className="hidden sm:inline">Préparer</span>
+            <span className="sr-only sm:hidden">Préparer la visite chez {visit.doctor_name}</span>
+          </Button>
+        )}
       <Button asChild size="icon" variant="ghost" className="text-mint hover:bg-white/10 hover:text-white" aria-label={`Itinéraire vers ${visit.doctor_name}`}>
         <a href={directionsUrl(visit)} target="_blank" rel="noreferrer">
           <Navigation />
         </a>
       </Button>
+      </span>
     );
   }
   if (state === "done") return <span className="text-mint/80 pr-1 text-xs">Faite</span>;

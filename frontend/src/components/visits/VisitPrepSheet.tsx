@@ -7,7 +7,7 @@
  * Rien n'est enregistré : le délégué lit, puis fait sa visite.
  */
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, MessageSquareQuote, Package } from "lucide-react";
+import { AlertTriangle, Building2, MapPin, MessageSquareQuote, Package, Phone, Target } from "lucide-react";
 
 import { aiApi, type ProductToPush } from "@/api/ai";
 import { FrequencyBadge, SegmentBadge, StatusPill } from "@/components/shared/badges";
@@ -47,6 +47,29 @@ export function VisitPrepSheet({ doctorId, onOpenChange }: Props) {
                   </span>
                 </p>
                 <p className="text-[13px] first-letter:uppercase">{p.reception}</p>
+                {/* Informations essentielles : où, comment joindre, dernière visite */}
+                <ul className="text-ink/80 space-y-0.5 text-[13px]">
+                  {p.establishment && (
+                    <li className="flex items-center gap-1.5">
+                      <Building2 className="text-pine size-3.5 shrink-0" /> {p.establishment}
+                    </li>
+                  )}
+                  <li className="flex items-center gap-1.5">
+                    <MapPin className="text-pine size-3.5 shrink-0" /> {p.address}, {p.district}
+                  </li>
+                  {p.phone && (
+                    <li className="flex items-center gap-1.5">
+                      <Phone className="text-pine size-3.5 shrink-0" />
+                      <a href={`tel:${p.phone.replace(/\s/g, "")}`} className="underline-offset-4 hover:underline">
+                        {p.phone}
+                      </a>
+                    </li>
+                  )}
+                  <li>
+                    {p.visits_count} visite{p.visits_count > 1 ? "s" : ""} au total, {p.visits_this_month} ce mois-ci
+                    {p.last_visit_date ? `, dernière le ${formatDate(p.last_visit_date)}` : ""}.
+                  </li>
+                </ul>
                 <p className="bg-mint-wash/70 border-mint text-ink rounded-lg border px-3 py-2 text-sm">{p.briefing}</p>
               </div>
             </SheetDescription>
@@ -66,6 +89,25 @@ export function VisitPrepSheet({ doctorId, onOpenChange }: Props) {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {/* 0. Objectifs de la visite */}
+            {p.objectives.length > 0 && (
+              <section>
+                <h3 className="font-display text-ink mb-2 flex items-center gap-1.5 text-base font-semibold">
+                  <Target className="text-pine size-4" /> Objectifs de la visite
+                </h3>
+                <ol className="space-y-1.5">
+                  {p.objectives.map((o, i) => (
+                    <li key={o} className="border-line flex gap-2.5 rounded-lg border bg-white px-3 py-2 text-[13px]">
+                      <span className="bg-pine flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white">
+                        {i + 1}
+                      </span>
+                      <span className="text-ink">{o}</span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
             )}
 
             {/* 1. Dernier compte-rendu */}

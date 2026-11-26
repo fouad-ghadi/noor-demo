@@ -5,6 +5,7 @@ On les importe tous ici pour que `Base.metadata.create_all()` les connaisse,
 et pour pouvoir écrire simplement `from app.models import Doctor, Visit`.
 """
 from app.models.alert import Alert
+from app.models.closing import DayClosing
 from app.models.doctor import Doctor, DoctorProductStatus
 from app.models.event import Event
 from app.models.objective import Objective, ObjectiveProduct
@@ -16,6 +17,7 @@ from app.models.visit import Visit, VisitObjection, VisitProduct, VisitSample
 
 __all__ = [
     "Alert",
+    "DayClosing",
     "Doctor",
     "DoctorProductStatus",
     "Document",

@@ -133,6 +133,12 @@ Plan d'origine :
   ou une réunion) ; pour montrer le compte à rebours de 24 h, rédiger en direct un compte-rendu qui mentionne un effet
   (ex. « une patiente a fait une éruption cutanée sous Amoxira ») : l'alerte apparaît avec « il reste ~24 h ».
 
+- **26 nov. 2026 : prototype « journée complète » pour Sothema** (voir CLAUDE.md) : itinéraire et modification de la
+  semaine proposée, « Imprévu ? », objectifs de visite, dictée simulée + écran de vérification du compte-rendu,
+  clôture du jour validée, objectifs de ventes fictifs et zones à fort potentiel, mode hors connexion de démonstration.
+  Scénario conseillé : tableau de bord → Préparer (arrêt en cours) → compte-rendu (dictée simulée, vérifier, valider)
+  → Imprévu ? → Clôturer ma journée → Planning, Remplir ma semaine → Analyse des ventes → coupure réseau simulée.
+
 ## 7. Méthode de travail attendue
 
 1. Lire `CLAUDE.md` puis ce fichier.

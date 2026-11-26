@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, addWeeks, format, isSameDay, parseISO, startOfDay, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarOff, CalendarPlus, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { CalendarClock, CalendarOff, CalendarPlus, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ import { usePageContext } from "@/components/assistant/AssistantContext";
 import { AgendaList } from "@/components/planning/AgendaList";
 import { EventDialog } from "@/components/planning/EventDialog";
 import { FillWeekDialog } from "@/components/planning/FillWeekDialog";
+import { ReplanDialog } from "@/components/planning/ReplanDialog";
 import { VisitsMap } from "@/components/planning/VisitsMap";
 import { LEGEND } from "@/components/planning/visitStyle";
 import { WeekCalendar } from "@/components/planning/WeekCalendar";
@@ -44,6 +45,7 @@ export function PlanningPage() {
   const [planOpen, setPlanOpen] = useState(false);
   const [eventOpen, setEventOpen] = useState(false);
   const [fillOpen, setFillOpen] = useState(false);
+  const [replanOpen, setReplanOpen] = useState(false);
 
   // --- État lu dans l'URL -------------------------------------------------
   const view: View = (params.get("vue") as View) ?? (isDesktop ? "semaine" : "jour");
@@ -133,6 +135,9 @@ export function PlanningPage() {
             <>
               <Button variant="outline" onClick={() => setEventOpen(true)}>
                 <CalendarOff /> Ajouter un événement
+              </Button>
+              <Button variant="outline" onClick={() => setReplanOpen(true)}>
+                <CalendarClock /> Imprévu ?
               </Button>
               <Button variant="outline" onClick={() => setFillOpen(true)}>
                 <Sparkles /> Remplir ma semaine
@@ -263,6 +268,12 @@ export function PlanningPage() {
         // Semaine affichée si elle est à venir, sinon NOOR choisit la première semaine avec des places libres
         start={view === "semaine" && weekStart > startOfDay(new Date()) ? toApiDate(weekStart) : undefined}
         onDone={(monday) => update({ vue: "semaine", date: monday })}
+      />
+      <ReplanDialog
+        open={replanOpen}
+        onOpenChange={setReplanOpen}
+        // Vue « Jour » sur une journée à venir : c'est elle qu'on réorganise ; sinon aujourd'hui
+        day={view === "jour" && anchor >= startOfDay(new Date()) ? anchor : undefined}
       />
       {dialogs}
     </>

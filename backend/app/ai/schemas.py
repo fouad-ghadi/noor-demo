@@ -107,6 +107,7 @@ class CardFields(BaseModel):
     last_name: str = ""
     specialty: str | None = None      # une des spécialités du référentiel (SPECIALTIES)
     practice_type: str | None = None  # cabinet / clinique / hopital_public
+    establishment: str | None = None  # nom de l'établissement (« Clinique Les Orangers »)
     address: str = ""
     city: str | None = None
     district: str | None = None
@@ -251,6 +252,13 @@ class VisitPreparation(BaseModel):
     products: list[ProductToPush]    # du plus prioritaire au moins prioritaire (3 au maximum)
     reminders: list[str]             # points d'attention (suite prévue, cas de pharmacovigilance...)
     briefing: str                    # synthèse en une ou deux phrases
+    objectives: list[str] = []       # objectifs de la visite (« Faire passer Amoxira en prescription régulière »)
+    address: str = ""                # informations essentielles : adresse, établissement, téléphone
+    establishment: str | None = None
+    district: str = ""
+    phone: str | None = None
+    last_visit_date: date | None = None
+    visits_this_month: int = 0
 
 
 # --- « Remplir ma semaine » ----------------------------------------------------------
@@ -265,6 +273,10 @@ class PlannedProposal(BaseModel):
     slot: str
     score: float
     reasons: list[str]               # pourquoi ce médecin (priorité) et pourquoi ce jour (réception, quartier)
+    latitude: float | None = None
+    longitude: float | None = None
+    distance_km: float | None = None # depuis l'arrêt précédent de la tournée (None pour le premier)
+    reception_days: str | None = None  # "1,3" = mardi et jeudi ; vide = tous les jours
 
 
 class DayPlan(BaseModel):
@@ -275,6 +287,8 @@ class DayPlan(BaseModel):
     already_planned: int             # visites déjà dans l'agenda
     event: str | None                # ex. « Formation (matin) » : journée réduite
     proposals: list[PlannedProposal]
+    route_km: float = 0              # longueur estimée de la tournée proposée (à vol d'oiseau × 1,3)
+    travel_min: int = 0              # temps de trajet estimé (25 km/h en ville)
 
 
 class WeekPlan(BaseModel):
@@ -297,6 +311,47 @@ class WeekPlanItem(BaseModel):
 
 
 WeekPlanConfirm.model_rebuild()
+
+
+# --- Imprévu : réorganiser la journée ------------------------------------------------------
+class ReplanRequest(BaseModel):
+    day: date
+    # "retard" : décaler la suite de la journée de delay_min minutes (ce qui ne tient plus est reporté)
+    # "medecin_absent" : reporter les visites choisies (visit_ids)
+    # "journee_interrompue" : reporter tout le reste de la journée (urgence, panne, maladie...)
+    reason: str
+    delay_min: int = Field(default=0, ge=0, le=480)
+    visit_ids: list[int] = []
+    from_time: str | None = None     # « 11:00 » : seules les visites à partir de cette heure (défaut : maintenant)
+
+
+class ReplanMove(BaseModel):
+    visit_id: int
+    doctor_id: int
+    doctor_name: str
+    district: str
+    old_at: datetime
+    new_at: datetime
+    kind: str                        # "decalee" (même jour) | "reportee" (autre jour)
+    why: str
+
+
+class ReplanProposal(BaseModel):
+    day: date
+    reason_label: str
+    moves: list[ReplanMove]
+    unchanged: int                   # visites de la journée qui ne bougent pas
+    summary: str
+
+
+class ReplanItem(BaseModel):
+    visit_id: int
+    planned_at: datetime
+
+
+class ReplanApply(BaseModel):
+    """Déplacements gardés par le délégué (il peut en retirer ou changer l'heure avant de valider)."""
+    moves: list[ReplanItem]
 
 
 # --- Analyse des ventes : ce que l'IA en déduit -----------------------------------------
@@ -325,9 +380,41 @@ class ClosingCheck(BaseModel):
     link: str | None = None          # page où le régler
 
 
+class ClosingObjective(BaseModel):
+    """Un objectif de la journée : atteint ou non, avec le détail des chiffres."""
+    label: str                       # « Visites de la journée »
+    done: float
+    target: float
+    reached: bool
+    detail: str                      # « 8 visites sur 10 prévues dans la journée type »
+
+
+class ClosingVisit(BaseModel):
+    """Une ligne du bilan : un médecin de la journée et ce qui s'est passé."""
+    visit_id: int
+    doctor_id: int
+    doctor_name: str
+    time: str                        # « 09:30 »
+    status: str                      # realisee / annulee / reportee / planifiee
+    products: list[str]
+    note: str | None = None          # accueil, motif d'annulation...
+
+
 class ClosingReport(BaseModel):
     scope: str                       # "jour" | "mois"
     title: str                       # « Journée du lundi 23 nov. 2026 »
     figures: dict[str, float]        # chiffres clés (visites, CPA...)
     to_fix: list[ClosingCheck]       # à faire avant de clôturer (vide = tout est en ordre)
     report: str                      # rapport rédigé automatiquement, à relire et copier
+    day: date | None = None          # journée concernée (clôture du jour)
+    visits: list[ClosingVisit] = []          # médecins de la journée
+    products: list[str] = []                 # produits présentés (« Amoxira (3) »)
+    objectives: list[ClosingObjective] = []  # objectifs atteints / non atteints
+    observations: list[str] = []             # points importants (objections, promesses, PV...)
+    validated_at: datetime | None = None     # si le délégué a déjà validé ce bilan
+    validated_report: str | None = None      # texte validé (modifié par le délégué)
+
+
+class ClosingValidate(BaseModel):
+    day: date
+    report: str = Field(min_length=10, max_length=8000)

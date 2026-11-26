@@ -7,10 +7,14 @@
  * 2. « Remplir le formulaire » : NOOR extrait produits, accueil, objections,
  *    échantillons, durée et suite à donner.
  * 3. Le formulaire est pré-rempli : le délégué relit et valide lui-même.
+ *
+ * « Simuler une dictée » (démonstration) : le texte d'une dictée type s'écrit mot à mot, comme si le
+ * délégué parlait. Utile devant un jury (pas de micro, salle bruyante, navigateur sans reconnaissance vocale).
+ * Rien n'est caché : la fenêtre indique clairement qu'il s'agit d'une simulation.
  */
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2, Mic, Square, Wand2 } from "lucide-react";
+import { Loader2, Mic, PlayCircle, Square, Wand2 } from "lucide-react";
 
 import { aiApi, type VoiceReportResult } from "@/api/ai";
 import { Button } from "@/components/ui/button";
@@ -43,19 +47,35 @@ const LANGUAGES = [
   { code: "ar-MA", label: "Darija (arabe marocain)" },
 ];
 
-/** Exemple de dictée en darija mélangée de français (pour la démonstration au jury). */
-const EXAMPLE =
-  "L'docteur kan mzyan, 3jbo Cardiovex bzzaf, walakin gal lia prix ghali chwiya l'patients dyalo. " +
-  "3titou jouj boites d'échantillons dyal Cardiovex. Dqayq 15. Ghadi nrj3 l'semaine jaya m3a l'étude.";
+/** Dictées types pour la simulation ({p1}, {p2} = produits conseillés pour ce médecin). */
+const SIMULATIONS = [
+  {
+    label: "Simuler en français",
+    text:
+      "Visite d'environ quinze minutes, le docteur était très réceptif. J'ai présenté {p1} et {p2}. " +
+      "Il trouve {p1} intéressant mais il dit que le prix est un peu élevé pour ses patients. " +
+      "Il promet de prescrire {p1} à ses prochains patients. J'ai laissé deux boîtes d'échantillons de {p1}. " +
+      "Je reviens dans deux semaines avec l'étude clinique.",
+  },
+  {
+    label: "Simuler en darija",
+    text:
+      "L'docteur kan mzyan, 3jbo {p1} bzzaf, walakin gal lia prix ghali chwiya l'patients dyalo. " +
+      "3titou jouj boites d'échantillons dyal {p1}. Hdert m3ah 3la {p2} tani. Dqayq 15. " +
+      "Ghadi nrj3 l'semaine jaya m3a l'étude.",
+  },
+];
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   visitId: number;
   onDraft: (result: VoiceReportResult) => void;
+  /** Produits conseillés pour ce médecin (pour une simulation crédible). */
+  productNames?: string[];
 }
 
-export function VoiceDictationDialog({ open, onOpenChange, visitId, onDraft }: Props) {
+export function VoiceDictationDialog({ open, onOpenChange, visitId, onDraft, productNames = [] }: Props) {
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [lang, setLang] = useState("fr-FR");
@@ -63,9 +83,39 @@ export function VoiceDictationDialog({ open, onOpenChange, visitId, onDraft }: P
   const [micError, setMicError] = useState<string | null>(null);
   const recognizer = useRef<SpeechRecognizer | null>(null);
 
-  // Fermeture de la fenêtre : on coupe le micro
+  // Simulation : le texte s'écrit mot à mot (comme une transcription en direct)
+  const [simulating, setSimulating] = useState(false);
+  const timer = useRef<number | null>(null);
+  const stopSimulation = () => {
+    if (timer.current !== null) window.clearInterval(timer.current);
+    timer.current = null;
+    setSimulating(false);
+  };
+  const simulate = (template: string) => {
+    stopSimulation();
+    const [p1 = "Amoxira", p2 = "Calmapyr"] = productNames;
+    const words = template.replaceAll("{p1}", p1).replaceAll("{p2}", p2).split(" ");
+    // Mouvement réduit demandé par le système : le texte apparaît d'un coup
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTranscript(words.join(" "));
+      return;
+    }
+    setTranscript("");
+    setSimulating(true);
+    let i = 0;
+    timer.current = window.setInterval(() => {
+      i += 1;
+      setTranscript(words.slice(0, i).join(" "));
+      if (i >= words.length) stopSimulation();
+    }, 90);
+  };
+
+  // Fermeture de la fenêtre : on coupe le micro et la simulation
   useEffect(() => {
-    if (!open) recognizer.current?.stop();
+    if (!open) {
+      recognizer.current?.stop();
+      stopSimulation();
+    }
   }, [open]);
 
   const start = () => {
@@ -161,18 +211,30 @@ export function VoiceDictationDialog({ open, onOpenChange, visitId, onDraft }: P
           <Textarea
             value={transcript + (interim ? ` ${interim}` : "")}
             onChange={(e) => setTranscript(e.target.value)}
-            readOnly={listening}
+            readOnly={listening || simulating}
             rows={6}
             placeholder="Le texte dicté apparaît ici. Vous pouvez aussi l'écrire ou le corriger."
             aria-label="Texte du compte-rendu dicté"
           />
-          <button
-            type="button"
-            onClick={() => setTranscript(EXAMPLE)}
-            className="cursor-pointer text-xs text-[#0D7F75] underline-offset-4 hover:underline"
-          >
-            Charger un exemple en darija
-          </button>
+        </div>
+        {/* Démonstration : dictée simulée (texte écrit mot à mot), clairement signalée comme telle */}
+        <div className="border-line bg-paper flex flex-wrap items-center gap-2 rounded-lg border border-dashed px-3 py-2">
+          <span className="text-muted-foreground mr-auto text-xs">Démonstration sans micro :</span>
+          {SIMULATIONS.map((sim) => (
+            <Button key={sim.label} type="button" size="sm" variant="outline" disabled={listening || simulating} onClick={() => simulate(sim.text)}>
+              <PlayCircle /> {sim.label}
+            </Button>
+          ))}
+          {simulating && (
+            <span className="text-pine flex w-full items-center gap-1.5 text-xs" aria-live="polite">
+              <span className="flex h-3 items-end gap-0.5" aria-hidden="true">
+                {[0, 1, 2, 3].map((b) => (
+                  <span key={b} className="bg-pine w-0.5 animate-pulse rounded-full" style={{ height: `${6 + ((b * 5) % 7)}px`, animationDelay: `${b * 120}ms` }} />
+                ))}
+              </span>
+              Dictée simulée en cours…
+            </span>
+          )}
         </div>
         {extract.isError && <p className="text-sm text-rose-700">{(extract.error as Error).message}</p>}
 
@@ -180,7 +242,7 @@ export function VoiceDictationDialog({ open, onOpenChange, visitId, onDraft }: P
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Annuler
           </Button>
-          <Button type="button" disabled={transcript.trim().length < 3 || listening || extract.isPending} onClick={() => extract.mutate()}>
+          <Button type="button" disabled={transcript.trim().length < 3 || listening || simulating || extract.isPending} onClick={() => extract.mutate()}>
             {extract.isPending ? <Loader2 className="animate-spin" /> : <Wand2 />}
             Remplir le formulaire
           </Button>

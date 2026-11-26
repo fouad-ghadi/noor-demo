@@ -36,6 +36,7 @@ const EMPTY: DoctorInput = {
   specialty: "Généraliste",
   practice_type: "cabinet",
   address: "",
+  establishment: "",
   city: "",
   district: "",
   phone: "",
@@ -176,6 +177,7 @@ function DoctorForm() {
       specialty: d.specialty,
       practice_type: d.practice_type,
       address: d.address,
+      establishment: d.establishment ?? "",
       city: d.city,
       district: d.district,
       phone: d.phone ?? "",
@@ -243,6 +245,7 @@ function DoctorForm() {
       specialty: c.specialty && meta.data?.specialties.includes(c.specialty) ? c.specialty : f.specialty,
       practice_type: (c.practice_type as DoctorInput["practice_type"]) || f.practice_type,
       address: c.address || f.address,
+      establishment: c.establishment || f.establishment,
       city: c.city || f.city,
       district: c.district || (c.city && c.city !== f.city ? "" : f.district),
       latitude: place?.latitude ?? f.latitude,
@@ -264,6 +267,7 @@ function DoctorForm() {
       specialty: form.specialty,
       practice_type: form.practice_type,
       address: form.address,
+      establishment: form.establishment || null,
       city: form.city || null,
       district: form.district || null,
       phone: form.phone || null,
@@ -278,6 +282,7 @@ function DoctorForm() {
         ...form,
         phone: form.phone || null,
         email: form.email || null,
+        establishment: form.establishment?.trim() || null,
         notes: form.notes || null,
         prescriptions: Object.entries(prescriptions).map(([product_id, status]) => ({
           product_id: Number(product_id),
@@ -447,6 +452,14 @@ function DoctorForm() {
                 value={form.practice_type}
                 onChange={(v) => set("practice_type", v as DoctorInput["practice_type"])}
                 options={PRACTICE_TYPE}
+              />
+            </Field>
+            <Field label="Établissement" htmlFor="establishment">
+              <Input
+                id="establishment"
+                value={form.establishment ?? ""}
+                onChange={(e) => set("establishment", e.target.value)}
+                placeholder="Ex. Clinique Les Orangers (facultatif)"
               />
             </Field>
             <Field label="Adresse" htmlFor="address" required uncertain={uncertain.includes("address")}>

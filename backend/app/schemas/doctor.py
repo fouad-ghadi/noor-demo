@@ -26,6 +26,7 @@ class DoctorBase(BaseModel):
     specialty: str
     practice_type: str = "cabinet"
     address: str
+    establishment: str | None = None  # ex. « Clinique Al Amal », « Cabinet de cardiologie »
     city: str
     district: str
     phone: str | None = None

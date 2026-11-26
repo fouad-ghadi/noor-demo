@@ -59,6 +59,7 @@ class VisitOut(BaseModel):
     next_visit_date: date | None
     cancel_reason: str | None
     report_source: str | None
+    report_summary: str | None
     reported_at: datetime | None
     products: list[VisitProductOut]
     samples: list[SampleOut]
@@ -93,6 +94,7 @@ class VisitOut(BaseModel):
             next_visit_date=v.next_visit_date,
             cancel_reason=v.cancel_reason,
             report_source=v.report_source,
+            report_summary=v.report_summary,
             reported_at=v.reported_at,
             products=[
                 VisitProductOut(product_id=p.product_id, brand_name=p.product.brand_name)
@@ -153,3 +155,5 @@ class VisitReport(BaseModel):
     # Si True et next_visit_date renseignée : crée automatiquement la prochaine visite
     plan_next_visit: bool = True
     report_source: str = "manuel"
+    # Compte-rendu structuré relu à l'écran de vérification (facultatif)
+    report_summary: str | None = Field(default=None, max_length=4000)

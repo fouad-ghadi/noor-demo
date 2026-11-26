@@ -86,6 +86,13 @@ export function VisitHistoryItem({ visit, readOnly = false }: { visit: Visit; re
             </p>
           )}
 
+          {visit.report_summary && (
+            <details className="text-xs">
+              <summary className="text-pine cursor-pointer font-medium">Compte-rendu validé</summary>
+              <p className="text-ink/90 mt-1 leading-relaxed whitespace-pre-line">{visit.report_summary}</p>
+            </details>
+          )}
+
           {(visit.samples.length > 0 || visit.next_step) && (
             <div className="text-muted-foreground border-line flex flex-wrap gap-x-4 gap-y-1 border-t pt-2 text-xs">
               {visit.samples.length > 0 && (

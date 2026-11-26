@@ -123,6 +123,8 @@ export interface Visit {
   next_visit_date: string | null;
   cancel_reason: string | null;
   report_source: "manuel" | "dictee" | null;
+  /** Compte-rendu structuré relu et validé à l'écran de vérification. */
+  report_summary: string | null;
   reported_at: string | null;
   products: { product_id: number; brand_name: string }[];
   samples: Sample[];
@@ -143,6 +145,7 @@ export interface VisitReportInput {
   next_visit_date?: string | null;
   plan_next_visit?: boolean;
   report_source?: "manuel" | "dictee";
+  report_summary?: string | null;
 }
 
 // --- Médecins -----------------------------------------------------------
@@ -152,6 +155,8 @@ export interface DoctorFields {
   specialty: string;
   practice_type: PracticeType;
   address: string;
+  /** Établissement (« Clinique Les Orangers »), souvent lu sur la carte de visite. */
+  establishment?: string | null;
   city: string;
   district: string;
   phone: string | null;
@@ -509,4 +514,40 @@ export interface Sales {
   monthly: { period: string; label: string; value: number; market_value: number; pm: number | null }[];
   months: string[];
   products: { id: number; name: string; market_name: string }[];
+}
+
+// --- Objectifs de ventes et zones à fort potentiel (GET /api/sales/scorecard) ---
+export interface ProductScore {
+  product_id: number;
+  name: string;
+  market_name: string;
+  value: number;
+  objective: number;
+  growth_target_pct: number;
+  attainment_pct: number;
+  status: "atteint" | "proche" | "en_retard";
+  pm: number | null;
+  pm_prev: number | null;
+  ie: number | null;
+  pm_series: { period: string; pm: number | null }[];
+  why: string;
+}
+export interface TerritoryPotential {
+  territory: string;
+  market_value: number;
+  pm: number | null;
+  national_pm: number | null;
+  ip: number | null;
+  gap_value: number;
+  doctors_ab: number;
+  non_prescribers: number;
+  score: number;
+  why: string[];
+}
+export interface SalesScorecard {
+  period_label: string;
+  objective_rule: string;
+  products: ProductScore[];
+  territories: TerritoryPotential[];
+  summary: string;
 }

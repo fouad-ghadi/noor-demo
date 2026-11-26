@@ -33,3 +33,25 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# Colonnes ajoutées après la création de certaines bases locales : (table, colonne, type SQL)
+NEW_COLUMNS = [
+    ("visits", "report_summary", "TEXT"),
+    ("doctors", "establishment", "VARCHAR(120)"),
+]
+
+
+def add_missing_columns(bind) -> None:
+    """
+    Petite « migration » : ajoute les colonnes récentes à une base existante.
+    Ainsi, une base créée avant la mise à jour continue de marcher sans relancer `python seed.py`.
+    """
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(bind)
+    tables = set(inspector.get_table_names())
+    with bind.begin() as conn:
+        for table, column, sql_type in NEW_COLUMNS:
+            if table in tables and column not in {c["name"] for c in inspector.get_columns(table)}:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {sql_type}"))

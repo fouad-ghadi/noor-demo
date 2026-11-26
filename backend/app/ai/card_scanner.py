@@ -77,6 +77,8 @@ ADDRESS_RE = re.compile(
     r"\b(rue|av|ave|avenue|bd|boulevard|angle|residence|res|imm|immeuble|lot|lotissement|route|place|"
     r"hay|etage|appt|appartement|centre|clinique|chu|hopital|n)\b"
 )
+# Établissement : ligne qui commence par Cabinet, Clinique, Centre, Polyclinique, Hôpital, CHU...
+ESTABLISHMENT_RE = re.compile(r"^(cabinet|clinique|polyclinique|centre|hopital|chu|espace medical|maison medicale)\b")
 STREET_WORDS = re.compile(r"\b(rue|av|avenue|bd|boulevard|route|place|angle|residence|imm|immeuble|lot)\b")
 
 
@@ -219,6 +221,12 @@ def extract_fields(text: str) -> tuple[CardFields, list[str]]:
     if fields.city and not fields.district:
         uncertain.append("district")
 
+    # Établissement (nom du cabinet, de la clinique...) : recopié tel quel
+    for line in lines:
+        if line != name_line and ESTABLISHMENT_RE.match(simplify(line)) and not PHONE_RE.search(line):
+            fields.establishment = line.strip(" -,")
+            break
+
     # Adresse : première ligne qui contient un mot de rue (Rue, Av., Bd, Résidence...)
     for line in lines:
         if EMAIL_RE.search(line) or PHONE_RE.search(line) or line == name_line:
@@ -247,6 +255,7 @@ CARD_SCHEMA = llm.strict_object({
     "last_name": {"type": "string"},
     "specialty": {"type": "string", "description": "Une valeur de la liste fournie, ou chaîne vide"},
     "practice_type": {"type": "string", "enum": ["cabinet", "clinique", "hopital_public"]},
+    "establishment": {"type": "string", "description": "Nom du cabinet, de la clinique ou de l'hôpital s'il est écrit, sinon chaîne vide"},
     "address": {"type": "string", "description": "Numéro et rue seulement (sans ville ni quartier)"},
     "city": {"type": "string"},
     "district": {"type": "string", "description": "Quartier, ou chaîne vide"},

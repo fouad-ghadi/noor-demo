@@ -23,6 +23,7 @@ import type {
   PvDeclarationDraft,
   PvDeclarationInput,
   Sales,
+  SalesScorecard,
   Team,
   User,
   Visit,
@@ -160,4 +161,6 @@ export const api = {
   deleteEvent: (id: number) => apiRequest<void>("DELETE", `/events/${id}`),
   sales: (params: { product_id?: number; period?: string; delegue_id?: number } = {}) =>
     apiRequest<Sales>("GET", `/sales${qs(params)}`),
+  /** Objectifs de ventes par produit (fictifs), parts de marché, zones à fort potentiel. */
+  salesScorecard: (delegue_id?: number) => apiRequest<SalesScorecard>("GET", `/sales/scorecard${qs({ delegue_id })}`),
 };

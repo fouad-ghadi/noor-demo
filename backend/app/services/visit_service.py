@@ -166,6 +166,7 @@ def submit_report(db: Session, user: User, visit_id: int, data: VisitReport) -> 
     visit.next_step = data.next_step
     visit.next_visit_date = data.next_visit_date
     visit.report_source = data.report_source
+    visit.report_summary = (data.report_summary or "").strip() or None
     visit.reported_at = now()
 
     # On remplace entièrement produits / échantillons / objections (cas d'une modification)

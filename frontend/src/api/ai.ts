@@ -28,6 +28,7 @@ export interface CardFields {
   last_name: string;
   specialty: string | null;
   practice_type: string | null;
+  establishment: string | null;
   address: string;
   city: string | null;
   district: string | null;
@@ -159,6 +160,14 @@ export interface VisitPreparation {
   products: ProductToPush[];
   reminders: string[];
   briefing: string;
+  /** Objectifs de la visite (« Faire passer Amoxira en prescription régulière »). */
+  objectives: string[];
+  address: string;
+  establishment: string | null;
+  district: string;
+  phone: string | null;
+  last_visit_date: string | null;
+  visits_this_month: number;
 }
 
 /** 🗓️ « Remplir ma semaine » (backend : app/ai/week_planner.py). */
@@ -173,6 +182,12 @@ export interface PlannedProposal {
   slot: TimeSlot;
   score: number;
   reasons: string[];
+  latitude: number | null;
+  longitude: number | null;
+  /** Distance depuis l'arrêt précédent (km, estimée), null pour le premier arrêt. */
+  distance_km: number | null;
+  /** Jours de réception « 1,3 » (0 = lundi) ; null = tous les jours. */
+  reception_days: string | null;
 }
 export interface DayPlan {
   day: string;
@@ -182,6 +197,8 @@ export interface DayPlan {
   already_planned: number;
   event: string | null;
   proposals: PlannedProposal[];
+  route_km: number;
+  travel_min: number;
 }
 export interface WeekPlan {
   week_start: string;
@@ -217,6 +234,49 @@ export interface ClosingReport {
   figures: Record<string, number>;
   to_fix: { label: string; link: string | null }[];
   report: string;
+  day: string | null;
+  visits: {
+    visit_id: number;
+    doctor_id: number;
+    doctor_name: string;
+    time: string;
+    status: "planifiee" | "realisee" | "annulee" | "reportee";
+    products: string[];
+    note: string | null;
+  }[];
+  products: string[];
+  objectives: { label: string; done: number; target: number; reached: boolean; detail: string }[];
+  observations: string[];
+  validated_at: string | null;
+  validated_report: string | null;
+}
+
+/** ⚡ Imprévu : journée réorganisée (backend : week_planner.replan_day). */
+export type ReplanReason = "retard" | "medecin_absent" | "journee_interrompue";
+export interface ReplanMove {
+  visit_id: number;
+  doctor_id: number;
+  doctor_name: string;
+  district: string;
+  old_at: string;
+  new_at: string;
+  kind: "decalee" | "reportee";
+  why: string;
+}
+export interface ReplanProposal {
+  day: string;
+  reason_label: string;
+  moves: ReplanMove[];
+  unchanged: number;
+  summary: string;
+}
+
+/** 📝 Compte-rendu structuré + points à vérifier (backend : app/ai/report_writer.py). */
+export interface StructuredReport {
+  title: string;
+  sections: { label: string; text: string }[];
+  summary: string;
+  checks: { level: "attention" | "info"; text: string }[];
 }
 
 // Réutilise le client principal (en-tête X-User-Id, messages d'erreur en français)
@@ -261,4 +321,13 @@ export const aiApi = {
   /** 🌙 Clôture de la journée (date « 2026-11-23 », par défaut aujourd'hui) ou du mois. */
   closeDay: (day?: string) => apiRequest<ClosingReport>("GET", `/ai/closing/day${day ? `?day=${day}` : ""}`),
   closeMonth: () => apiRequest<ClosingReport>("GET", "/ai/closing/month"),
+  /** ✅ Le délégué valide son bilan de journée (texte relu et corrigé). */
+  validateDay: (day: string, report: string) => post<ClosingReport>("/ai/closing/day/validate", { day, report }),
+  /** ⚡ Imprévu : proposition de journée réorganisée (rien n'est modifié). */
+  replanDay: (data: { day: string; reason: ReplanReason; delay_min?: number; visit_ids?: number[]; from_time?: string | null }) =>
+    post<ReplanProposal>("/ai/replan-day", data),
+  /** ✅ Déplacements gardés par le délégué. */
+  applyReplan: (moves: { visit_id: number; planned_at: string }[]) => post<{ moved: number }>("/ai/replan-day/apply", { moves }),
+  /** 📝 Compte-rendu structuré à partir de la saisie (écran de vérification). */
+  structureReport: (visit_id: number, data: VisitReportInput) => post<StructuredReport>(`/ai/report-structure/${visit_id}`, data),
 };

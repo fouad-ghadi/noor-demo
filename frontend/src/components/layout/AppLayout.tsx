@@ -11,12 +11,14 @@
  *  - juste après la connexion : le voile vert pin du « rideau » s'efface sur le tableau de bord.
  */
 import { useEffect, useState } from "react";
-import { LogOut, Sparkles } from "lucide-react";
+import { CloudOff, LogOut, Sparkles } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { NoorMark } from "@/components/brand/NoorMark";
 import { ZelligeField } from "@/components/brand/ZelligeField";
+import { OfflineBanner, SimulateOfflineToggle } from "@/components/layout/OfflineBanner";
+import { offlineStore } from "@/lib/offline";
 import { AssistantPanel } from "@/components/assistant/AssistantPanel";
 import { useAssistant } from "@/components/assistant/AssistantContext";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
@@ -91,6 +93,7 @@ function Sidebar() {
         ))}
       </nav>
       <div className="border-t border-white/10 p-3">
+        {user.role === "delegue" && <SimulateOfflineToggle onDark className="mb-1" />}
         <div className="flex items-center gap-3 rounded-lg px-2 py-2">
           <UserAvatar name={user.name} className="bg-mint text-pine" />
           <div className="min-w-0 flex-1">
@@ -155,6 +158,11 @@ function MobileTopBar() {
                 </DropdownMenuItem>
               ))}
             <DropdownMenuSeparator />
+            {user.role === "delegue" && (
+              <DropdownMenuItem onClick={() => offlineStore.setSimulated(!offlineStore.get().simulated)}>
+                <CloudOff /> {offlineStore.get().simulated ? "Rétablir la connexion (démo)" : "Simuler une coupure réseau (démo)"}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={() => {
                 logout();
@@ -267,6 +275,8 @@ export function AppLayout() {
           {/* Une page qui plante n'emporte pas le menu : message clair à la place de la page.
               Le filet reste en place d'une page à l'autre (pas de « key ») : une erreur levée pendant
               qu'on QUITTE une page est rattrapée ici, et non par le filet global qui masque le menu. */}
+          {/* Hors connexion : comptes-rendus gardés sur l'appareil, synchronisés au retour du réseau */}
+          <OfflineBanner />
           <ErrorBoundary resetKey={location.pathname}>
             {/* Chaque page arrive en fondu (clé = adresse de la page) */}
             <motion.div

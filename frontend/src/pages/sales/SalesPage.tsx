@@ -21,6 +21,7 @@ import { usePageContext } from "@/components/assistant/AssistantContext";
 import { ChartTooltip } from "@/components/dashboard/ChartTooltip";
 import { KpiCard, KpiStrip, type KpiStatus } from "@/components/dashboard/KpiCard";
 import { SalesInsightsCard } from "@/components/sales/SalesInsightsCard";
+import { SalesScorecard } from "@/components/sales/SalesScorecard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ErrorState, LoadingState } from "@/components/shared/states";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,12 +129,12 @@ export function SalesPage() {
 
       {sales.isLoading && <LoadingState rows={4} />}
       {sales.isError && <ErrorState error={sales.error} onRetry={() => sales.refetch()} />}
-      {s && <SalesContent s={s} />}
+      {s && <SalesContent s={s} delegueId={delegueId} onSelectProduct={(id) => setParam("produit", String(id))} />}
     </>
   );
 }
 
-function SalesContent({ s }: { s: Sales }) {
+function SalesContent({ s, delegueId, onSelectProduct }: { s: Sales; delegueId?: number; onSelectProduct: (id: number) => void }) {
   const sc = s.scope;
   const n = s.national;
   const losing = s.delegates.flatMap((d) => d.territories).filter((t) => t.ie !== null && t.ie < 97);
@@ -176,6 +177,9 @@ function SalesContent({ s }: { s: Sales }) {
       </KpiStrip>
 
       <SalesInsightsCard />
+
+      {/* Objectifs de ventes (fictifs) par produit, parts de marché, zones à fort potentiel */}
+      <SalesScorecard delegueId={delegueId} onSelectProduct={onSelectProduct} />
 
       {losing.length > 0 && (
         <div className="border-line bg-mint-wash/60 flex gap-3 rounded-xl border px-4 py-3 text-sm">

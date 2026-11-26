@@ -18,6 +18,8 @@ Avant d'entrer chez le médecin, le délégué ouvre une fiche qui rassemble :
     4. les échantillons à remettre (quantité selon le potentiel, dernier n° de lot remis).
 Rien n'est enregistré : le délégué lit, puis fait sa visite et son compte-rendu.
 """
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -216,7 +218,31 @@ def prepare(db: Session, user: User, doctor_id: int) -> VisitPreparation:
     focus = ", ".join(t.brand_name for t in to_push[:2])
     briefing = f"{intro}. Priorité du jour : {focus}." if focus else f"{intro}."
 
+    # Objectifs de la visite : ce que le délégué veut obtenir en sortant du cabinet
+    month_start = datetime.combine(today.replace(day=1), datetime.min.time())
+    this_month = db.query(Visit).filter(Visit.doctor_id == doctor.id, Visit.status == VisitStatus.REALISEE,
+                                        Visit.planned_at >= month_start).count()
+    objectives = []
+    if last and last.next_step:
+        objectives.append(f"Tenir l'engagement pris : {last.next_step[0].lower()}{last.next_step[1:]}")
+    if last and last.objections:
+        objectives.append(f"Lever l'objection « {last.objections[0]} » avec l'argument conseillé")
+    for t in to_push[:2]:
+        st = status.get(t.product_id, PrescribingStatus.NON_PRESCRIPTEUR)
+        objectives.append({
+            PrescribingStatus.NON_PRESCRIPTEUR: f"Obtenir un essai de {t.brand_name} sur quelques patients",
+            PrescribingStatus.OCCASIONNEL: f"Faire passer {t.brand_name} en prescription régulière",
+            PrescribingStatus.REGULIER: f"Entretenir {t.brand_name} : recueillir les retours des patients",
+        }[PrescribingStatus(st)])
+    if doctor.frequency == "F2":
+        objectives.append(f"Tenir le ciblage F2 : visite n° {this_month + 1} sur 2 ce mois-ci")
+    elif doctor.frequency == "F1" and this_month == 0:
+        objectives.append("Tenir le ciblage F1 : c'est la visite du mois")
+
     return VisitPreparation(
+        objectives=objectives[:5], address=doctor.address, establishment=doctor.establishment,
+        district=doctor.district, phone=doctor.phone, visits_this_month=this_month,
+        last_visit_date=last_visit.planned_at.date() if last_visit else None,
         doctor_id=doctor.id, doctor_name=doctor.full_name, specialty=doctor.specialty, segment=doctor.segment,
         frequency=doctor.frequency, patients_per_day=doctor.patients_per_day, reception=_reception_text(doctor),
         visits_count=db.query(Visit).filter(Visit.doctor_id == doctor.id, Visit.status == VisitStatus.REALISEE).count(),

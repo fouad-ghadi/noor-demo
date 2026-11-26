@@ -23,11 +23,13 @@ from app.api import (
     users,
     visits,
 )
-from app.database import Base, engine
+from app.database import Base, add_missing_columns, engine
 from app.services import daily_reseed
 
 # Crée les tables si elles n'existent pas encore (le seed les recrée de toute façon)
 Base.metadata.create_all(bind=engine)
+# Base locale créée avant l'ajout de nouvelles colonnes : on les ajoute (sinon il faudrait relancer le seed)
+add_missing_columns(engine)
 
 
 @asynccontextmanager

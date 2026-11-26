@@ -17,13 +17,16 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.ai.schemas import ClosingCheck, ClosingReport
-from app.models import PharmacovigilanceCase, User, Visit
-from app.models.enums import PvCaseStatus, Role, VisitStatus
+from app.ai.schemas import ClosingCheck, ClosingObjective, ClosingReport, ClosingVisit
+from app.models import DayClosing, PharmacovigilanceCase, User, Visit
+from app.models.enums import OBJECTION_CATEGORIES, PvCaseStatus, Role, VisitStatus
 from app.services import activity_service
 from app.services.dates import now, period_label, period_of
 from app.services.objective_service import get_progress
 
+DAILY_TARGET, SATURDAY_TARGET = 10, 5   # journée type d'un délégué (même règle que « Remplir ma semaine »)
+FEEDBACK = {"tres_favorable": "très favorable", "favorable": "favorable", "neutre": "neutre",
+            "reserve": "réservé", "defavorable": "défavorable"}
 WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
 
@@ -48,7 +51,8 @@ def _day_visits(db: Session, delegue_id: int, day: date) -> list[Visit]:
                             Visit.planned_at >= datetime.combine(day, time(0)),
                             Visit.planned_at < datetime.combine(day + timedelta(days=1), time(0)))
         .order_by(Visit.planned_at)
-        .options(selectinload(Visit.products), selectinload(Visit.samples), selectinload(Visit.doctor))))
+        .options(selectinload(Visit.products), selectinload(Visit.samples), selectinload(Visit.doctor),
+                 selectinload(Visit.objections))))
 
 
 def close_day(db: Session, user: User, day: date | None = None) -> ClosingReport:
@@ -109,18 +113,97 @@ def close_day(db: Session, user: User, day: date | None = None) -> ClosingReport
     if samples:
         lines.append("Échantillons remis : " + ", ".join(
             f"{n} × {p}" + (f" (lot {', '.join(sorted(lots[p]))})" if p in lots else "") for p, n in samples.items()) + ".")
+    if cancelled:
+        lines.append("Annulées ou reportées : " + ", ".join(
+            f"{v.doctor.full_name} ({v.cancel_reason or 'sans motif'})" for v in cancelled) + ".")
+
+    objectives = _day_objectives(db, me, day, done, products)
+    lines.append("Objectifs : " + " ; ".join(
+        f"{o.label.lower()} {'atteint' if o.reached else 'non atteint'} ({o.detail})" for o in objectives) + ".")
+    observations = _observations(done, pv, day)
+    if observations:
+        lines.append("Observations : " + " ".join(o.rstrip(".") + "." for o in observations))
     if to_fix:
         lines.append(f"Reste à faire : {len(to_fix)} point(s) (voir la liste).")
     else:
         lines.append("Tous les comptes-rendus sont saisis.")
     if tomorrow:
         lines.append(tomorrow)
+
+    saved = db.scalar(select(DayClosing).where(DayClosing.delegue_id == me.id, DayClosing.day == day))
     return ClosingReport(
-        scope="jour", title=f"Journée du {_fmt(day)}",
+        scope="jour", title=f"Journée du {_fmt(day)}", day=day,
         figures={"prevues": len(visits), "realisees": len(done), "annulees": len(cancelled),
                  "comptes_rendus_manquants": len(missing), "manquants_du_jour": len(missing_today), "echantillons": sum(samples.values())},
         to_fix=to_fix, report="\n".join(lines),
+        visits=[ClosingVisit(
+            visit_id=v.id, doctor_id=v.doctor_id, doctor_name=v.doctor.full_name, time=f"{v.planned_at:%H:%M}",
+            status=v.status, products=[vp.product.brand_name for vp in v.products],
+            note=(f"Accueil {FEEDBACK.get(v.feedback, v.feedback)}" if v.status == VisitStatus.REALISEE and v.feedback
+                  else v.cancel_reason if v.cancel_reason else None)) for v in visits],
+        products=[f"{p} ({n})" for p, n in products.most_common()],
+        objectives=objectives, observations=observations,
+        validated_at=saved.validated_at if saved else None,
+        validated_report=saved.report if saved else None,
     )
+
+
+def _day_objectives(db: Session, me: User, day: date, done: list[Visit], products: Counter) -> list[ClosingObjective]:
+    """Objectifs de la journée : visites, médecins ciblés, produits en retard sur l'objectif du mois."""
+    target = SATURDAY_TARGET if day.weekday() == 5 else DAILY_TARGET
+    out = [ClosingObjective(label="Visites de la journée", done=len(done), target=target, reached=len(done) >= target,
+                            detail=f"{len(done)} réalisées pour {target} dans une journée type")]
+    targeted = [v for v in done if v.doctor.frequency]
+    goal = round(len(done) * 0.7) if done else 1
+    out.append(ClosingObjective(label="Médecins ciblés vus", done=len(targeted), target=goal, reached=len(targeted) >= goal,
+                                detail=f"{len(targeted)} médecins F1/F2 sur {len(done)} visites (repère : 70 %)"))
+    progress = get_progress(db, me.id, period_of(day))
+    if progress:
+        late = [p for p in progress.products if p.pct < progress.expected_pct * 0.9]
+        if late:
+            pushed = [p.brand_name for p in late if products.get(p.brand_name)]
+            out.append(ClosingObjective(
+                label="Produits en retard présentés", done=len(pushed), target=len(late), reached=len(pushed) == len(late),
+                detail=(", ".join(f"{p.brand_name} {'présenté' if p.brand_name in pushed else 'non présenté'}" for p in late)
+                        + f" (en retard sur l'objectif de {period_label(period_of(day))})")))
+    return out
+
+
+def _observations(done: list[Visit], pv: list, day: date) -> list[str]:
+    """Ce que le délégué (ou son superviseur) doit retenir de la journée."""
+    obs = []
+    for v in done:
+        if v.prescription_feedback == "promesse_prescrire":
+            names = ", ".join(vp.product.brand_name for vp in v.products)
+            obs.append(f"{v.doctor.full_name} promet de prescrire {names} : à confirmer à la prochaine visite")
+        if v.feedback in ("reserve", "defavorable"):
+            obs.append(f"Accueil {FEEDBACK[v.feedback]} chez {v.doctor.full_name}")
+        for o in v.objections:
+            obs.append(f"Objection chez {v.doctor.full_name} : {_lower_first(OBJECTION_CATEGORIES.get(o.category, o.category))}"
+                       + (f" ({o.product.brand_name})" if o.product else ""))
+    for case in pv:
+        if case.visit and case.visit.planned_at.date() == day:
+            obs.append(f"Pharmacovigilance : {case.event} signalé, déclaration à faire sous 24 h")
+    return obs[:8]
+
+
+def _lower_first(text: str) -> str:
+    return text[:1].lower() + text[1:]
+
+
+def validate_day(db: Session, user: User, day: date, report: str) -> ClosingReport:
+    """Le délégué a relu (et corrigé) son bilan : on l'enregistre. Il peut le revalider plus tard."""
+    me = _delegue(user)
+    if day > now().date():
+        raise HTTPException(400, "On ne peut pas clôturer une journée à venir")
+    saved = db.scalar(select(DayClosing).where(DayClosing.delegue_id == me.id, DayClosing.day == day))
+    if saved is None:
+        saved = DayClosing(delegue_id=me.id, day=day, report=report.strip(), validated_at=now())
+        db.add(saved)
+    else:
+        saved.report, saved.validated_at = report.strip(), now()
+    db.commit()
+    return close_day(db, user, day)
 
 
 def close_month(db: Session, user: User, period: str | None = None) -> ClosingReport:

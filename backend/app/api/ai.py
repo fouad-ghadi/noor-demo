@@ -21,6 +21,7 @@ from app.ai import (
     potential,
     rag_assistant,
     recommendations,
+    report_writer,
     sales_insights,
     visit_prep,
     week_planner,
@@ -32,6 +33,7 @@ from app.ai.schemas import (
     CardScanRequest,
     CardScanResult,
     ClosingReport,
+    ClosingValidate,
     DuplicateCheckRequest,
     DuplicateMatch,
     MergeProposal,
@@ -40,6 +42,9 @@ from app.ai.schemas import (
     PharmacovigilanceResult,
     PotentialApply,
     PotentialAssessment,
+    ReplanApply,
+    ReplanProposal,
+    ReplanRequest,
     SalesInsights,
     WeekPlan,
     WeekPlanConfirm,
@@ -49,6 +54,7 @@ from app.ai.schemas import (
     VoiceReportResult,
 )
 from app.api.deps import DB, CurrentUser
+from app.schemas.visit import VisitReport
 from app.services import access, duplicate_service
 
 router = APIRouter(prefix="/ai", tags=["IA (à venir)"])
@@ -188,6 +194,18 @@ def ai_week_plan_confirm(data: WeekPlanConfirm, db: DB, user: CurrentUser) -> di
     return {"planned": week_planner.confirm(db, user, data.visits)}
 
 
+@router.post("/replan-day", response_model=ReplanProposal)
+def ai_replan_day(data: ReplanRequest, db: DB, user: CurrentUser):
+    """⚡ Imprévu : NOOR propose une journée réorganisée (rien n'est modifié avant validation)."""
+    return week_planner.replan_day(db, user, data)
+
+
+@router.post("/replan-day/apply")
+def ai_replan_apply(data: ReplanApply, db: DB, user: CurrentUser) -> dict:
+    """✅ Le délégué valide les déplacements gardés : les visites sont déplacées."""
+    return {"moved": week_planner.apply_replan(db, user, data.moves)}
+
+
 @router.get("/sales-insights", response_model=SalesInsights)
 def ai_sales_insights(db: DB, user: CurrentUser, delegue_id: int | None = None):
     """📈 Ce que NOOR déduit des ventes : zones à prioriser, produits en croissance, médecins à revoir."""
@@ -204,3 +222,15 @@ def ai_close_day(db: DB, user: CurrentUser, day: date | None = None):
 def ai_close_month(db: DB, user: CurrentUser, period: str | None = None):
     """📅 Clôturer mon mois : indicateurs du rapport mensuel et objectifs, rapport rédigé (à relire)."""
     return closing.close_month(db, user, period)
+
+
+@router.post("/closing/day/validate", response_model=ClosingReport)
+def ai_close_day_validate(data: ClosingValidate, db: DB, user: CurrentUser):
+    """✅ Le délégué valide son bilan de journée (texte relu et corrigé) : il est enregistré."""
+    return closing.validate_day(db, user, data.day, data.report)
+
+
+@router.post("/report-structure/{visit_id}", response_model=report_writer.StructuredReport)
+def ai_report_structure(visit_id: int, data: VisitReport, db: DB, user: CurrentUser):
+    """📝 Compte-rendu structuré + points à vérifier, à partir de la saisie (rien n'est enregistré)."""
+    return report_writer.structure(db, user, visit_id, data)

@@ -262,7 +262,7 @@ def find_all_pairs(db: Session) -> list[tuple[Doctor, Doctor, float, list[str]]]
 
 FIELD_LABELS = {
     "first_name": "Prénom", "last_name": "Nom", "specialty": "Spécialité", "practice_type": "Type d'exercice",
-    "address": "Adresse", "city": "Ville", "district": "Quartier", "phone": "Téléphone", "email": "E-mail",
+    "address": "Adresse", "establishment": "Établissement", "city": "Ville", "district": "Quartier", "phone": "Téléphone", "email": "E-mail",
 }
 
 
@@ -306,7 +306,7 @@ def merge_proposal(db: Session, user: User, doctor_id: int, card: dict) -> dict:
             return bool(a | b) and len(a & b) / len(a | b) >= 0.75
         return simplify(old) == simplify(new)
 
-    for field in ("specialty", "practice_type", "address", "city", "district", "phone", "email"):
+    for field in ("specialty", "practice_type", "establishment", "address", "city", "district", "phone", "email"):
         new = card.get(field)
         new = new.strip() if isinstance(new, str) else new
         if not new:

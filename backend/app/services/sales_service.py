@@ -226,3 +226,126 @@ def evolution_index_by_territory(db: Session) -> dict[tuple[str, int], float]:
         if who != "marche" and m["cur"] and m["prev"] and v["prev"]:
             result[(territory, int(who))] = round(100 * (v["cur"] / m["cur"]) / (v["prev"] / m["prev"]), 1)
     return result
+
+
+# ---------------------------------------------------------------------------
+# Objectifs de ventes par produit et zones à fort potentiel (page « Analyse des ventes »)
+# ---------------------------------------------------------------------------
+# Objectif de DÉMONSTRATION (fictif) : ventes de l'an dernier sur les mêmes mois + une croissance demandée.
+GROWTH_TARGET = {"chronique": 10.0, "aigue": 8.0}
+NEAR_PCT = 98   # entre 98 et 100 % de l'objectif : « proche »
+
+
+def _fr(x: float, digits: int = 1) -> str:
+    """12.34 → « 12,3 » (virgule décimale, comme dans l'interface)."""
+    return f"{x:.{digits}f}".replace(".", ",")
+
+
+def _fr_money(value: float) -> str:
+    """Montant lisible : « 18,1 M DH », « 612 k DH »."""
+    if abs(value) >= 1_000_000:
+        return f"{_fr(value / 1_000_000)} M DH"
+    if abs(value) >= 1_000:
+        return f"{round(value / 1000)} k DH"
+    return f"{round(value)} DH"
+
+
+def scorecard(db: Session, user: User, delegue_id: int | None = None) -> "SalesScorecard":
+    from app.models import Doctor
+    from app.models.enums import PrescribingStatus
+    from app.schemas.sales import PmPoint, ProductScore, SalesScorecard, TerritoryPotential
+    from sqlalchemy.orm import selectinload
+
+    last_month = last_available_month(db)
+    cur, prev, label, _ = _months_for("ytd", last_month)
+    months = list(reversed(previous_periods(last_month, 12)))
+    delegates = _scope_delegates(db, user, delegue_id)
+    scope = {t for d in delegates for t in territories_of_region(d.region)}
+    ids = [d.id for d in delegates]
+
+    products = {p.id: p for p in db.scalars(select(Product))}
+    entries = list(db.scalars(select(MarketProduct)))
+    ours = {mp.product_id: mp for mp in entries if mp.product_id is not None}
+    code_of = {mp.id: mp.market_code for mp in entries}
+    # ventes[(territoire, code marché, product_id ou 0 = tout le marché, mois)]
+    sums: dict[tuple[str, str, int, str], float] = defaultdict(float)
+    for territory, mp_id, pid, period, value in db.execute(
+        select(SalesRecord.territory, SalesRecord.market_product_id, MarketProduct.product_id,
+               SalesRecord.period, SalesRecord.value)
+        .join(MarketProduct, MarketProduct.id == SalesRecord.market_product_id)
+        .where(SalesRecord.period.in_(sorted(set(cur) | set(prev) | set(months))))
+    ):
+        code = code_of[mp_id]
+        sums[(territory, code, 0, period)] += value
+        if pid is not None:
+            sums[(territory, code, pid, period)] += value
+
+    def total(territories, code, pid, periods) -> float:
+        return sum(v for (t, c, p, m), v in sums.items()
+                   if c == code and p == pid and m in periods and (territories is None or t in territories))
+
+    rows = []
+    for pid, mp in ours.items():
+        p = products[pid]
+        value, value_prev = total(scope, mp.market_code, pid, cur), total(scope, mp.market_code, pid, prev)
+        market, market_prev = total(scope, mp.market_code, 0, cur), total(scope, mp.market_code, 0, prev)
+        growth = GROWTH_TARGET.get(p.business_unit, 7.0)
+        objective = value_prev * (1 + growth / 100)
+        attainment = round(100 * value / objective, 1) if objective else 0.0
+        pm, pm_prev = _ratio(value, market), _ratio(value_prev, market_prev)
+        status = "atteint" if attainment >= 100 else "proche" if attainment >= NEAR_PCT else "en_retard"
+        evol = _evol(value, value_prev)
+        why = (f"Objectif : ventes de l'an dernier + {growth:g} %. Réalisé : {attainment:.0f} % "
+               f"(ventes {'+' if (evol or 0) >= 0 else ''}{_fr(evol or 0)} % sur un an")
+        why += f", part de marché {_fr(pm)} % contre {_fr(pm_prev)} %)." if pm is not None and pm_prev else ")."
+        rows.append(ProductScore(
+            product_id=pid, name=p.brand_name, market_name=mp.market_name, value=round(value),
+            objective=round(objective), growth_target_pct=growth, attainment_pct=attainment, status=status,
+            pm=pm, pm_prev=pm_prev, ie=_ratio(pm, pm_prev) if pm is not None and pm_prev else None,
+            pm_series=[PmPoint(period=m, pm=_ratio(total(scope, mp.market_code, pid, [m]),
+                                                   total(scope, mp.market_code, 0, [m]))) for m in reversed(months)],
+            why=why,
+        ))
+    rows.sort(key=lambda r: r.attainment_pct)
+
+    # Zones à fort potentiel : ventes à conquérir si notre part rejoignait la part nationale, marché par marché
+    doctors = list(db.scalars(select(Doctor).where(Doctor.delegue_id.in_(ids), Doctor.segment.in_(["A", "B"]))
+                              .options(selectinload(Doctor.prescriptions))))
+    territories = []
+    for t in sorted(scope):
+        market_t, ours_t, gap, nat_parts = 0.0, 0.0, 0.0, []
+        for pid, mp in ours.items():
+            m = total({t}, mp.market_code, 0, cur)
+            v = total({t}, mp.market_code, pid, cur)
+            nat_pm = total(None, mp.market_code, pid, cur) / (total(None, mp.market_code, 0, cur) or 1)
+            market_t += m
+            ours_t += v
+            gap += max(0.0, nat_pm * m - v)
+            nat_parts.append((nat_pm * m, m))
+        national_pm = _ratio(sum(a for a, _ in nat_parts), sum(b for _, b in nat_parts))
+        pm = _ratio(ours_t, market_t)
+        docs = [d for d in doctors if d.territory == t]
+        non_presc = sum(1 for d in docs if not any(ps.status == PrescribingStatus.REGULIER for ps in d.prescriptions))
+        why = [f"Marché local : {_fr_money(market_t)} depuis janvier",
+               (f"Notre part : {_fr(pm)} % contre {_fr(national_pm)} % au national" if pm is not None and national_pm
+                else "Part de marché non disponible"),
+               f"{len(docs)} médecins A ou B, dont {non_presc} ne prescrivent encore aucun de nos produits régulièrement"]
+        territories.append(TerritoryPotential(
+            territory=t, market_value=round(market_t), pm=pm, national_pm=national_pm,
+            ip=_ratio(pm, national_pm) if pm is not None and national_pm else None,
+            gap_value=round(gap), doctors_ab=len(docs), non_prescribers=non_presc,
+            score=round(gap / 1000 + non_presc * 2, 1), why=why,
+        ))
+    territories.sort(key=lambda x: -x.score)
+
+    late = [r for r in rows if r.status == "en_retard"]
+    summary = (f"{len(late)} produit{'s' if len(late) > 1 else ''} en retard sur l'objectif"
+               + (f" ({', '.join(r.name for r in late[:3])})" if late else "")
+               + (f". Territoire au plus fort potentiel : {territories[0].territory}, environ "
+                  f"{_fr_money(territories[0].gap_value)} à conquérir." if territories else "."))
+    return SalesScorecard(
+        period_label=label,
+        objective_rule=("Objectifs fictifs de démonstration : ventes des mêmes mois de l'an dernier + 10 % "
+                        "(produits chroniques) ou + 8 % (produits aigus)."),
+        products=rows, territories=territories[:6], summary=summary,
+    )

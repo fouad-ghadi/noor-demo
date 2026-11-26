@@ -40,11 +40,11 @@ def font(kind: str, size: int) -> ImageFont.FreeTypeFont:
 # Chaque carte : fichier, titre + nom, lignes de spécialité, lignes d'adresse, lignes de contact
 CARDS = [
     ("carte-wazzani.png", "Dr Youssef WAZZANI",
-     ["Pneumo-Allergologue", "Maladies respiratoires et allergies"],
+     ["Pneumo-Allergologue", "Centre de pneumologie Agdal"],
      ["8, Av. de France", "Agdal - Rabat"],
      ["Tél : 05 37 77 18 42", "Sur rendez-vous"]),
     ("carte-elamrani.png", "Dr Mohamed ELAMRANI",
-     ["Cardiologue", "Maladies du coeur et des vaisseaux"],
+     ["Cardiologue", "Cabinet de cardiologie Zerktouni"],
      ["45, Bd Zerktouni", "Maârif - Casablanca"],
      ["Tél : +212 522-251478", "GSM : 06 61 90 12 34"]),
     ("carte-ettahiri.png", "Dr Saïd ETTAHIRI",
@@ -52,7 +52,7 @@ CARDS = [
      ["5, Rue Ibn Aïcha", "Daoudiate - Marrakech"],
      ["GSM : +212 668 127 730", "dr.ettahiri@gmail.com"]),
     ("carte-bennis.png", "Dr Leïla BENNIS",
-     ["Pédiatre", "Nourrissons et enfants"],
+     ["Pédiatre", "Clinique Les Orangers"],
      ["Résidence Anfa Place, Bd d'Anfa", "Anfa - Casablanca"],
      ["Tél : 05 22 39 40 41", "dr.bennis.pediatre@gmail.com"]),
 ]

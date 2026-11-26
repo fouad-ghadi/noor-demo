@@ -28,11 +28,11 @@ import { cn } from "@/lib/utils";
 const DEMO_CARDS = [
   {
     file: "carte-elamrani.png", label: "Dr Mohamed Elamrani", hint: "Cardiologue à Casablanca, déjà en base sous « El Amrani »",
-    text: "Dr Mohamed ELAMRANI\nCardiologue\nMaladies du coeur et des vaisseaux\n45, Bd Zerktouni\nMaârif - Casablanca\nTél : +212 522-251478\nGSM : 06 61 90 12 34",
+    text: "Dr Mohamed ELAMRANI\nCardiologue\nCabinet de cardiologie Zerktouni\n45, Bd Zerktouni\nMaârif - Casablanca\nTél : +212 522-251478\nGSM : 06 61 90 12 34",
   },
   {
     file: "carte-wazzani.png", label: "Dr Youssef Wazzani", hint: "Pneumologue à Rabat, déjà en base sous « Ouazzani »",
-    text: "Dr Youssef WAZZANI\nPneumo-Allergologue\nMaladies respiratoires et allergies\n8, Av. de France\nAgdal - Rabat\nTél : 05 37 77 18 42\nSur rendez-vous",
+    text: "Dr Youssef WAZZANI\nPneumo-Allergologue\nCentre de pneumologie Agdal\n8, Av. de France\nAgdal - Rabat\nTél : 05 37 77 18 42\nSur rendez-vous",
   },
   {
     file: "carte-ettahiri.png", label: "Dr Saïd Ettahiri", hint: "Rhumatologue à Marrakech, déjà en base sous « Tahiri »",
@@ -40,7 +40,7 @@ const DEMO_CARDS = [
   },
   {
     file: "carte-bennis.png", label: "Dr Leïla Bennis", hint: "Pédiatre à Casablanca, nouvelle",
-    text: "Dr Leïla BENNIS\nPédiatre\nNourrissons et enfants\nRésidence Anfa Place, Bd d'Anfa\nAnfa - Casablanca\nTél : 05 22 39 40 41\ndr.bennis.pediatre@gmail.com",
+    text: "Dr Leïla BENNIS\nPédiatre\nClinique Les Orangers\nRésidence Anfa Place, Bd d'Anfa\nAnfa - Casablanca\nTél : 05 22 39 40 41\ndr.bennis.pediatre@gmail.com",
   },
 ];
 

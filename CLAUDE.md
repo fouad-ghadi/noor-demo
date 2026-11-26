@@ -137,7 +137,19 @@ ni sur le site public** : on reproduit seulement la structure et les formules, a
   `ai/medical_info.py` (fiches `docs/medical/fiche_*.md`, `kind="medical"`). Phrases prédéfinies du compte-rendu :
   `src/lib/reportPhrases.ts`. Nouveaux champs : `Doctor.patients_per_day`, `Doctor.reception_days` ("1,3" = mar. et jeu.),
   `Product.channel/margin_level/peak_months/sample_unit` (seed : `add_cabinet_profiles`, hasard séparé `Random(2027)`).
-  Tests : `backend/tests/test_sothema.py`. Guide du chatbot : sections 19 à 25 (25 = scan de carte).
+  Tests : `backend/tests/test_sothema.py`. Guide du chatbot : sections 19 à 30 (25 = scan de carte, 26 à 30 = journée complète).
+- **Prototype « journée complète » (26 nov. 2026, tout sans clé)** : « Remplir ma semaine » avec itinéraire
+  (km et temps de route estimés = vol d'oiseau × 1,3 à 25 km/h, carte `components/planning/RouteMap.tsx`), visites
+  déplaçables (jour, heure) ou retirées avant validation ; **« Imprévu ? »** (`week_planner.replan_day`, `ReplanDialog.tsx`,
+  planning + tableau de bord : retard / médecin absent / journée interrompue, reports au prochain jour de réception) ;
+  objectifs de la visite + infos essentielles dans « Préparer la visite » (aussi depuis l'arrêt en cours de la tournée) ;
+  compte-rendu : **dictée simulée** (FR / darija, texte écrit mot à mot) et **écran de vérification** (`ai/report_writer.py`,
+  `ReportReviewDialog.tsx`, texte final dans `Visit.report_summary`) ; clôture du jour modifiable et **validée**
+  (table `day_closings`, objectifs atteints / non atteints, observations) ; `/sales/scorecard` (objectifs de ventes
+  FICTIFS = N-1 + 10 % chronique / + 8 % aigu, PM sur 12 mois, zones à fort potentiel) ; `Doctor.establishment` lu sur la
+  carte ; outil chatbot `ventes_produit` ; **mode hors connexion de démo** (`lib/offline.ts`, `OfflineBanner.tsx` :
+  « Simuler une coupure réseau », comptes-rendus gardés dans localStorage puis synchronisés). Colonnes ajoutées à une
+  base existante par `database.add_missing_columns` (pas besoin de relancer le seed). Tests : `tests/test_journee_complete.py`.
 - Recommandations : carte « Visites recommandées » (`components/dashboard/RecommendedVisits.tsx`) avec « Planifier ».
 - Catalogue médicaments (`/produits`, `pages/products/ProductsPage.tsx`) : grille animée (CSS, coupée par
   prefers-reduced-motion), filtres par gamme + recherche (`src/lib/catalogue.ts`, testé par `npm test` / vitest),
@@ -170,7 +182,7 @@ page Statistiques, analyse des ventes type IMS, n° de lot, statut de prescripti
 
 22 nov. 2026 (soir) : demandes du laboratoire intégrées (potentiel A/B/C expliqué, Préparer la visite,
 Remplir ma semaine, conclusions des ventes, phrases prédéfinies, clôture jour/mois, fiches médicales du chatbot).
-Reste de leur liste : saisie hors-ligne (option).
+Reste de leur liste : saisie hors-ligne (option) → faite en démonstration le 26 nov. (comptes-rendus seulement).
 
 Pistes pour la suite (à valider avec Fouad ; MVP le 8 déc. 2026) :
 1. ~~Pharmacovigilance conforme~~ : fait le 22 nov. 2026 (PR « pharmacovigilance conforme »).

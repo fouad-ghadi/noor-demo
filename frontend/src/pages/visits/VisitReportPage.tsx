@@ -15,8 +15,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { api } from "@/api/client";
-import type { VoiceReportResult } from "@/api/ai";
-import type { Feedback, PrescriptionFeedback, Product, Visit } from "@/api/types";
+import { aiApi, type StructuredReport, type VoiceReportResult } from "@/api/ai";
+import type { Feedback, PrescriptionFeedback, Product, Visit, VisitReportInput } from "@/api/types";
 import { AiFeatureButton } from "@/components/ai/AiFeatureButton";
 import { usePageContext } from "@/components/assistant/AssistantContext";
 import { SegmentBadge } from "@/components/shared/badges";
@@ -30,8 +30,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { TIME_OPTIONS } from "@/components/visits/PlanVisitDialog";
+import { ReportReviewDialog } from "@/components/visits/ReportReviewDialog";
 import { VoiceDictationDialog } from "@/components/visits/VoiceDictationDialog";
 import { invalidateVisitData, useMeta, useProducts } from "@/hooks/queries";
+import { offlineStore, useOffline } from "@/lib/offline";
 import { REPORT_PHRASES, appendPhrase } from "@/lib/reportPhrases";
 import { formatDate, formatLongDay, formatTime, toApiDateTime } from "@/lib/format";
 import { FEEDBACK, PRESCRIPTION_FEEDBACK } from "@/lib/labels";
@@ -240,33 +242,64 @@ function ReportForm({ visit, products, objectionCategories }: {
 
   const presented = products.filter((p) => productIds.includes(p.id));
 
-  const mutation = useMutation({
+  /** Contenu du compte-rendu tel que saisi (envoyé pour la vérification puis pour l'enregistrement). */
+  const buildPayload = (): VisitReportInput => ({
+    actual_at: `${date}T${time}:00`,
+    duration_min: duration,
+    product_ids: productIds,
+    feedback: feedback!,
+    prescription_feedback: prescriptionFeedback,
+    objections: Object.entries(objections).map(([category, o]) => ({
+      category,
+      comment: o.comment.trim() || null,
+      product_id: o.product_id,
+    })),
+    samples: Object.entries(samples)
+      .filter(([pid, q]) => q > 0 && productIds.includes(Number(pid)))
+      .map(([pid, quantity]) => ({
+        product_id: Number(pid),
+        quantity,
+        lot_number: lots[Number(pid)]?.trim() || null,
+      })),
+    notes: notes.trim() || null,
+    next_step: nextStep.trim() || null,
+    next_visit_date: nextDate || null,
+    plan_next_visit: planNext && !alreadyPlanned,
+    report_source: reportSource,
+  });
+
+  // Écran de vérification : NOOR rédige le compte-rendu structuré, le délégué le relit puis valide
+  const [review, setReview] = useState<StructuredReport | null>(null);
+  const { offline } = useOffline();
+  const structure = useMutation({
+    // Hors connexion : NOOR met en forme sur l'appareil (version simplifiée, sans contrôles du serveur)
     mutationFn: () =>
-      api.submitReport(visit.id, {
-        actual_at: `${date}T${time}:00`,
-        duration_min: duration,
-        product_ids: productIds,
-        feedback: feedback!,
-        prescription_feedback: prescriptionFeedback,
-        objections: Object.entries(objections).map(([category, o]) => ({
-          category,
-          comment: o.comment.trim() || null,
-          product_id: o.product_id,
-        })),
-        samples: Object.entries(samples)
-          .filter(([pid, q]) => q > 0 && productIds.includes(Number(pid)))
-          .map(([pid, quantity]) => ({
-            product_id: Number(pid),
-            quantity,
-            lot_number: lots[Number(pid)]?.trim() || null,
-          })),
-        notes: notes.trim() || null,
-        next_step: nextStep.trim() || null,
-        next_visit_date: nextDate || null,
-        plan_next_visit: planNext && !alreadyPlanned,
-        report_source: reportSource,
-      }),
-    onSuccess: () => {
+      offline ? Promise.resolve(structureOffline(buildPayload(), visit, products)) : aiApi.structureReport(visit.id, buildPayload()),
+    onSuccess: setReview,
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (summary: string | null) => {
+      const payload = { ...buildPayload(), report_summary: summary };
+      if (offlineStore.isOffline()) {
+        // Pas de réseau : le compte-rendu est gardé sur l'appareil et partira au retour de la connexion
+        offlineStore.enqueue({ visitId: visit.id, doctorName: visit.doctor_name, payload, savedAt: new Date().toISOString() });
+        return "hors-connexion" as const;
+      }
+      await api.submitReport(visit.id, payload);
+      return "envoye" as const;
+    },
+    onSuccess: (result) => {
+      setReview(null);
+      if (result === "hors-connexion") {
+        toast.success("Compte-rendu gardé sur l'appareil", {
+          description: `${visit.doctor_name} : il sera envoyé automatiquement au retour de la connexion.`,
+        });
+        if ((window.history.state?.idx ?? 0) > 0) navigate(-1);
+        else navigate("/planning");
+        return;
+      }
       invalidateVisitData(queryClient);
       toast.success(isEdit ? "Compte-rendu mis à jour" : "Compte-rendu enregistré", {
         description: isEdit
@@ -284,7 +317,7 @@ function ReportForm({ visit, products, objectionCategories }: {
     e.preventDefault();
     if (productIds.length === 0) return toast.error("Sélectionnez au moins un produit présenté");
     if (!feedback) return toast.error("Indiquez l'accueil du médecin");
-    mutation.mutate();
+    structure.mutate();
   };
 
   return (
@@ -594,20 +627,62 @@ function ReportForm({ visit, products, objectionCategories }: {
         {/* Barre de validation fixe (au-dessus de la navigation mobile) */}
         <div className="border-line shadow-pine/10 sticky bottom-20 z-10 flex items-center justify-between gap-3 rounded-xl border bg-white/95 p-3 shadow-lg backdrop-blur lg:bottom-4">
           <p className="text-muted-foreground hidden text-[13px] sm:block">
-            {productIds.length} produit(s) présenté(s), accueil : {feedback ? FEEDBACK[feedback].label.toLowerCase() : "non renseigné"}
+            {offline
+              ? "Hors connexion : le compte-rendu sera gardé sur l'appareil puis envoyé au retour du réseau."
+              : `${productIds.length} produit(s) présenté(s), accueil : ${feedback ? FEEDBACK[feedback].label.toLowerCase() : "non renseigné"}`}
           </p>
           <div className="flex flex-1 justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => navigate(-1)}>
               Annuler
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
-              {isEdit ? "Enregistrer" : "Valider la visite"}
+            <Button type="submit" disabled={structure.isPending || mutation.isPending}>
+              {structure.isPending ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
+              Vérifier le compte-rendu
             </Button>
           </div>
         </div>
       </form>
-      <VoiceDictationDialog open={dictationOpen} onOpenChange={setDictationOpen} visitId={visit.id} onDraft={applyDraft} />
+      <VoiceDictationDialog
+        open={dictationOpen}
+        onOpenChange={setDictationOpen}
+        visitId={visit.id}
+        onDraft={applyDraft}
+        productNames={targeted.slice(0, 2).map((p) => p.brand_name)}
+      />
+      <ReportReviewDialog
+        report={review}
+        initialSummary={visit.report_summary}
+        saving={mutation.isPending}
+        isEdit={isEdit}
+        onBack={() => setReview(null)}
+        onConfirm={(summary) => mutation.mutate(summary)}
+      />
     </div>
   );
+}
+
+/** Hors connexion : mise en forme simple du compte-rendu sur l'appareil (le serveur n'est pas joignable). */
+function structureOffline(data: VisitReportInput, visit: Visit, products: Product[]): StructuredReport {
+  const name = (id: number) => products.find((p) => p.id === id)?.brand_name ?? `Produit ${id}`;
+  const sections = [
+    { label: "Contexte", text: `Visite chez ${visit.doctor_name} (${visit.doctor_specialty}), ${visit.doctor_district}, durée ${data.duration_min} min.` },
+    { label: "Produits présentés", text: data.product_ids.map(name).join(", ") + "." },
+    { label: "Réaction du médecin", text: `Accueil ${FEEDBACK[data.feedback].label.toLowerCase()}.` },
+    ...(data.samples.length
+      ? [{ label: "Échantillons remis", text: data.samples.map((s) => `${s.quantity} × ${name(s.product_id)}${s.lot_number ? ` (lot ${s.lot_number})` : ""}`).join(", ") + "." }]
+      : []),
+    ...(data.notes ? [{ label: "Observations", text: data.notes }] : []),
+    { label: "Suite à donner", text: data.next_step || "Non précisée." },
+  ];
+  return {
+    title: `Compte-rendu, ${visit.doctor_name}`,
+    sections,
+    summary: sections.map((s) => `${s.label} : ${s.text}`).join("\n"),
+    checks: [
+      {
+        level: "info",
+        text: "Hors connexion : mise en forme faite sur l'appareil. Les contrôles de NOOR (lots, pharmacovigilance) se feront à l'envoi.",
+      },
+    ],
+  };
 }

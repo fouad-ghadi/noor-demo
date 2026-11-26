@@ -16,6 +16,8 @@ class Doctor(Base):
     specialty: Mapped[str] = mapped_column(String(60), index=True)
     practice_type: Mapped[str] = mapped_column(String(30))      # enums.PracticeType
     address: Mapped[str] = mapped_column(String(200))
+    # Établissement (cabinet, clinique, hôpital...) tel qu'écrit sur la carte de visite
+    establishment: Mapped[str | None] = mapped_column(String(120))
     city: Mapped[str] = mapped_column(String(60), index=True)
     district: Mapped[str] = mapped_column(String(80))           # quartier
     phone: Mapped[str | None] = mapped_column(String(30))

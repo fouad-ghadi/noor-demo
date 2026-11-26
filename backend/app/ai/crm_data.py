@@ -350,6 +350,35 @@ def comptes_rendus_en_attente(db: Session, user: User, delegue: str = "") -> Too
     return ToolResult(data, text, citation, lines)
 
 
+def ventes_produit(db: Session, user: User, produit: str = "", delegue: str = "") -> ToolResult:
+    """Ventes (marché type IMS, fictif) face à l'objectif, et part de marché, d'un produit ou de tout le portefeuille."""
+    from app.services import sales_service
+
+    targets = _targets(db, user, delegue)
+    card = sales_service.scorecard(db, user, targets[0].id if len(targets) == 1 else None)
+    q = normalize(produit)
+    chosen = [r for r in card.products if normalize(r.name) in q] if q else []
+    status = {"atteint": "objectif atteint", "proche": "proche de l'objectif", "en_retard": "en retard sur l'objectif"}
+    if chosen:
+        r = chosen[0]
+        text = (f"{r.name} ({card.period_label.lower()}) : {fmt_num(round(r.value / 1_000_000, 2))} M DH de ventes, soit {fmt_pct(r.attainment_pct)} "
+                f"de l'objectif ({status[r.status]}). Part de marché : {fmt_pct(r.pm or 0)} contre {fmt_pct(r.pm_prev or 0)} "
+                f"un an plus tôt. Données de marché fictives de démonstration.")
+        lines, link = [], f"/ventes?produit={r.product_id}"
+    else:
+        late = [r for r in card.products if r.status != "atteint"]
+        text = (f"{card.summary} Données fictives de démonstration ({card.period_label.lower()}) :")
+        lines = [f"{r.name} : {fmt_pct(r.attainment_pct)} de l'objectif, part de marché {fmt_pct(r.pm or 0)}"
+                 for r in (late or card.products)[:6]]
+        link = "/ventes"
+    citation = Citation(document_id=0, document_title="Vos données NOOR : analyse des ventes", section=card.period_label,
+                        excerpt=card.objective_rule, link=link)
+    data = {"periode": card.period_label, "regle_objectif": card.objective_rule,
+            "produits": [r.model_dump(include={"name", "value", "objective", "attainment_pct", "status", "pm", "pm_prev"})
+                         for r in (chosen or card.products)]}
+    return ToolResult(data, text, citation, lines)
+
+
 # ---------------------------------------------------------------------------
 # Description des outils pour Claude (format « tool use » de l'API)
 # ---------------------------------------------------------------------------
@@ -378,6 +407,12 @@ TOOLS: dict[str, tuple[Callable[..., ToolResult], dict]] = {
         "description": "Avancement de l'objectif du mois en cours : visites réalisées / objectif, rythme attendu à date, "
                        "couverture des médecins A, présentations par produit.",
         "properties": {"delegue": _DELEGUE},
+    }),
+    "ventes_produit": (ventes_produit, {
+        "description": "Ventes du marché (type IMS, données fictives) depuis janvier face à l'objectif de ventes, "
+                       "et part de marché, pour un produit ou tout le portefeuille (produits en retard d'abord).",
+        "properties": {"produit": {"type": "string", "description": "Nom du produit (ex. « Amoxira ») ou chaîne vide pour tout le portefeuille."},
+                       "delegue": _DELEGUE},
     }),
     "comptes_rendus_en_attente": (comptes_rendus_en_attente, {
         "description": "Visites passées dont le compte-rendu n'a pas encore été rédigé (et celles en retard de plus de 48 h).",
@@ -412,6 +447,7 @@ def run_tool(db: Session, user: User, name: str, args: dict) -> ToolResult:
 PATTERNS: list[tuple[str, str]] = [
     ("comptes_rendus_en_attente", r"(comptes?.?rendus?|\bcr\b).*(attente|retard|rediger|reste|manque|faire|pas encore)"
                                   r"|(attente|retard|rediger|reste).*(comptes?.?rendus?|\bcr\b)"),
+    ("ventes_produit", r"\bventes?\b|\bvendu|part de marche|parts de marche|chiffre d.?affaires"),
     ("objectifs_du_mois", r"\bobjectifs?\b"),
     ("medecins_a_voir", r"(pas|jamais) (encore )?(vu|visite)|non (vus?|visites?)|a (voir|revoir|visiter)|reste a voir"
                         r"|qui (dois|doit|faut)|en retard de frequence|manque"),
@@ -448,6 +484,8 @@ def detect_tool(db: Session, user: User, question: str) -> tuple[str, dict] | No
         args["frequence"] = "F2" if re.search(r"\bf2\b", q) else "F1" if re.search(r"\bf1\b", q) else "tous"
     elif name == "visites_du_jour":
         args["jour"] = question
+    elif name == "ventes_produit":
+        args["produit"] = question
     return name, args
 
 

@@ -50,11 +50,17 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
   const product = products.data?.find((p) => p.id === context.productId);
 
   // Questions d'exemple : une par sorte de question (produit adapté à la page affichée)
-  const suggestions = [
-    product ? `Contre-indications de ${product.brand_name} ?` : "Peut-on donner Amoxira à un enfant de moins de 6 ans ?",
-    "Quel est mon CPA ?",
-    "Quelle différence entre Gram positif et Gram négatif ?",
-    "Comment ajouter un jour de congé ?",
+  const suggestions: { group: string; questions: string[] }[] = [
+    {
+      group: "Produits",
+      questions: [
+        product ? `Contre-indications de ${product.brand_name} ?` : "Peut-on donner Amoxira à un enfant de moins de 6 ans ?",
+        "Posologie de Cardiovex ?",
+      ],
+    },
+    { group: "Informations médicales", questions: ["Quelle différence entre Gram positif et Gram négatif ?"] },
+    { group: "Utiliser NOOR", questions: ["Comment remplir ma semaine ?", "Comment déclarer un effet indésirable ?"] },
+    { group: "Mes chiffres", questions: ["Quel est mon CPA ?", "Quels produits sont en retard sur l'objectif de ventes ?"] },
   ];
 
   const ask = useMutation({
@@ -110,19 +116,28 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
               NOOR, ou sur vos chiffres (CPA, médecins à voir, tournée, objectifs). NOOR répond à partir des documents
               validés et de vos données, et cite toujours sa source.
             </p>
-            <div className="space-y-2">
-              <p className="text-muted-foreground text-xs">Exemples :</p>
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => send(s)}
-                  className="border-line hover:bg-mint-wash/60 text-ink block w-full cursor-pointer rounded-lg border px-3 py-2 text-left text-sm transition-colors"
-                >
-                  {s}
-                </button>
+            <div className="space-y-3">
+              {suggestions.map((g) => (
+                <div key={g.group} className="space-y-1.5">
+                  <p className="text-muted-foreground text-xs">{g.group}</p>
+                  {g.questions.map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      onClick={() => send(q)}
+                      className="border-line hover:bg-mint-wash/60 text-ink block w-full cursor-pointer rounded-lg border px-3 py-2 text-left text-sm transition-colors"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
+            <p className="border-line bg-paper text-muted-foreground rounded-lg border px-3 py-2 text-xs leading-relaxed">
+              Prototype de démonstration : les fiches produits et médicales sont des documents fictifs rédigés pour
+              la démo (produits fictifs, molécules réelles). Elles ne sont ni validées par un laboratoire, ni un avis
+              médical : en pratique, se référer au RCP officiel.
+            </p>
           </div>
         )}
 

@@ -16,7 +16,7 @@
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CalendarCheck2, Eye, FileClock, Gauge, Moon, Repeat, Target, Users } from "lucide-react";
+import { ArrowLeft, CalendarCheck2, CalendarClock, Eye, FileClock, Gauge, Moon, Repeat, Target, Users } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 import { api } from "@/api/client";
@@ -35,7 +35,9 @@ import { TopObjections } from "@/components/dashboard/TopObjections";
 import { VisitsPerWeekChart } from "@/components/dashboard/VisitsPerWeekChart";
 import { ErrorState, LoadingState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
+import { ReplanDialog } from "@/components/planning/ReplanDialog";
 import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
+import { VisitPrepSheet } from "@/components/visits/VisitPrepSheet";
 import { useVisitDialogs } from "@/components/visits/useVisitDialogs";
 import { formatLongDay } from "@/lib/format";
 
@@ -62,6 +64,8 @@ export function DashboardPage() {
   const { openVisit, dialogs } = useVisitDialogs({ readOnly });
   const [planOpen, setPlanOpen] = useState(false);
   const [closing, setClosing] = useState<ClosingScope | null>(null);
+  const [replanOpen, setReplanOpen] = useState(false);
+  const [prepDoctor, setPrepDoctor] = useState<number | null>(null);
 
   if (dashboard.isLoading) return <LoadingState rows={5} />;
   if (dashboard.isError || !d) return <ErrorState error={dashboard.error} onRetry={() => dashboard.refetch()} />;
@@ -139,11 +143,14 @@ export function DashboardPage() {
                 <Button size="sm" variant="outline" className={ON_DARK} onClick={() => setClosing("mois")}>
                   <CalendarCheck2 /> Clôturer mon mois
                 </Button>
+                <Button size="sm" variant="outline" className={ON_DARK} onClick={() => setReplanOpen(true)}>
+                  <CalendarClock /> Imprévu ?
+                </Button>
               </div>
             )}
             </>
           }
-          aside={<DayRoute visits={d.today_visits} readOnly={readOnly} onVisitClick={openVisit} onPlan={() => setPlanOpen(true)} />}
+          aside={<DayRoute visits={d.today_visits} readOnly={readOnly} onVisitClick={openVisit} onPlan={() => setPlanOpen(true)} onPrepare={(v) => setPrepDoctor(v.doctor_id)} />}
         />
 
         {/* Les autres indicateurs du mois, dans un seul panneau */}
@@ -216,6 +223,8 @@ export function DashboardPage() {
       )}
       <PlanVisitDialog open={planOpen} onOpenChange={setPlanOpen} />
       <ClosingDialog scope={closing} onOpenChange={(o) => !o && setClosing(null)} />
+      <ReplanDialog open={replanOpen} onOpenChange={setReplanOpen} />
+      <VisitPrepSheet doctorId={prepDoctor} onOpenChange={(o) => !o && setPrepDoctor(null)} />
       {dialogs}
     </>
   );

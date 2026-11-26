@@ -30,10 +30,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.recommendations import _recommend_for
-from app.ai.schemas import DayPlan, PlannedProposal, WeekPlan, WeekPlanItem
+from app.ai.schemas import (DayPlan, PlannedProposal, ReplanItem, ReplanMove, ReplanProposal, ReplanRequest,
+                             WeekPlan, WeekPlanItem)
 from app.models import Doctor, Event, User, Visit
 from app.models.enums import Role, VisitStatus
-from app.schemas.visit import VisitCreate
+from app.schemas.visit import VisitCreate, VisitReschedule
 from app.services import access, visit_service
 from app.services.dates import now, week_start
 
@@ -49,6 +50,11 @@ EVENT_LABELS = {
 SLOT_START = {"matin": time(9, 0), "midi": time(12, 0), "apres_midi": time(14, 30)}
 SLOT_STEP_MIN = {"matin": 30, "midi": 30, "apres_midi": 35}
 SLOT_ORDER = {"matin": 0, "midi": 1, "apres_midi": 2}
+ROAD_FACTOR = 1.3      # la route fait des détours : distance à vol d'oiseau × 1,3
+CITY_SPEED_KMH = 25    # vitesse moyenne en ville, arrêts compris
+DAY_END = time(18, 30)
+EXTRA_FOR_REPLAN = 2
+MIN_FREE_PLACES = 25   # « Remplir ma semaine » choisit la première semaine où il reste au moins 25 places # au-delà, une visite décalée par un retard est reportée à un autre jour
 
 
 def _fmt_day(d: date) -> str:
@@ -115,11 +121,11 @@ def _days_of_week(db: Session, delegue_id: int, monday: date) -> list[dict]:
 
 
 def _first_free_week(db: Session, delegue_id: int) -> date:
-    """Première semaine (à partir de la semaine prochaine si on est dimanche) qui a des places libres."""
+    """Première semaine qui a vraiment des places libres (une demi-semaine au moins)."""
     monday = week_start(now().date())
     for _ in range(6):
         free = sum(max(0, d["target"] - len(d["planned"])) for d in _days_of_week(db, delegue_id, monday))
-        if free >= 10:
+        if free >= MIN_FREE_PLACES:
             return monday
         monday += timedelta(days=7)
     return monday
@@ -170,9 +176,11 @@ def plan_week(db: Session, user: User, start: date | None = None, delegue_id: in
                 remaining -= {doc.id for doc in chosen}
         elif d["planned"]:
             zone_reason = "Journée déjà complète"
+        km, minutes = _route_stats(proposals)
         day_plans.append(DayPlan(
             day=day, zone=zone[:3], zone_reason=zone_reason, capacity=d["target"],
             already_planned=len(d["planned"]), event=d["event"], proposals=proposals,
+            route_km=km, travel_min=minutes,
         ))
 
     total = sum(len(dp.proposals) for dp in day_plans)
@@ -221,10 +229,25 @@ def _schedule(day: date, chosen: list[Doctor], candidates: dict, planned: list[V
             out.append(PlannedProposal(
                 doctor_id=doc.id, doctor_name=doc.full_name, specialty=doc.specialty, segment=doc.segment,
                 frequency=doc.frequency, district=doc.district, planned_at=t, slot=slot, score=reco.score,
-                reasons=reasons,
+                reasons=reasons, latitude=doc.latitude, longitude=doc.longitude, reception_days=doc.reception_days,
             ))
             t += timedelta(minutes=SLOT_STEP_MIN[slot])
+    # Distance depuis l'arrêt précédent (tournée dans l'ordre des heures)
+    out.sort(key=lambda p: p.planned_at)
+    for prev, cur in zip(out, out[1:]):
+        if prev.latitude and cur.latitude:
+            cur.distance_km = round(_road_km((prev.latitude, prev.longitude), (cur.latitude, cur.longitude)), 1)
     return out
+
+
+def _road_km(a: tuple[float, float], b: tuple[float, float]) -> float:
+    """Distance par la route, estimée : vol d'oiseau × 1,3 (détours en ville)."""
+    return _distance(a, b) * ROAD_FACTOR
+
+
+def _route_stats(proposals: list[PlannedProposal]) -> tuple[float, int]:
+    km = round(sum(p.distance_km or 0 for p in proposals), 1)
+    return km, round(km / CITY_SPEED_KMH * 60)
 
 
 def confirm(db: Session, user: User, items: list[WeekPlanItem]) -> int:
@@ -232,4 +255,123 @@ def confirm(db: Session, user: User, items: list[WeekPlanItem]) -> int:
     for item in items:
         visit_service.plan_visit(db, user, VisitCreate(doctor_id=item.doctor_id, planned_at=item.planned_at,
                                                        notes="Planifiée avec « Remplir ma semaine »"))
+    return len(items)
+
+
+
+# --- Imprévu : réorganiser la journée ------------------------------------------------------------
+REPLAN_LABELS = {
+    "retard": "Retard sur la tournée",
+    "medecin_absent": "Médecin absent ou indisponible",
+    "journee_interrompue": "Journée interrompue (urgence, panne, maladie...)",
+}
+
+
+def _next_free_slot(db: Session, delegue_id: int, doctor: Doctor, after: date,
+                    taken: dict[date, set[datetime]]) -> tuple[datetime, str] | None:
+    """Premier jour ouvré après `after` où le médecin reçoit et où l'agenda a de la place, sur son créneau préféré."""
+    slot = doctor.preferred_slot or "matin"
+    d = after
+    for _ in range(14):
+        d += timedelta(days=1)
+        if d.weekday() == 6 or not _receives(doctor, d):
+            continue
+        if d.weekday() == 5 and slot != "matin":
+            continue
+        info = _days_of_week(db, delegue_id, week_start(d))
+        day = next((x for x in info if x["day"] == d), None)
+        if day is None or slot not in day["slots"]:
+            continue
+        busy = {v.planned_at.replace(second=0, microsecond=0) for v in day["planned"]} | taken.setdefault(d, set())
+        # Une visite reportée peut s'ajouter à une journée pleine : 2 visites de plus au maximum
+        if len(busy) >= day["target"] + EXTRA_FOR_REPLAN:
+            continue
+        t = datetime.combine(d, SLOT_START[slot])
+        while t in busy:
+            t += timedelta(minutes=SLOT_STEP_MIN[slot])
+        taken[d].add(t)
+        full = len(busy) > day["target"]
+        why = (f"Prochain jour où le médecin reçoit ({_reception_text(doctor)}), sur son créneau habituel"
+               + (" : journée déjà chargée, une visite de plus" if full else ""))
+        return t, why
+    return None
+
+
+def replan_day(db: Session, user: User, req: ReplanRequest) -> ReplanProposal:
+    """
+    Un imprévu : NOOR propose une journée réorganisée. Rien n'est modifié avant la validation du délégué.
+      - retard : les visites suivantes sont décalées ; celles qui finiraient après 18 h 30 sont reportées ;
+      - médecin absent : les visites choisies sont reportées au prochain jour où le médecin reçoit ;
+      - journée interrompue : tout le reste de la journée est reporté, médecin par médecin.
+    """
+    if req.reason not in REPLAN_LABELS:
+        raise HTTPException(400, "Motif inconnu")
+    delegue = _target_delegue(db, user, None)
+    start = datetime.combine(req.day, time(0))
+    if req.from_time:
+        h, m = (int(x) for x in req.from_time.split(":"))
+        start = datetime.combine(req.day, time(h, m))
+    elif req.day == now().date():
+        start = now().replace(second=0, microsecond=0)
+    visits = list(db.scalars(select(Visit).where(
+        Visit.delegue_id == delegue, Visit.status == VisitStatus.PLANIFIEE,
+        Visit.planned_at >= datetime.combine(req.day, time(0)),
+        Visit.planned_at < datetime.combine(req.day + timedelta(days=1), time(0))).order_by(Visit.planned_at)))
+    remaining = [v for v in visits if v.planned_at >= start]
+    if req.reason == "medecin_absent":
+        targets = [v for v in visits if v.id in set(req.visit_ids)]
+        if not targets:
+            raise HTTPException(400, "Choisissez la ou les visites concernées")
+    elif req.reason == "journee_interrompue":
+        targets = remaining
+    else:
+        targets = []
+
+    moves: list[ReplanMove] = []
+    taken: dict[date, set[datetime]] = {}
+    end = datetime.combine(req.day, DAY_END)
+    if req.reason == "retard":
+        for v in remaining:
+            new_at = v.planned_at + timedelta(minutes=req.delay_min)
+            if new_at <= end:
+                moves.append(ReplanMove(
+                    visit_id=v.id, doctor_id=v.doctor_id, doctor_name=v.doctor.full_name, district=v.doctor.district,
+                    old_at=v.planned_at, new_at=new_at, kind="decalee",
+                    why=f"Décalée de {req.delay_min} min pour absorber le retard"))
+            else:
+                targets.append(v)
+    unplaced = []
+    for v in targets:
+        found = _next_free_slot(db, delegue, v.doctor, req.day, taken)
+        if found is None:
+            unplaced.append(v.doctor.full_name)
+            continue
+        new_at, why = found
+        if req.reason == "retard":
+            why = f"Finirait après {DAY_END:%H:%M} avec le retard. {why}"
+        moves.append(ReplanMove(
+            visit_id=v.id, doctor_id=v.doctor_id, doctor_name=v.doctor.full_name, district=v.doctor.district,
+            old_at=v.planned_at, new_at=new_at, kind="reportee", why=why))
+
+    moves.sort(key=lambda m: m.old_at)
+    moved = {m.visit_id for m in moves}
+    shifted = sum(m.kind == "decalee" for m in moves)
+    postponed = len(moves) - shifted
+    parts = []
+    if shifted:
+        parts.append(f"{shifted} visite{'s' if shifted > 1 else ''} décalée{'s' if shifted > 1 else ''} dans la journée")
+    if postponed:
+        parts.append(f"{postponed} reportée{'s' if postponed > 1 else ''} au prochain jour où le médecin reçoit")
+    summary = (", ".join(parts) + ".") if parts else "Aucune visite à déplacer pour ce motif."
+    if unplaced:
+        summary += (f" Pas de place dans les deux semaines pour {', '.join(unplaced)} : "
+                    "à reporter vous-même depuis le planning.")
+    return ReplanProposal(day=req.day, reason_label=REPLAN_LABELS[req.reason], moves=moves,
+                          unchanged=len([v for v in visits if v.id not in moved]), summary=summary)
+
+
+def apply_replan(db: Session, user: User, items: list[ReplanItem]) -> int:
+    """Le délégué valide : chaque visite gardée est déplacée (mêmes règles que « Déplacer une visite »)."""
+    for item in items:
+        visit_service.reschedule_visit(db, user, item.visit_id, VisitReschedule(planned_at=item.planned_at))
     return len(items)

@@ -38,6 +38,8 @@ class Visit(Base):
     next_visit_date: Mapped[date | None] = mapped_column(Date)
     cancel_reason: Mapped[str | None] = mapped_column(String(200))
     report_source: Mapped[str | None] = mapped_column(String(20))  # enums.ReportSource
+    # Compte-rendu structuré rédigé par NOOR puis relu / corrigé par le délégué (écran de vérification)
+    report_summary: Mapped[str | None] = mapped_column(Text)
     reported_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 

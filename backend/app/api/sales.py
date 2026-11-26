@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 
 from app.api.deps import DB, CurrentUser
-from app.schemas.sales import SalesOut
+from app.schemas.sales import SalesOut, SalesScorecard
 from app.services import sales_service
 
 router = APIRouter(prefix="/sales", tags=["Analyse des ventes"])
@@ -17,3 +17,9 @@ def sales(db: DB, user: CurrentUser, product_id: int | None = None, period: str 
     son équipe (ou un délégué avec `delegue_id`).
     """
     return sales_service.sales_analysis(db, user, product_id, period, delegue_id)
+
+
+@router.get("/scorecard", response_model=SalesScorecard)
+def sales_scorecard(db: DB, user: CurrentUser, delegue_id: int | None = None):
+    """Objectifs de ventes par produit (fictifs), évolution des parts de marché, zones à fort potentiel."""
+    return sales_service.scorecard(db, user, delegue_id)

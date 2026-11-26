@@ -206,6 +206,7 @@ function InfoCard({ doctor: d }: { doctor: DoctorDetail }) {
       </CardHeader>
       <CardContent className="space-y-3">
         <InfoRow icon={MapPin}>
+          {d.establishment && <p className="text-ink font-medium">{d.establishment}</p>}
           <p>{d.address}</p>
           <p className="text-muted-foreground">
             {d.district}, {d.city}

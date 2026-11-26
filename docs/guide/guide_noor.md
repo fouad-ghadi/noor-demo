@@ -94,7 +94,7 @@ Dans le compte-rendu, à l'étape Notes, des phrases prêtes à l'emploi sont ra
 
 ## 23. Clôturer ma journée ou mon mois
 
-Sur le tableau de bord, cliquez sur « Clôturer ma journée » ou « Clôturer mon mois ». NOOR liste ce qu'il reste à régler (comptes-rendus en attente, cas de pharmacovigilance à déclarer), avec un lien pour le faire, puis rédige le rapport : visites réalisées, médecins vus, produits présentés, échantillons et numéros de lot, tournée du lendemain. Pour le mois : jours travaillés, calls, contacts, moyenne de visites, couverture, CPA F1 et F2, objectifs. Relisez le rapport puis cliquez sur « Copier le rapport » pour le coller dans un e-mail.
+Sur le tableau de bord, cliquez sur « Clôturer ma journée » ou « Clôturer mon mois ». NOOR liste ce qu'il reste à régler (comptes-rendus en attente, cas de pharmacovigilance à déclarer), avec un lien pour le faire, puis rédige le rapport : visites réalisées, médecins vus, produits présentés, échantillons et numéros de lot, tournée du lendemain. Pour le mois : jours travaillés, calls, contacts, moyenne de visites, couverture, CPA F1 et F2, objectifs. Le bilan de la journée montre aussi les médecins vus, les visites annulées ou reportées, les produits présentés, les objectifs atteints ou non atteints (visites de la journée, médecins ciblés, produits en retard sur l'objectif du mois) et les observations importantes (objections, promesses de prescription, pharmacovigilance). Le rapport est modifiable : corrigez-le, puis cliquez sur « Valider et clôturer ma journée ». La journée est alors marquée « clôturée » ; vous pouvez revenir la mettre à jour. « Copier le rapport » permet de le coller dans un e-mail.
 
 ## 24. Ce que NOOR déduit des ventes
 
@@ -103,3 +103,24 @@ Dans la page Analyse des ventes (Mes performances), la carte « Ce que NOOR en d
 ## 25. Scanner une carte de visite et éviter les doublons
 
 Sur la page Nouveau médecin, cliquez sur « Scanner une carte de visite ». Choisissez « Prendre une photo » (sur téléphone), « Importer une image », ou une carte d'exemple. NOOR lit la carte et pré-remplit le formulaire : nom, prénom, spécialité, adresse, ville, téléphone, e-mail. Relisez toujours les champs avant d'enregistrer. NOOR cherche aussi les doublons dans toute la base, même si l'orthographe diffère (Ouazzani et Wazzani, El Amrani et Elamrani, numéros écrits autrement). Si une fiche proche existe, cliquez sur « Compléter cette fiche » pour mettre à jour la fiche existante au lieu d'en créer une deuxième, ou sur « Ce n'est pas le même médecin » pour continuer. La vérification des doublons fonctionne aussi pendant la saisie manuelle.
+
+## 26. Imprévu : réorganiser ma journée
+
+En cas d'imprévu, cliquez sur « Imprévu ? » dans le Planning ou sur le tableau de bord. Choisissez ce qui se passe : « Je suis en retard » (indiquez le retard : la suite de la journée est décalée, et les visites qui finiraient après 18 h 30 sont reportées), « Un médecin est absent » (cochez sa visite : elle est reportée au prochain jour où il reçoit) ou « Je dois arrêter ma journée » (urgence, panne, maladie : tout le reste de la journée est reporté, médecin par médecin). NOOR propose les nouveaux horaires, chacun avec sa raison. Décochez ce que vous ne voulez pas, puis cliquez sur « Valider » : le planning est mis à jour.
+
+## 27. Itinéraire et modification de la semaine proposée
+
+Dans « Remplir ma semaine », chaque jour affiche son itinéraire : kilomètres et temps de route estimés, et la distance entre deux arrêts. « Voir sur la carte » montre la tournée numérotée. Pour chaque visite proposée, vous pouvez changer l'heure, la déplacer à un autre jour de la semaine (NOOR vous prévient si le médecin ne reçoit pas ce jour-là) ou la retirer. « Revenir à la proposition » annule vos changements. Seules les visites gardées sont ajoutées au planning quand vous cliquez sur « Valider ».
+
+## 28. Vérifier le compte-rendu avant de l'enregistrer
+
+Après avoir rempli le compte-rendu (puces, phrases prédéfinies, dictée), cliquez sur « Vérifier le compte-rendu ». NOOR le met en forme par rubriques (contexte, produits présentés, réaction du médecin, objections, échantillons, observations, suite à donner) et signale ce qu'il faut vérifier : numéro de lot manquant, objection sans suite prévue, effet indésirable possible. Le texte final est modifiable. « Modifier la saisie » revient au formulaire ; « Valider la visite » enregistre le compte-rendu. Dans la fenêtre « Dicter le compte-rendu », les boutons « Simuler en français » et « Simuler en darija » écrivent une dictée type, pour une démonstration sans micro.
+
+## 29. Objectifs de ventes et zones à fort potentiel
+
+Dans « Analyse des ventes » (Mes performances), la carte « Objectifs et résultats par produit » compare les ventes depuis janvier à l'objectif de chaque produit (objectif fictif de démonstration : ventes de l'an dernier + 10 % pour les produits chroniques, + 8 % pour les produits aigus). Les produits en retard sont en tête, avec une mini-courbe de leur part de marché sur 12 mois. Cliquez un produit pour voir son détail. La carte « Zones à fort potentiel » classe vos territoires selon les ventes à conquérir (si notre part de marché rejoignait la moyenne nationale) et le nombre de médecins A ou B qui ne prescrivent pas encore nos produits.
+
+## 30. Travailler hors connexion
+
+Si le réseau coupe, un bandeau « Hors connexion » s'affiche. Vous pouvez continuer à rédiger vos comptes-rendus : ils sont gardés sur l'appareil, puis envoyés automatiquement au retour de la connexion (le bandeau affiche la synchronisation). Pour une démonstration, le menu propose « Simuler une coupure réseau (démo) » puis « Rétablir la connexion ». Dans ce prototype, seuls les comptes-rendus sont gardés hors connexion.
+
