@@ -39,7 +39,7 @@ import { ReplanDialog } from "@/components/planning/ReplanDialog";
 import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
 import { VisitPrepSheet } from "@/components/visits/VisitPrepSheet";
 import { useVisitDialogs } from "@/components/visits/useVisitDialogs";
-import { formatLongDay } from "@/lib/format";
+import { formatLongDay, plural } from "@/lib/format";
 
 // Bouton secondaire posé sur le bandeau vert pin
 const ON_DARK = "border-white/25 bg-white/5 text-white hover:bg-white/10 hover:text-white";
@@ -83,9 +83,9 @@ export function DashboardPage() {
     text:
       visitsTone === "good"
         ? k.visits_done > k.visits_expected_to_date
-          ? `En avance de ${k.visits_done - k.visits_expected_to_date} visite(s) sur le rythme`
+          ? `En avance de ${plural(k.visits_done - k.visits_expected_to_date, "visite")} sur le rythme`
           : "Dans les temps"
-        : `${k.visits_expected_to_date - k.visits_done} visite(s) de retard`,
+        : `${plural(k.visits_expected_to_date - k.visits_done, "visite")} de retard`,
   };
   // Activité du mois (à date) : couverture et CPA comparés au rythme attendu (part du mois écoulée)
   const act = d.activity;
@@ -132,7 +132,7 @@ export function DashboardPage() {
                 unit="visites"
                 progress={<ProgressWithMarker onDark value={visitsPct} expected={expectedPct} tone={visitsTone} />}
                 status={<KpiStatusLine onDark status={visitsStatus} />}
-                detail={`${k.visits_planned_remaining} encore planifiée(s) d'ici la fin du mois. Le trait blanc indique le rythme attendu.`}
+                detail={`${k.visits_planned_remaining} encore ${k.visits_planned_remaining >= 2 ? "planifiées" : "planifiée"} d'ici la fin du mois. Le trait blanc indique le rythme attendu.`}
               />
             ) : null}
             {!readOnly && (
@@ -159,7 +159,7 @@ export function DashboardPage() {
             label="Moyenne de visites par jour"
             icon={Gauge}
             value={act.avg_visits_per_day.toLocaleString("fr-FR", { maximumFractionDigits: 1 })}
-            detail={`${act.calls} visites en ${act.worked_days.toLocaleString("fr-FR")} jours travaillés, ${k.cancelled_month} annulée(s) ou reportée(s)`}
+            detail={`${act.calls} visites en ${act.worked_days.toLocaleString("fr-FR")} jours travaillés, ${plural(k.cancelled_month, "annulée ou reportée", "annulées ou reportées")}`}
           />
           <KpiCard
             label="Couverture de la cible"

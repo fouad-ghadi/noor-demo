@@ -82,3 +82,13 @@ export function formatMoney(n: number): string {
   if (Math.abs(n) >= 1_000) return `${Math.round(n / 1_000).toLocaleString("fr-FR")} k DH`;
   return `${Math.round(n).toLocaleString("fr-FR")} DH`;
 }
+
+/**
+ * Nombre + nom accordé (en français, 0 et 1 restent au singulier) :
+ * plural(1, "visite") → « 1 visite » ; plural(3, "visite") → « 3 visites » ;
+ * plural(2, "compte-rendu", "comptes-rendus") → « 2 comptes-rendus ».
+ * Évite les « visite(s) » qui font brouillon à l'écran.
+ */
+export function plural(n: number, singular: string, pluralForm = `${singular}s`): string {
+  return `${n.toLocaleString("fr-FR")} ${Math.abs(n) >= 2 ? pluralForm : singular}`;
+}

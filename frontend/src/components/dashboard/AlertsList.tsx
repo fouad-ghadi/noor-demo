@@ -9,7 +9,7 @@ import type { Alert } from "@/api/types";
 import { PvDeadlineBadge } from "@/components/pharmacovigilance/PvDeadlineBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatAgo } from "@/lib/format";
+import { formatAgo, plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const SEVERITY = {
@@ -42,7 +42,7 @@ export function AlertsList({ alerts, readOnly }: { alerts: Alert[]; readOnly?: b
         <CardTitle className="flex items-center gap-2">
           <Bell className="size-4 text-pine" /> Alertes
         </CardTitle>
-        <CardDescription>{alerts.length ? `${alerts.length} alerte(s) ouverte(s)` : "Aucune alerte"}</CardDescription>
+        <CardDescription>{alerts.length ? plural(alerts.length, "alerte ouverte", "alertes ouvertes") : "Aucune alerte"}</CardDescription>
       </CardHeader>
       <CardContent className="divide-line divide-y">
         {alerts.length === 0 && (

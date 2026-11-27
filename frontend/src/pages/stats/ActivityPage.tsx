@@ -142,7 +142,7 @@ function ActivityContent({ a, showTeam }: { a: Activity; showTeam: boolean }) {
           suffix={`sur ${num(scope.period_days)}`}
           detail={
             scope.event_days
-              ? `${num(scope.event_days)} jour(s) d'événements hors terrain`
+              ? `${num(scope.event_days)} ${scope.event_days >= 2 ? "jours" : "jour"} d'événements hors terrain`
               : "Aucun événement hors terrain"
           }
         />

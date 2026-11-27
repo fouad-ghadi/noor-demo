@@ -2,6 +2,8 @@
  * Libellés français et couleurs des valeurs codées renvoyées par l'API.
  * (En base, on stocke des codes sans accents : "realisee", "apres_midi"...)
  */
+import { Annoyed, Frown, Laugh, Meh, Smile, type LucideIcon } from "lucide-react";
+
 import type {
   AlertSeverity,
   EventType,
@@ -84,12 +86,13 @@ export const PRACTICE_TYPE: Record<PracticeType, string> = {
   hopital_public: "Hôpital public",
 };
 
-export const FEEDBACK: Record<Feedback, { label: string; emoji: string; className: string }> = {
-  tres_favorable: { label: "Très favorable", emoji: "😀", className: "text-emerald-700" },
-  favorable: { label: "Favorable", emoji: "🙂", className: "text-emerald-600" },
-  neutre: { label: "Neutre", emoji: "😐", className: "text-slate-600" },
-  reserve: { label: "Réservé", emoji: "😕", className: "text-amber-700" },
-  defavorable: { label: "Défavorable", emoji: "🙁", className: "text-rose-700" },
+/** Accueil du médecin : libellé + icône (visage dessiné, plus sobre qu'un emoji) + couleur. */
+export const FEEDBACK: Record<Feedback, { label: string; icon: LucideIcon; className: string }> = {
+  tres_favorable: { label: "Très favorable", icon: Laugh, className: "text-emerald-700" },
+  favorable: { label: "Favorable", icon: Smile, className: "text-emerald-600" },
+  neutre: { label: "Neutre", icon: Meh, className: "text-slate-600" },
+  reserve: { label: "Réservé", icon: Annoyed, className: "text-amber-700" },
+  defavorable: { label: "Défavorable", icon: Frown, className: "text-rose-700" },
 };
 
 export const SOURCE: Record<string, string> = {

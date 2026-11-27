@@ -33,7 +33,7 @@ import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
 import { useVisitDialogs } from "@/components/visits/useVisitDialogs";
 import { invalidateVisitData, useTeamUsers } from "@/hooks/queries";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { formatDateTime, formatLongDay, toApiDate, toApiDateTime } from "@/lib/format";
+import { formatDateTime, formatLongDay, plural, toApiDate, toApiDateTime } from "@/lib/format";
 
 type View = "jour" | "semaine";
 
@@ -127,7 +127,7 @@ export function PlanningPage() {
         title="Planning"
         description={
           visits.data
-            ? `${stats.planned} planifiée(s), ${stats.done} réalisée(s)${stats.pending ? `, ${stats.pending} compte(s)-rendu(s) à faire` : ""}`
+            ? `${plural(stats.planned, "planifiée")}, ${plural(stats.done, "réalisée")}${stats.pending ? `, ${plural(stats.pending, "compte-rendu", "comptes-rendus")} à faire` : ""}`
             : "Vos visites de la semaine"
         }
         actions={

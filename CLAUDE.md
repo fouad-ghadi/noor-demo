@@ -56,6 +56,9 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
     statuts = point de couleur + libellé (`StatusPill` dans `shared/badges.tsx`, `dot` dans `lib/labels.ts`) ;
     segments = tuiles A (pin plein) / B (menthe) / C (contour). Titres en Bricolage (`font-display`),
     pas de libellés en majuscules, pas de « · » entre les informations (phrases simples).
+    **Jamais d'emoji comme icône** (rendu « basique » et différent selon Windows/Android) : icônes `lucide-react`
+    (ex. accueil du médecin = visages Lucide dans `FEEDBACK` de `lib/labels.ts`). Pas de « visite(s) » :
+    `plural(n, "visite")` de `lib/format.ts` (backend : `_plural` dans `ai/closing.py`).
   - **Refonte animée (22 nov. 2026)** : motif zellige « éclairé » `components/brand/ZelligeField.tsx` (SVG + variables CSS
     `--lx/--ly/--lr`, la lumière suit la souris, dérive seule sur mobile) sur la connexion, le menu, `HeroBand` et le monogramme
     de la fiche médecin ; `motion` (paquet npm, `motion/react`) pour la pastille du menu qui glisse (`layoutId`), le fondu entre

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { invalidateVisitData } from "@/hooks/queries";
 import { offlineStore, useOffline } from "@/lib/offline";
 import { cn } from "@/lib/utils";
+import { plural } from "@/lib/format";
 
 export function OfflineBanner() {
   const { offline, simulated, queue } = useOffline();
@@ -78,7 +79,7 @@ export function OfflineBanner() {
           </>
         ) : (
           <>
-            <span className="font-medium">{queue.length} compte(s)-rendu(s) en attente d'envoi.</span>
+            <span className="font-medium">{plural(queue.length, "compte-rendu", "comptes-rendus")} en attente d'envoi.</span>
           </>
         )}
       </p>

@@ -5,7 +5,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { GitMerge, Loader2, Save } from "lucide-react";
+import { GitMerge, Loader2, Save, ScanLine } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -337,7 +337,7 @@ function DoctorForm() {
                 : "Vous avez sa carte de visite ? Photographiez-la : NOOR remplira la fiche et vérifiera les doublons."}
             </p>
             <AiFeatureButton
-              icon="📷"
+              icon={<ScanLine className="size-4" />}
               label={scan ? "Scanner une autre carte" : "Scanner une carte de visite"}
               description="Prenez la carte en photo : la fiche est pré-remplie et NOOR signale si le médecin existe déjà (ex. « Ouazzani » / « Wazzani »)."
               enabled

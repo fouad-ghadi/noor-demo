@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, format, parseISO } from "date-fns";
-import { Check, CheckCircle2, Lightbulb, Loader2, Minus, Plus } from "lucide-react";
+import { Check, CheckCircle2, Lightbulb, Loader2, Mic, Minus, Plus, TriangleAlert } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -35,7 +35,7 @@ import { VoiceDictationDialog } from "@/components/visits/VoiceDictationDialog";
 import { invalidateVisitData, useMeta, useProducts } from "@/hooks/queries";
 import { offlineStore, useOffline } from "@/lib/offline";
 import { REPORT_PHRASES, appendPhrase } from "@/lib/reportPhrases";
-import { formatDate, formatLongDay, formatTime, toApiDateTime } from "@/lib/format";
+import { formatDate, formatLongDay, formatTime, plural, toApiDateTime } from "@/lib/format";
 import { FEEDBACK, PRESCRIPTION_FEEDBACK } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -346,7 +346,7 @@ function ReportForm({ visit, products, objectionCategories }: {
             Pressé ? Dictez votre compte-rendu, en darija ou en français : NOOR remplira le formulaire.
           </p>
           <AiFeatureButton
-            icon="🎤"
+            icon={<Mic className="size-4" />}
             label="Dicter le compte-rendu"
             description="Dictez la visite en darija ou en français ; le formulaire sera pré-rempli et vous n'aurez plus qu'à le relire."
             className="shrink-0"
@@ -436,7 +436,9 @@ function ReportForm({ visit, products, objectionCategories }: {
 
         <Section n={3} title="Accueil du médecin">
           <div className="grid grid-cols-5 gap-2">
-            {(Object.keys(FEEDBACK) as Feedback[]).map((f) => (
+            {(Object.keys(FEEDBACK) as Feedback[]).map((f) => {
+              const FaceIcon = FEEDBACK[f].icon;
+              return (
               <button
                 key={f}
                 type="button"
@@ -447,10 +449,15 @@ function ReportForm({ visit, products, objectionCategories }: {
                   feedback === f ? "border-pine bg-mint-wash ring-pine/15 ring-2" : "border-line bg-white hover:bg-mint-wash/50",
                 )}
               >
-                <span className="text-2xl">{FEEDBACK[f].emoji}</span>
+                <FaceIcon
+                  className={cn("size-6 transition", feedback === f ? FEEDBACK[f].className : "text-muted-foreground")}
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
                 <span className="text-[11px] leading-tight font-medium">{FEEDBACK[f].label}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
           <p className="mt-4 mb-2 text-sm font-medium">Ce que le médecin dit de sa prescription</p>
           <div className="flex flex-wrap gap-2">
@@ -574,8 +581,9 @@ function ReportForm({ visit, products, objectionCategories }: {
             rows={4}
             placeholder="Ce qui s'est dit, l'intérêt du médecin, ses retours patients, toute information utile…"
           />
-          <p className="text-muted-foreground mt-2 text-xs">
-            ⚠️ Si le médecin mentionne un effet indésirable chez un patient, notez-le ici : il devra être déclaré à la pharmacovigilance.
+          <p className="text-muted-foreground mt-2 flex items-start gap-1.5 text-xs">
+            <TriangleAlert className="mt-px size-3.5 shrink-0 text-amber-600" aria-hidden />
+            Si le médecin mentionne un effet indésirable chez un patient, notez-le ici : il devra être déclaré à la pharmacovigilance.
           </p>
         </Section>
 
@@ -629,7 +637,7 @@ function ReportForm({ visit, products, objectionCategories }: {
           <p className="text-muted-foreground hidden text-[13px] sm:block">
             {offline
               ? "Hors connexion : le compte-rendu sera gardé sur l'appareil puis envoyé au retour du réseau."
-              : `${productIds.length} produit(s) présenté(s), accueil : ${feedback ? FEEDBACK[feedback].label.toLowerCase() : "non renseigné"}`}
+              : `${plural(productIds.length, "produit présenté", "produits présentés")}, accueil : ${feedback ? FEEDBACK[feedback].label.toLowerCase() : "non renseigné"}`}
           </p>
           <div className="flex flex-1 justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => navigate(-1)}>

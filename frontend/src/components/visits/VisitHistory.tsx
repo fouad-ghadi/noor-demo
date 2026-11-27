@@ -2,7 +2,7 @@
  * Historique des visites d'un médecin, sous forme de frise verticale :
  * date, statut, produits présentés, retour du médecin, objections, échantillons, notes.
  */
-import { Clock, FileText, MessageSquareWarning, Package, StickyNote } from "lucide-react";
+import { Clock, FileText, MessageSquareWarning, Mic, Package, StickyNote } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { Visit } from "@/api/types";
@@ -37,10 +37,11 @@ export function VisitHistoryItem({ visit, readOnly = false }: { visit: Visit; re
           {formatDate(date)} <span className="text-muted-foreground font-normal">à {formatTime(date)}</span>
         </p>
         <VisitStatusBadge status={visit.status} pending={visit.report_pending} />
-        {visit.report_source === "dictee" && <Badge variant="outline">🎤 Dicté</Badge>}
+        {visit.report_source === "dictee" && <Badge variant="outline"><Mic aria-hidden />Dicté</Badge>}
         {visit.feedback && (
-          <span className={cn("text-xs font-medium", FEEDBACK[visit.feedback].className)}>
-            {FEEDBACK[visit.feedback].emoji} {FEEDBACK[visit.feedback].label}
+          <span className={cn("inline-flex items-center gap-1 text-xs font-medium", FEEDBACK[visit.feedback].className)}>
+            <FeedbackIcon feedback={visit.feedback} />
+            {FEEDBACK[visit.feedback].label}
           </span>
         )}
       </div>
@@ -135,4 +136,10 @@ export function VisitHistory({ visits, readOnly }: { visits: Visit[]; readOnly?:
       ))}
     </ol>
   );
+}
+
+/** Petit visage de l'accueil du médecin (icône Lucide, couleur héritée du libellé). */
+function FeedbackIcon({ feedback }: { feedback: keyof typeof FEEDBACK }) {
+  const Icon = FEEDBACK[feedback].icon;
+  return <Icon className="size-3.5" strokeWidth={2} aria-hidden />;
 }

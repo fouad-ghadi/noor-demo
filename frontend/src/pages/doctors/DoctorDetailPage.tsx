@@ -34,7 +34,7 @@ import { PlanVisitDialog } from "@/components/visits/PlanVisitDialog";
 import { VisitPrepSheet } from "@/components/visits/VisitPrepSheet";
 import { VisitHistory } from "@/components/visits/VisitHistory";
 import { useProducts } from "@/hooks/queries";
-import { formatDate, formatLongDay, formatShortDate, formatTime, initials } from "@/lib/format";
+import { formatDate, formatLongDay, formatShortDate, formatTime, initials, plural } from "@/lib/format";
 import { FREQUENCY, OUT_OF_TARGET, PRACTICE_TYPE, SEGMENT, SOURCE, TIME_SLOT, receptionText } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -155,7 +155,7 @@ export function DoctorDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Historique des visites</CardTitle>
-              <CardDescription>{history.length} visite(s), de la plus récente à la plus ancienne</CardDescription>
+              <CardDescription>{plural(history.length, "visite")}, de la plus récente à la plus ancienne</CardDescription>
             </CardHeader>
             <CardContent>
               {history.length === 0 ? (
@@ -270,7 +270,7 @@ function ReceptivityCard({ doctor: d }: { doctor: DoctorDetail }) {
                 {TIME_SLOT[s.slot]} {best?.slot === s.slot && "(le meilleur)"}
               </span>
               <span className="text-muted-foreground tabular">
-                {s.visits ? `${Math.round(s.favorable_rate)} % sur ${s.visits} visite(s)` : "Aucune visite"}
+                {s.visits ? `${Math.round(s.favorable_rate)} % sur ${plural(s.visits, "visite")}` : "Aucune visite"}
               </span>
             </div>
             <div className="bg-muted h-2 overflow-hidden rounded-full">

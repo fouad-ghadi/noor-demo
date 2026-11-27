@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, isWeekend } from "date-fns";
-import { CalendarPlus, Loader2 } from "lucide-react";
+import { CalendarPlus, Lightbulb, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { api } from "@/api/client";
@@ -145,8 +145,9 @@ export function PlanVisitDialog({ open, onOpenChange, doctor, defaultDate, defau
             </div>
           </div>
           {selected?.preferred_slot && (
-            <p className="rounded-md bg-mint-wash px-3 py-2 text-xs text-pine">
-              💡 Créneau préféré de ce médecin : <strong>{TIME_SLOT[selected.preferred_slot]}</strong>
+            <p className="bg-mint-wash text-pine flex items-center gap-2 rounded-md px-3 py-2 text-xs">
+              <Lightbulb className="size-3.5 shrink-0" aria-hidden />
+              Créneau préféré de ce médecin : <strong>{TIME_SLOT[selected.preferred_slot]}</strong>
             </p>
           )}
 

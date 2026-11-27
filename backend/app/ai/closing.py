@@ -39,6 +39,11 @@ def _num(x: float) -> str:
     return f"{x:.1f}".replace(".", ",").replace(",0", "")
 
 
+def _plural(n: int, singular: str, plural_form: str | None = None) -> str:
+    """« 1 visite », « 3 visites » (0 et 1 au singulier, comme en français) : pas de « visite(s) »."""
+    return f"{n} {singular if n < 2 else (plural_form or singular + 's')}"
+
+
 def _delegue(user: User) -> User:
     if user.role != Role.DELEGUE:
         raise HTTPException(400, "La clôture est faite par le délégué")
@@ -86,7 +91,7 @@ def close_day(db: Session, user: User, day: date | None = None) -> ClosingReport
     to_fix = [ClosingCheck(label=f"Compte-rendu à saisir : {v.doctor.full_name} ({v.planned_at:%d/%m à %H:%M})",
                            link=f"/visites/{v.id}/compte-rendu") for v in missing]
     if later:
-        to_fix.append(ClosingCheck(label=f"{len(later)} visite(s) encore prévue(s) plus tard aujourd'hui", link="/planning"))
+        to_fix.append(ClosingCheck(label=f"{_plural(len(later), 'visite encore prévue', 'visites encore prévues')} plus tard aujourd'hui", link="/planning"))
     pv = list(db.scalars(select(PharmacovigilanceCase).where(
         PharmacovigilanceCase.delegue_id == me.id, PharmacovigilanceCase.status == PvCaseStatus.A_DECLARER)))
     for case in pv:
@@ -124,7 +129,7 @@ def close_day(db: Session, user: User, day: date | None = None) -> ClosingReport
     if observations:
         lines.append("Observations : " + " ".join(o.rstrip(".") + "." for o in observations))
     if to_fix:
-        lines.append(f"Reste à faire : {len(to_fix)} point(s) (voir la liste).")
+        lines.append(f"Reste à faire : {_plural(len(to_fix), 'point')} (voir la liste).")
     else:
         lines.append("Tous les comptes-rendus sont saisis.")
     if tomorrow:
@@ -215,11 +220,11 @@ def close_month(db: Session, user: User, period: str | None = None) -> ClosingRe
                                      Visit.planned_at <= now()).count()
     to_fix = []
     if pending:
-        to_fix.append(ClosingCheck(label=f"{pending} compte(s)-rendu(s) en attente", link="/planning"))
+        to_fix.append(ClosingCheck(label=f"{_plural(pending, 'compte-rendu', 'comptes-rendus')} en attente", link="/planning"))
     lines = [
         f"Rapport mensuel d'activité, {period_label(period)} ({me.name}, {me.region}).",
         f"Jours travaillés : {_num(row.worked_days)} sur {_num(row.period_days)} "
-        f"({_num(row.event_days)} jour(s) d'événements).",
+        f"({_num(row.event_days)} {'jours' if row.event_days >= 2 else 'jour'} d'événements).",
         f"Calls : {row.calls} visites, {row.contacts} médecins différents ; moyenne : {_num(row.avg_visits_per_day)} visites par jour.",
         f"Ciblage : {row.targeted} médecins ({row.targeted_f1} F1, {row.targeted_f2} F2) ; "
         f"couverture : {_num(row.coverage_pct)} % ; CPA : {_num(row.cpa_pct)} % "

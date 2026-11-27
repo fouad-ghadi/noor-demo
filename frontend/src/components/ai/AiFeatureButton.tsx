@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 
 interface Props {
-  icon: ReactNode; // ex. "🎤" ou une icône lucide
+  icon: ReactNode; // une icône lucide, ex. <Mic className="size-4" /> (pas d'emoji : rendu inégal selon les appareils)
   label: string;
   description: string; // texte de l'infobulle
   enabled?: boolean;
@@ -31,7 +31,7 @@ export function AiFeatureButton({ icon, label, description, enabled = false, onC
       className={cn("border-mint text-pine bg-white hover:bg-mint-wash disabled:opacity-80", className)}
       data-ai-extension-point
     >
-      <span aria-hidden>{icon}</span>
+      <span aria-hidden className="inline-flex">{icon}</span>
       {label}
       <span className="bg-pine text-mint rounded px-1.5 py-px text-[10px] font-semibold">IA</span>
     </Button>
