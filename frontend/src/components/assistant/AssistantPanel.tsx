@@ -21,7 +21,7 @@ import { BarChart3, BookOpen, FileText, Info, Loader2, SendHorizontal, Stethosco
 import { Link } from "react-router-dom";
 
 import { aiApi, type AskKind, type AskResponse } from "@/api/ai";
-import { NoorMark } from "@/components/brand/NoorMark";
+import { SothemaBadge } from "@/components/brand/SothemaLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProducts } from "@/hooks/queries";
@@ -97,7 +97,7 @@ export function AssistantPanel({ context, onClose }: AssistantPanelProps) {
     <div className="flex h-full flex-col bg-white">
       <div className="bg-pine flex items-center justify-between px-4 py-3.5 text-white">
         <div className="flex items-center gap-2.5">
-          <NoorMark className="size-8" color="#9FE3D6" core="#0F3D3E" />
+          <SothemaBadge className="size-8" />
           <div>
             <p className="font-display text-[17px] font-semibold">Assistant NOOR</p>
             <p className="text-xs text-[#CFEDE7]">Produits, mode d'emploi et vos chiffres</p>

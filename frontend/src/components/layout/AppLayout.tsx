@@ -15,7 +15,7 @@ import { CloudOff, LogOut, Sparkles } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
-import { NoorMark } from "@/components/brand/NoorMark";
+import { SothemaLogo } from "@/components/brand/SothemaLogo";
 import { ZelligeField } from "@/components/brand/ZelligeField";
 import { OfflineBanner, SimulateOfflineToggle } from "@/components/layout/OfflineBanner";
 import { offlineStore } from "@/lib/offline";
@@ -241,7 +241,7 @@ function EntryVeil() {
           aria-hidden="true"
         >
           <motion.div exit={{ scale: 1.6, opacity: 0 }} transition={{ duration: 0.5 }}>
-            <NoorMark className="size-16 rotate-[315deg]" color="#5EEAD4" core="#0F3D3E" />
+            <SothemaLogo imgClassName="h-14" />
           </motion.div>
         </motion.div>
       )}

@@ -357,5 +357,5 @@ Pour que toute l'équipe voie l'application sans rien installer : **[docs/DEPLOI
 - **Backend** : Python, FastAPI, SQLAlchemy 2, Pydantic 2, SQLite.
 - **Frontend** : React 19, Vite, TypeScript, Tailwind CSS 4, composants shadcn/ui (Radix),
   TanStack React Query, React Router, Recharts, Leaflet + OpenStreetMap, date-fns (français).
-- **Design** : accent sarcelle, emblème NOOR en étoile à huit branches (« noor » = lumière),
+- **Design** : accent sarcelle, logo Sothema (pastille blanche) à côté du nom NOOR,
   polices Inter et Bricolage Grotesque ; couleurs des graphiques validées pour les daltoniens.

@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { api } from "@/api/client";
 import type { User } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
-import { NoorMark } from "@/components/brand/NoorMark";
+import { SothemaLogo } from "@/components/brand/SothemaLogo";
 import { ZelligeField } from "@/components/brand/ZelligeField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,11 +91,11 @@ function EntryCurtain({ origin, name }: { origin: { x: number; y: number }; name
     >
       <ZelligeField interactive={false} />
       <motion.div
-        initial={{ rotate: -90, scale: 0.6, opacity: 0 }}
-        animate={{ rotate: 315, scale: 1, opacity: 1 }}
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1], delay: 0.15 }}
       >
-        <NoorMark className="size-16" color="#5EEAD4" core={PINE} />
+        <SothemaLogo imgClassName="h-14" />
       </motion.div>
       <motion.p
         className="font-display relative mt-6 text-2xl font-semibold tracking-[-0.01em]"
@@ -180,10 +180,9 @@ export function LoginPage() {
       >
         <ZelligeField className="-z-10" />
         <div className="group noor-enter w-fit">
-          <div className="flex items-center gap-2.5">
-            <span className="noor-mark-spin">
-              <NoorMark className="size-9" color="#5EEAD4" core={PINE} />
-            </span>
+          <div className="flex items-center gap-3">
+            <SothemaLogo imgClassName="h-9 sm:h-11" />
+            <span className="h-8 w-px bg-white/25" aria-hidden="true" />
             <span className="font-display text-xl font-bold tracking-wide text-white">NOOR</span>
           </div>
         </div>

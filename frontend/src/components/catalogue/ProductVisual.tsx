@@ -9,7 +9,7 @@
 import { useState } from "react";
 
 import type { Product } from "@/api/types";
-import { NoorMark } from "@/components/brand/NoorMark";
+import { SothemaMark } from "@/components/brand/SothemaLogo";
 import { gammeTint, packshotUrl } from "@/lib/catalogue";
 import { cn } from "@/lib/utils";
 
@@ -75,7 +75,7 @@ function DrawnBox({ product, stage, decorative }: { product: Product; stage: boo
             <p className={cn("text-muted-foreground mt-1 leading-tight", stage ? "text-sm" : "text-[9px]")}>{product.molecule}</p>
           </div>
           <p className={cn("text-pine font-display flex items-center gap-1 font-semibold tracking-wide", stage ? "text-xs" : "text-[8px]")}>
-            <NoorMark className={stage ? "size-3.5" : "size-2"} />
+            <SothemaMark className={stage ? "h-3.5" : "h-2"} />
             NOOR
           </p>
         </div>

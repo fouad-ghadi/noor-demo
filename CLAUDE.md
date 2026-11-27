@@ -47,7 +47,9 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
   - Chaque page déclare son contexte avec `usePageContext(...)` (pour le panneau « Assistant NOOR »).
   - Couleurs des graphiques **validées** (daltonisme/contraste) dans `src/lib/chartColors.ts` : ne pas les changer au hasard.
   - Page de connexion : design dédié (vert pin `#0F3D3E`, safran `#E8A33D` réservé à « l'arrêt en cours »,
-    police de titre Bricolage Grotesque, emblème étoile à 8 branches `components/brand/NoorMark.tsx`).
+    police de titre Bricolage Grotesque). **Logo Sothema partout à la place de l'étoile NOOR** (demande de Fouad, 27 nov. 2026) :
+    `components/brand/SothemaLogo.tsx` (`SothemaBadge` = « S » sur pastille blanche, `SothemaLogo` = logo complet), fichiers `public/brand/`.
+    `NoorMark.tsx` n'est plus utilisé.
   - **Même identité dans toute l'application** (refonte complète du gabarit) : jetons `pine`, `mint`, `mint-wash`,
     `saffron`, `saffron-ink`, `ink`, `paper`, `line` (`src/index.css`, ex. `bg-pine`, `border-line`).
     **Règle du safran = « maintenant »** : prochaine visite, aujourd'hui et l'heure actuelle dans le planning,
@@ -87,7 +89,7 @@ hamza.aitlahcen@ (en retard), imane.fassifihri@ (en retard, annulations) — `@n
 
 Fouad a fourni (le 21 oct. 2026) des photos du vrai CRM, un rapport d'activité anonymisé, la procédure de
 remontée des effets indésirables et les formations. **Ne jamais mettre leurs noms, chiffres ou documents dans le dépôt
-ni sur le site public** : on reproduit seulement la structure et les formules, avec des données fictives.
+ni sur le site public** (seule exception, voulue par Fouad le 27 nov. 2026 : le logo Sothema) : on reproduit seulement la structure et les formules, avec des données fictives.
 - Vocabulaire : délégué = **VM**, superviseur = **DSM** ; calls (visites), contacts (médecins vus), ciblage, BU, gamme.
 - Ciblage `Doctor.frequency` : **F1** = 1 visite/mois, **F2** = 2 visites/mois, `None` = hors cible ; potentiel = `segment` A/B/C.
   Territoires (secteurs IMS) : `seed_data/territories.py` (`Doctor.territory`, recalculé à la création / modification).

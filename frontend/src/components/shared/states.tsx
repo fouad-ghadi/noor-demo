@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 
-import { NoorMark } from "@/components/brand/NoorMark";
+import { SothemaMark } from "@/components/brand/SothemaLogo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -39,8 +39,8 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
 export function EmptyState({ title, description, action }: { title: string; description?: ReactNode; action?: ReactNode }) {
   return (
     <div className="border-line flex flex-col items-center gap-2 rounded-xl border border-dashed bg-white/60 p-8 text-center">
-      {/* L'étoile NOOR, en filigrane menthe */}
-      <NoorMark className="size-9" color="#C9EDE5" core="#FFFFFF" />
+      {/* Le « S » Sothema, en filigrane */}
+      <SothemaMark className="h-9 opacity-40" />
       <p className="font-display text-ink text-[17px] font-semibold">{title}</p>
       {description && <p className="text-muted-foreground text-sm">{description}</p>}
       {action}
